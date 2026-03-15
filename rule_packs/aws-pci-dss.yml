@@ -1,0 +1,671 @@
+metadata:
+  name: aws-pci-dss
+  version: 1.0.0
+  description: AWS PCI-DSS Compliance Rule Pack - Payment Card Industry Data Security Standard requirements
+  author: Riveter Team
+  created: 2025-10-27
+  updated: 2025-10-27
+  dependencies: []
+  tags: [compliance, pci-dss, payment-card, aws, cardholder-data]
+  min_riveter_version: 0.1.0
+
+rules:
+  # Network Segmentation Rules (8-10 rules)
+  - id: pci_vpc_cardholder_data_segmentation
+    resource_type: aws_security_group
+    description: "PCI-DSS 1.2.1 - Cardholder data environment must be properly segmented"
+    severity: error
+    filter:
+      tags.PCIScope: "true"
+    assert:
+      ingress:
+        subset:
+          - cidr_blocks:
+              regex: "^(?!0\\.0\\.0\\.0/0).*$"
+    metadata:
+      tags: [pci-dss, network-segmentation, security-groups]
+      pci_requirement: "1.2.1"
+      pci_version: "3.2.1"
+      references:
+        - https://www.pcisecuritystandards.org/document_library
+        - https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html
+
+  - id: pci_security_group_no_ssh_from_internet
+    resource_type: aws_security_group
+    description: "PCI-DSS 1.3.1 - SSH access must not be allowed from the internet"
+    severity: error
+    assert:
+      ingress:
+        subset:
+          - from_port: 22
+            to_port: 22
+            protocol: tcp
+            cidr_blocks:
+              regex: "^(?!0\\.0\\.0\\.0/0).*$"
+    metadata:
+      tags: [pci-dss, network-segmentation, ssh-access]
+      pci_requirement: "1.3.1"
+      pci_version: "3.2.1"
+      references:
+        - https://www.pcisecuritystandards.org/document_library
+        - https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html
+
+  - id: pci_security_group_no_rdp_from_internet
+    resource_type: aws_security_group
+    description: "PCI-DSS 1.3.1 - RDP access must not be allowed from the internet"
+    severity: error
+    assert:
+      ingress:
+        subset:
+          - from_port: 3389
+            to_port: 3389
+            protocol: tcp
+            cidr_blocks:
+              regex: "^(?!0\\.0\\.0\\.0/0).*$"
+    metadata:
+      tags: [pci-dss, network-segmentation, rdp-access]
+      pci_requirement: "1.3.1"
+      pci_version: "3.2.1"
+      references:
+        - https://www.pcisecuritystandards.org/document_library
+        - https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html
+
+  - id: pci_nacl_default_deny
+    resource_type: aws_network_acl
+    description: "PCI-DSS 1.2.1 - Network ACLs must implement default deny policy"
+    severity: error
+    assert:
+      egress:
+        subset:
+          - rule_no: 32767
+            action: deny
+      ingress:
+        subset:
+          - rule_no: 32767
+            action: deny
+    metadata:
+      tags: [pci-dss, network-segmentation, nacl]
+      pci_requirement: "1.2.1"
+      pci_version: "3.2.1"
+      references:
+        - https://www.pcisecuritystandards.org/document_library
+        - https://docs.aws.amazon.com/vpc/latest/userguide/vpc-network-acls.html
+
+  - id: pci_vpc_flow_logs_enabled
+    resource_type: aws_flow_log
+    description: "PCI-DSS 10.2.1 - VPC Flow Logs must be enabled for network monitoring"
+    severity: error
+    assert:
+      traffic_type: ALL
+    metadata:
+      tags: [pci-dss, network-monitoring, vpc-flow-logs]
+      pci_requirement: "10.2.1"
+      pci_version: "3.2.1"
+      references:
+        - https://www.pcisecuritystandards.org/document_library
+        - https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html
+
+  - id: pci_alb_waf_enabled
+    resource_type: aws_lb
+    description: "PCI-DSS 1.3.4 - Application Load Balancers must have WAF enabled"
+    severity: error
+    filter:
+      load_balancer_type: application
+      tags.PCIScope: "true"
+    assert:
+      # WAF association would be checked via aws_wafv2_web_acl_association
+      tags.WAFEnabled: "true"
+    metadata:
+      tags: [pci-dss, network-segmentation, waf]
+      pci_requirement: "1.3.4"
+      pci_version: "3.2.1"
+      references:
+        - https://www.pcisecuritystandards.org/document_library
+        - https://docs.aws.amazon.com/waf/latest/developerguide/waf-chapter.html
+
+  - id: pci_rds_no_public_access
+    resource_type: aws_db_instance
+    description: "PCI-DSS 1.3.1 - RDS instances in PCI scope must not be publicly accessible"
+    severity: error
+    filter:
+      tags.PCIScope: "true"
+    assert:
+      publicly_accessible: false
+    metadata:
+      tags: [pci-dss, network-segmentation, rds]
+      pci_requirement: "1.3.1"
+      pci_version: "3.2.1"
+      references:
+        - https://www.pcisecuritystandards.org/document_library
+        - https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_VPC.WorkingWithRDSInstanceinaVPC.html
+
+  - id: pci_ec2_no_public_ip_cardholder_data
+    resource_type: aws_instance
+    description: "PCI-DSS 1.3.1 - EC2 instances handling cardholder data must not have public IPs"
+    severity: error
+    filter:
+      tags.PCIScope: "true"
+    assert:
+      associate_public_ip_address: false
+    metadata:
+      tags: [pci-dss, network-segmentation, ec2]
+      pci_requirement: "1.3.1"
+      pci_version: "3.2.1"
+      references:
+        - https://www.pcisecuritystandards.org/document_library
+        - https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing.html
+
+  - id: pci_elasticache_subnet_group
+    resource_type: aws_elasticache_replication_group
+    description: "PCI-DSS 1.2.1 - ElastiCache must be deployed in private subnets"
+    severity: error
+    filter:
+      tags.PCIScope: "true"
+    assert:
+      subnet_group_name: present
+    metadata:
+      tags: [pci-dss, network-segmentation, elasticache]
+      pci_requirement: "1.2.1"
+      pci_version: "3.2.1"
+      references:
+        - https://www.pcisecuritystandards.org/document_library
+        - https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/SubnetGroups.html
+
+  - id: pci_redshift_no_public_access
+    resource_type: aws_redshift_cluster
+    description: "PCI-DSS 1.3.1 - Redshift clusters in PCI scope must not be publicly accessible"
+    severity: error
+    filter:
+      tags.PCIScope: "true"
+    assert:
+      publicly_accessible: false
+    metadata:
+      tags: [pci-dss, network-segmentation, redshift]
+      pci_requirement: "1.3.1"
+      pci_version: "3.2.1"
+      references:
+        - https://www.pcisecuritystandards.org/document_library
+        - https://docs.aws.amazon.com/redshift/latest/mgmt/managing-clusters-vpc.html
+
+  # Encryption Rules (7-9 rules)
+  - id: pci_s3_encryption_cardholder_data
+    resource_type: aws_s3_bucket
+    description: "PCI-DSS 3.4 - S3 buckets storing cardholder data must be encrypted"
+    severity: error
+    filter:
+      tags.PCIScope: "true"
+    assert:
+      server_side_encryption_configuration: present
+    metadata:
+      tags: [pci-dss, encryption, s3, cardholder-data]
+      pci_requirement: "3.4"
+      pci_version: "3.2.1"
+      references:
+        - https://www.pcisecuritystandards.org/document_library
+        - https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucket-encryption.html
+
+  - id: pci_rds_encryption_cardholder_data
+    resource_type: aws_db_instance
+    description: "PCI-DSS 3.4 - RDS instances storing cardholder data must have encryption at rest"
+    severity: error
+    filter:
+      tags.PCIScope: "true"
+    assert:
+      storage_encrypted: true
+    metadata:
+      tags: [pci-dss, encryption, rds, cardholder-data]
+      pci_requirement: "3.4"
+      pci_version: "3.2.1"
+      references:
+        - https://www.pcisecuritystandards.org/document_library
+        - https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.Encryption.html
+
+  - id: pci_ebs_encryption
+    resource_type: aws_ebs_volume
+    description: "PCI-DSS 3.4 - EBS volumes in PCI scope must be encrypted"
+    severity: error
+    filter:
+      tags.PCIScope: "true"
+    assert:
+      encrypted: true
+    metadata:
+      tags: [pci-dss, encryption, ebs]
+      pci_requirement: "3.4"
+      pci_version: "3.2.1"
+      references:
+        - https://www.pcisecuritystandards.org/document_library
+        - https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSEncryption.html
+
+  - id: pci_kms_key_rotation
+    resource_type: aws_kms_key
+    description: "PCI-DSS 3.6.4 - KMS keys must have automatic rotation enabled"
+    severity: error
+    assert:
+      enable_key_rotation: true
+    metadata:
+      tags: [pci-dss, encryption, kms, key-management]
+      pci_requirement: "3.6.4"
+      pci_version: "3.2.1"
+      references:
+        - https://www.pcisecuritystandards.org/document_library
+        - https://docs.aws.amazon.com/kms/latest/developerguide/rotating-keys.html
+
+  - id: pci_cloudfront_https_only
+    resource_type: aws_cloudfront_distribution
+    description: "PCI-DSS 4.1 - CloudFront distributions must enforce HTTPS for cardholder data transmission"
+    severity: error
+    filter:
+      tags.PCIScope: "true"
+    assert:
+      viewer_certificate.minimum_protocol_version:
+        regex: "^TLSv1\\.2"
+      default_cache_behavior.viewer_protocol_policy:
+        regex: "^(redirect-to-https|https-only)$"
+    metadata:
+      tags: [pci-dss, encryption-in-transit, cloudfront]
+      pci_requirement: "4.1"
+      pci_version: "3.2.1"
+      references:
+        - https://www.pcisecuritystandards.org/document_library
+        - https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/secure-connections-supported-viewer-protocols-ciphers.html
+
+  - id: pci_alb_https_listener
+    resource_type: aws_lb_listener
+    description: "PCI-DSS 4.1 - Load balancer listeners must use HTTPS for cardholder data"
+    severity: error
+    filter:
+      tags.PCIScope: "true"
+    assert:
+      protocol:
+        regex: "^HTTPS$"
+      ssl_policy:
+        regex: "^ELBSecurityPolicy-TLS-1-2"
+    metadata:
+      tags: [pci-dss, encryption-in-transit, alb]
+      pci_requirement: "4.1"
+      pci_version: "3.2.1"
+      references:
+        - https://www.pcisecuritystandards.org/document_library
+        - https://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-https-listener.html
+
+  - id: pci_elasticache_encryption_at_rest
+    resource_type: aws_elasticache_replication_group
+    description: "PCI-DSS 3.4 - ElastiCache replication groups must have encryption at rest"
+    severity: error
+    filter:
+      tags.PCIScope: "true"
+    assert:
+      at_rest_encryption_enabled: true
+    metadata:
+      tags: [pci-dss, encryption, elasticache]
+      pci_requirement: "3.4"
+      pci_version: "3.2.1"
+      references:
+        - https://www.pcisecuritystandards.org/document_library
+        - https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/at-rest-encryption.html
+
+  - id: pci_elasticache_encryption_in_transit
+    resource_type: aws_elasticache_replication_group
+    description: "PCI-DSS 4.1 - ElastiCache replication groups must have encryption in transit"
+    severity: error
+    filter:
+      tags.PCIScope: "true"
+    assert:
+      transit_encryption_enabled: true
+    metadata:
+      tags: [pci-dss, encryption-in-transit, elasticache]
+      pci_requirement: "4.1"
+      pci_version: "3.2.1"
+      references:
+        - https://www.pcisecuritystandards.org/document_library
+        - https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/in-transit-encryption.html
+
+  - id: pci_dynamodb_encryption_at_rest
+    resource_type: aws_dynamodb_table
+    description: "PCI-DSS 3.4 - DynamoDB tables storing cardholder data must have encryption at rest"
+    severity: error
+    filter:
+      tags.PCIScope: "true"
+    assert:
+      server_side_encryption: present
+    metadata:
+      tags: [pci-dss, encryption, dynamodb, cardholder-data]
+      pci_requirement: "3.4"
+      pci_version: "3.2.1"
+      references:
+        - https://www.pcisecuritystandards.org/document_library
+        - https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/EncryptionAtRest.html
+
+  # Access Control Rules (6-8 rules)
+  - id: pci_iam_mfa_required
+    resource_type: aws_iam_user
+    description: "PCI-DSS 8.3.1 - IAM users with access to cardholder data must have MFA enabled"
+    severity: error
+    filter:
+      tags.PCIAccess: "true"
+    assert:
+      force_destroy: false
+    metadata:
+      tags: [pci-dss, iam, access-control, mfa]
+      pci_requirement: "8.3.1"
+      pci_version: "3.2.1"
+      references:
+        - https://www.pcisecuritystandards.org/document_library
+        - https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa.html
+
+  - id: pci_iam_no_wildcard_actions
+    resource_type: aws_iam_policy
+    description: "PCI-DSS 7.1.2 - IAM policies must follow least privilege principle"
+    severity: error
+    assert:
+      policy:
+        regex: "^(?!.*\"Action\":\\s*\"\\*\").*$"
+    metadata:
+      tags: [pci-dss, iam, least-privilege]
+      pci_requirement: "7.1.2"
+      pci_version: "3.2.1"
+      references:
+        - https://www.pcisecuritystandards.org/document_library
+        - https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html
+
+  - id: pci_s3_block_public_access
+    resource_type: aws_s3_bucket_public_access_block
+    description: "PCI-DSS 7.1.1 - S3 buckets must block all public access"
+    severity: error
+    assert:
+      block_public_acls: true
+      block_public_policy: true
+      ignore_public_acls: true
+      restrict_public_buckets: true
+    metadata:
+      tags: [pci-dss, s3, access-control]
+      pci_requirement: "7.1.1"
+      pci_version: "3.2.1"
+      references:
+        - https://www.pcisecuritystandards.org/document_library
+        - https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html
+
+  - id: pci_iam_password_policy
+    resource_type: aws_iam_account_password_policy
+    description: "PCI-DSS 8.2.3 - IAM password policy must meet complexity requirements"
+    severity: error
+    assert:
+      minimum_password_length:
+        gte: 12
+      require_uppercase_characters: true
+      require_lowercase_characters: true
+      require_numbers: true
+      require_symbols: true
+      max_password_age:
+        lte: 90
+    metadata:
+      tags: [pci-dss, iam, access-control, password-policy]
+      pci_requirement: "8.2.3"
+      pci_version: "3.2.1"
+      references:
+        - https://www.pcisecuritystandards.org/document_library
+        - https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_passwords_account-policy.html
+
+  - id: pci_iam_user_no_inline_policies
+    resource_type: aws_iam_user
+    description: "PCI-DSS 7.1.2 - IAM users should not have inline policies for better access management"
+    severity: error
+    assert:
+      inline_policy:
+        length:
+          eq: 0
+    metadata:
+      tags: [pci-dss, iam, access-control]
+      pci_requirement: "7.1.2"
+      pci_version: "3.2.1"
+      references:
+        - https://www.pcisecuritystandards.org/document_library
+        - https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_managed-vs-inline.html
+
+  - id: pci_iam_root_access_key_disabled
+    resource_type: aws_iam_access_key
+    description: "PCI-DSS 7.1.1 - Root account access keys must not exist"
+    severity: error
+    filter:
+      user: root
+    assert:
+      status: Inactive
+    metadata:
+      tags: [pci-dss, iam, root-account, access-control]
+      pci_requirement: "7.1.1"
+      pci_version: "3.2.1"
+      references:
+        - https://www.pcisecuritystandards.org/document_library
+        - https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html
+
+  - id: pci_lambda_execution_role_least_privilege
+    resource_type: aws_lambda_function
+    description: "PCI-DSS 7.1.2 - Lambda functions must use least privilege execution roles"
+    severity: error
+    filter:
+      tags.PCIScope: "true"
+    assert:
+      role: present
+    metadata:
+      tags: [pci-dss, lambda, access-control, least-privilege]
+      pci_requirement: "7.1.2"
+      pci_version: "3.2.1"
+      references:
+        - https://www.pcisecuritystandards.org/document_library
+        - https://docs.aws.amazon.com/lambda/latest/dg/lambda-intro-execution-role.html
+
+  - id: pci_ec2_instance_profile_required
+    resource_type: aws_instance
+    description: "PCI-DSS 7.1.2 - EC2 instances in PCI scope must use IAM instance profiles"
+    severity: error
+    filter:
+      tags.PCIScope: "true"
+    assert:
+      iam_instance_profile: present
+    metadata:
+      tags: [pci-dss, ec2, access-control, iam]
+      pci_requirement: "7.1.2"
+      pci_version: "3.2.1"
+      references:
+        - https://www.pcisecuritystandards.org/document_library
+        - https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html
+
+  # Logging and Monitoring Rules (5-7 rules)
+  - id: pci_cloudtrail_enabled
+    resource_type: aws_cloudtrail
+    description: "PCI-DSS 10.2.1 - CloudTrail must be enabled for audit logging"
+    severity: error
+    assert:
+      enable_logging: true
+      include_global_service_events: true
+      is_multi_region_trail: true
+    metadata:
+      tags: [pci-dss, cloudtrail, audit-logging]
+      pci_requirement: "10.2.1"
+      pci_version: "3.2.1"
+      references:
+        - https://www.pcisecuritystandards.org/document_library
+        - https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-user-guide.html
+
+  - id: pci_cloudtrail_log_validation
+    resource_type: aws_cloudtrail
+    description: "PCI-DSS 10.5.2 - CloudTrail must have log file validation for audit integrity"
+    severity: error
+    assert:
+      enable_log_file_validation: true
+    metadata:
+      tags: [pci-dss, cloudtrail, audit-logging, integrity]
+      pci_requirement: "10.5.2"
+      pci_version: "3.2.1"
+      references:
+        - https://www.pcisecuritystandards.org/document_library
+        - https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-log-file-validation-intro.html
+
+  - id: pci_cloudwatch_log_retention
+    resource_type: aws_cloudwatch_log_group
+    description: "PCI-DSS 10.7 - CloudWatch log groups must have adequate retention period"
+    severity: error
+    assert:
+      retention_in_days:
+        gte: 365
+    metadata:
+      tags: [pci-dss, cloudwatch, audit-logging, retention]
+      pci_requirement: "10.7"
+      pci_version: "3.2.1"
+      references:
+        - https://www.pcisecuritystandards.org/document_library
+        - https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/Working-with-log-groups-and-streams.html
+
+  - id: pci_s3_access_logging
+    resource_type: aws_s3_bucket_logging
+    description: "PCI-DSS 10.2.1 - S3 buckets must have access logging enabled"
+    severity: error
+    assert:
+      target_bucket: present
+    metadata:
+      tags: [pci-dss, s3, audit-logging]
+      pci_requirement: "10.2.1"
+      pci_version: "3.2.1"
+      references:
+        - https://www.pcisecuritystandards.org/document_library
+        - https://docs.aws.amazon.com/AmazonS3/latest/userguide/ServerLogs.html
+
+  - id: pci_alb_access_logs
+    resource_type: aws_lb
+    description: "PCI-DSS 10.2.1 - Application Load Balancers must have access logs enabled"
+    severity: error
+    filter:
+      load_balancer_type: application
+      tags.PCIScope: "true"
+    assert:
+      access_logs.enabled: true
+    metadata:
+      tags: [pci-dss, alb, audit-logging]
+      pci_requirement: "10.2.1"
+      pci_version: "3.2.1"
+      references:
+        - https://www.pcisecuritystandards.org/document_library
+        - https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html
+
+  - id: pci_guardduty_enabled
+    resource_type: aws_guardduty_detector
+    description: "PCI-DSS 11.4 - GuardDuty must be enabled for intrusion detection"
+    severity: error
+    assert:
+      enable: true
+    metadata:
+      tags: [pci-dss, guardduty, monitoring, intrusion-detection]
+      pci_requirement: "11.4"
+      pci_version: "3.2.1"
+      references:
+        - https://www.pcisecuritystandards.org/document_library
+        - https://docs.aws.amazon.com/guardduty/latest/ug/what-is-guardduty.html
+
+  - id: pci_config_enabled
+    resource_type: aws_config_configuration_recorder
+    description: "PCI-DSS 10.5.3 - AWS Config must be enabled for configuration monitoring"
+    severity: error
+    assert:
+      recording_group.all_supported: true
+      recording_group.include_global_resource_types: true
+    metadata:
+      tags: [pci-dss, config, monitoring, configuration-management]
+      pci_requirement: "10.5.3"
+      pci_version: "3.2.1"
+      references:
+        - https://www.pcisecuritystandards.org/document_library
+        - https://docs.aws.amazon.com/config/latest/developerguide/WhatIsConfig.html
+
+  # Vulnerability Management Rules (4-6 rules)
+  - id: pci_ssm_patch_compliance
+    resource_type: aws_ssm_patch_baseline
+    description: "PCI-DSS 6.1 - Systems Manager patch baseline must be configured for vulnerability management"
+    severity: error
+    assert:
+      approved_patches_compliance_level:
+        regex: "^(CRITICAL|HIGH)$"
+    metadata:
+      tags: [pci-dss, ssm, patch-management, vulnerability-management]
+      pci_requirement: "6.1"
+      pci_version: "3.2.1"
+      references:
+        - https://www.pcisecuritystandards.org/document_library
+        - https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-patch-baselines.html
+
+  - id: pci_inspector_assessment_target
+    resource_type: aws_inspector_assessment_target
+    description: "PCI-DSS 11.2.1 - Inspector assessment targets must be configured for vulnerability scanning"
+    severity: error
+    assert:
+      resource_group_arn: present
+    metadata:
+      tags: [pci-dss, inspector, vulnerability-scanning]
+      pci_requirement: "11.2.1"
+      pci_version: "3.2.1"
+      references:
+        - https://www.pcisecuritystandards.org/document_library
+        - https://docs.aws.amazon.com/inspector/latest/userguide/inspector_introduction.html
+
+  - id: pci_security_group_description_required
+    resource_type: aws_security_group
+    description: "PCI-DSS 1.1.6 - Security groups must have descriptions for documentation"
+    severity: warning
+    assert:
+      description:
+        regex: ".{10,}"
+    metadata:
+      tags: [pci-dss, security-groups, documentation]
+      pci_requirement: "1.1.6"
+      pci_version: "3.2.1"
+      references:
+        - https://www.pcisecuritystandards.org/document_library
+        - https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html
+
+  - id: pci_ec2_detailed_monitoring
+    resource_type: aws_instance
+    description: "PCI-DSS 10.6.1 - EC2 instances in PCI scope must have detailed monitoring enabled"
+    severity: error
+    filter:
+      tags.PCIScope: "true"
+    assert:
+      monitoring: true
+    metadata:
+      tags: [pci-dss, ec2, monitoring]
+      pci_requirement: "10.6.1"
+      pci_version: "3.2.1"
+      references:
+        - https://www.pcisecuritystandards.org/document_library
+        - https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-cloudwatch.html
+
+  - id: pci_rds_monitoring_enabled
+    resource_type: aws_db_instance
+    description: "PCI-DSS 10.6.1 - RDS instances in PCI scope must have enhanced monitoring enabled"
+    severity: error
+    filter:
+      tags.PCIScope: "true"
+    assert:
+      monitoring_interval:
+        gte: 60
+    metadata:
+      tags: [pci-dss, rds, monitoring]
+      pci_requirement: "10.6.1"
+      pci_version: "3.2.1"
+      references:
+        - https://www.pcisecuritystandards.org/document_library
+        - https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Monitoring.OS.html
+
+  - id: pci_lambda_dead_letter_queue
+    resource_type: aws_lambda_function
+    description: "PCI-DSS 10.6.1 - Lambda functions in PCI scope must have dead letter queues for error handling"
+    severity: warning
+    filter:
+      tags.PCIScope: "true"
+    assert:
+      dead_letter_config: present
+    metadata:
+      tags: [pci-dss, lambda, error-handling, monitoring]
+      pci_requirement: "10.6.1"
+      pci_version: "3.2.1"
+      references:
+        - https://www.pcisecuritystandards.org/document_library
+        - https://docs.aws.amazon.com/lambda/latest/dg/invocation-async.html

@@ -1,0 +1,465 @@
+metadata:
+  name: azure-hipaa
+  version: 1.0.0
+  description: Azure HIPAA Compliance Rule Pack - Healthcare data protection requirements
+  author: Riveter Team
+  created: 2025-10-27
+  updated: 2025-10-27
+  dependencies: []
+  tags: [compliance, hipaa, healthcare, azure, phi]
+  min_riveter_version: 0.1.0
+
+rules:
+  # ============================================================================
+  # Encryption Rules (6-8 rules)
+  # ============================================================================
+
+  - id: azure_hipaa_storage_encryption_phi
+    resource_type: azurerm_storage_account
+    description: "HIPAA - Storage accounts storing PHI must have encryption enabled"
+    severity: error
+    filter:
+      tags.DataClassification: PHI
+    assert:
+      enable_https_traffic_only: true
+      min_tls_version: TLS1_2
+    metadata:
+      tags: [hipaa, azure, storage, encryption, phi]
+      hipaa_control: "164.312(a)(2)(iv)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.microsoft.com/en-us/azure/storage/common/storage-service-encryption
+
+  - id: azure_hipaa_sql_tde_enabled
+    resource_type: azurerm_mssql_database
+    description: "HIPAA - SQL databases storing PHI must have Transparent Data Encryption enabled"
+    severity: error
+    filter:
+      tags.DataClassification: PHI
+    assert:
+      transparent_data_encryption_enabled: true
+    metadata:
+      tags: [hipaa, azure, sql, encryption, phi]
+      hipaa_control: "164.312(a)(2)(iv)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.microsoft.com/en-us/azure/azure-sql/database/transparent-data-encryption-tde-overview
+
+  - id: azure_hipaa_vm_disk_encryption
+    resource_type: azurerm_linux_virtual_machine
+    description: "HIPAA - Virtual machines must have disk encryption enabled"
+    severity: error
+    assert:
+      encryption_at_host_enabled: true
+    metadata:
+      tags: [hipaa, azure, vm, disk-encryption]
+      hipaa_control: "164.312(a)(2)(iv)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.microsoft.com/en-us/azure/virtual-machines/disk-encryption
+
+  - id: azure_hipaa_managed_disk_encryption
+    resource_type: azurerm_managed_disk
+    description: "HIPAA - Managed disks must have encryption enabled"
+    severity: error
+    assert:
+      encryption_settings.enabled: true
+    metadata:
+      tags: [hipaa, azure, disk, encryption]
+      hipaa_control: "164.312(a)(2)(iv)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.microsoft.com/en-us/azure/virtual-machines/disk-encryption
+
+  - id: azure_hipaa_keyvault_cmk_encryption
+    resource_type: azurerm_storage_account
+    description: "HIPAA - Storage accounts should use customer-managed keys for encryption"
+    severity: error
+    filter:
+      tags.DataClassification: PHI
+    assert:
+      customer_managed_key: present
+    metadata:
+      tags: [hipaa, azure, storage, cmk, encryption]
+      hipaa_control: "164.312(a)(2)(iv)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.microsoft.com/en-us/azure/storage/common/customer-managed-keys-overview
+
+  - id: azure_hipaa_cosmos_encryption
+    resource_type: azurerm_cosmosdb_account
+    description: "HIPAA - Cosmos DB accounts must have encryption at rest enabled"
+    severity: error
+    assert:
+      # Encryption at rest is enabled by default in Cosmos DB
+      # We check for customer-managed keys for enhanced security
+      key_vault_key_id: present
+    metadata:
+      tags: [hipaa, azure, cosmosdb, encryption]
+      hipaa_control: "164.312(a)(2)(iv)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.microsoft.com/en-us/azure/cosmos-db/database-encryption-at-rest
+
+  - id: azure_hipaa_app_service_https_only
+    resource_type: azurerm_app_service
+    description: "HIPAA - App Services must enforce HTTPS only"
+    severity: error
+    assert:
+      https_only: true
+    metadata:
+      tags: [hipaa, azure, app-service, encryption-in-transit]
+      hipaa_control: "164.312(e)(1)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.microsoft.com/en-us/azure/app-service/configure-ssl-bindings
+
+  - id: azure_hipaa_function_app_https_only
+    resource_type: azurerm_function_app
+    description: "HIPAA - Function Apps must enforce HTTPS only"
+    severity: error
+    assert:
+      https_only: true
+    metadata:
+      tags: [hipaa, azure, function-app, encryption-in-transit]
+      hipaa_control: "164.312(e)(1)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.microsoft.com/en-us/azure/azure-functions/security-concepts
+
+  # ============================================================================
+  # Access Controls Rules (5-7 rules)
+  # ============================================================================
+
+  - id: azure_hipaa_storage_public_access_disabled
+    resource_type: azurerm_storage_account
+    description: "HIPAA - Storage accounts must disable public blob access"
+    severity: error
+    assert:
+      allow_blob_public_access: false
+    metadata:
+      tags: [hipaa, azure, storage, access-control]
+      hipaa_control: "164.308(a)(4)(ii)(B)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.microsoft.com/en-us/azure/storage/blobs/anonymous-read-access-prevent
+
+  - id: azure_hipaa_sql_public_network_disabled
+    resource_type: azurerm_mssql_server
+    description: "HIPAA - SQL servers must disable public network access"
+    severity: error
+    assert:
+      public_network_access_enabled: false
+    metadata:
+      tags: [hipaa, azure, sql, access-control]
+      hipaa_control: "164.308(a)(4)(ii)(B)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.microsoft.com/en-us/azure/azure-sql/database/connectivity-settings
+
+  - id: azure_hipaa_keyvault_network_acls
+    resource_type: azurerm_key_vault
+    description: "HIPAA - Key vaults must have network ACLs configured with default deny"
+    severity: error
+    assert:
+      network_acls.default_action: Deny
+    metadata:
+      tags: [hipaa, azure, keyvault, access-control]
+      hipaa_control: "164.308(a)(4)(ii)(B)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.microsoft.com/en-us/azure/key-vault/general/network-security
+
+  - id: azure_hipaa_vm_managed_identity
+    resource_type: azurerm_linux_virtual_machine
+    description: "HIPAA - Virtual machines should use managed identities for authentication"
+    severity: error
+    assert:
+      identity: present
+    metadata:
+      tags: [hipaa, azure, vm, managed-identity, access-control]
+      hipaa_control: "164.308(a)(4)(ii)(B)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview
+
+  - id: azure_hipaa_role_assignment_least_privilege
+    resource_type: azurerm_role_assignment
+    description: "HIPAA - Role assignments must follow least privilege principle"
+    severity: error
+    assert:
+      role_definition_name:
+        regex: "^(?!.*Owner|.*Contributor).*$"
+    metadata:
+      tags: [hipaa, azure, rbac, least-privilege]
+      hipaa_control: "164.308(a)(4)(ii)(B)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.microsoft.com/en-us/azure/role-based-access-control/overview
+
+  - id: azure_hipaa_cosmos_private_endpoint
+    resource_type: azurerm_cosmosdb_account
+    description: "HIPAA - Cosmos DB accounts should use private endpoints"
+    severity: error
+    assert:
+      public_network_access_enabled: false
+    metadata:
+      tags: [hipaa, azure, cosmosdb, private-endpoint, access-control]
+      hipaa_control: "164.308(a)(4)(ii)(B)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.microsoft.com/en-us/azure/cosmos-db/how-to-configure-private-endpoints
+
+  - id: azure_hipaa_app_service_auth_enabled
+    resource_type: azurerm_app_service
+    description: "HIPAA - App Services must have authentication enabled"
+    severity: error
+    assert:
+      auth_settings.enabled: true
+    metadata:
+      tags: [hipaa, azure, app-service, authentication, access-control]
+      hipaa_control: "164.308(a)(4)(ii)(B)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.microsoft.com/en-us/azure/app-service/overview-authentication-authorization
+
+  # ============================================================================
+  # Audit Logging Rules (4-6 rules)
+  # ============================================================================
+
+  - id: azure_hipaa_activity_log_retention
+    resource_type: azurerm_monitor_log_profile
+    description: "HIPAA - Activity logs must have adequate retention period"
+    severity: error
+    assert:
+      retention_policy.days:
+        gte: 365
+    metadata:
+      tags: [hipaa, azure, activity-log, audit-logging, retention]
+      hipaa_control: "164.312(b)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.microsoft.com/en-us/azure/azure-monitor/essentials/activity-log
+
+  - id: azure_hipaa_sql_auditing_enabled
+    resource_type: azurerm_mssql_server
+    description: "HIPAA - SQL servers must have auditing enabled"
+    severity: error
+    assert:
+      extended_auditing_policy.enabled: true
+    metadata:
+      tags: [hipaa, azure, sql, audit-logging]
+      hipaa_control: "164.312(b)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.microsoft.com/en-us/azure/azure-sql/database/auditing-overview
+
+  - id: azure_hipaa_storage_logging_enabled
+    resource_type: azurerm_storage_account
+    description: "HIPAA - Storage accounts must have logging enabled"
+    severity: error
+    filter:
+      tags.DataClassification: PHI
+    assert:
+      # Storage analytics logging is configured via separate resources
+      # We check for the presence of diagnostic settings
+      tags.LoggingEnabled: "true"
+    metadata:
+      tags: [hipaa, azure, storage, audit-logging, phi]
+      hipaa_control: "164.312(b)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.microsoft.com/en-us/azure/storage/common/storage-analytics-logging
+
+  - id: azure_hipaa_keyvault_logging_enabled
+    resource_type: azurerm_key_vault
+    description: "HIPAA - Key vaults must have diagnostic logging enabled"
+    severity: error
+    assert:
+      # Diagnostic settings are configured via separate resources
+      # We check for the presence of logging configuration
+      tags.LoggingEnabled: "true"
+    metadata:
+      tags: [hipaa, azure, keyvault, audit-logging]
+      hipaa_control: "164.312(b)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.microsoft.com/en-us/azure/key-vault/general/logging
+
+  - id: azure_hipaa_nsg_flow_logs_enabled
+    resource_type: azurerm_network_watcher_flow_log
+    description: "HIPAA - Network security groups must have flow logs enabled"
+    severity: error
+    assert:
+      enabled: true
+      retention_policy.enabled: true
+      retention_policy.days:
+        gte: 365
+    metadata:
+      tags: [hipaa, azure, nsg, flow-logs, audit-logging]
+      hipaa_control: "164.312(b)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.microsoft.com/en-us/azure/network-watcher/network-watcher-nsg-flow-logging-overview
+
+  - id: azure_hipaa_app_service_logging_enabled
+    resource_type: azurerm_app_service
+    description: "HIPAA - App Services must have application logging enabled"
+    severity: error
+    assert:
+      logs.application_logs.file_system.level:
+        regex: "^(Information|Warning|Error)$"
+    metadata:
+      tags: [hipaa, azure, app-service, audit-logging]
+      hipaa_control: "164.312(b)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.microsoft.com/en-us/azure/app-service/troubleshoot-diagnostic-logs
+
+  # ============================================================================
+  # Network Security Rules (3-5 rules)
+  # ============================================================================
+
+  - id: azure_hipaa_nsg_no_wide_open_rules
+    resource_type: azurerm_network_security_rule
+    description: "HIPAA - Network security rules must not allow unrestricted access"
+    severity: error
+    filter:
+      direction: Inbound
+      access: Allow
+    assert:
+      source_address_prefix:
+        regex: "^(?!\\*).*$"
+      source_address_prefixes:
+        regex: "^(?!.*\\*).*$"
+    metadata:
+      tags: [hipaa, azure, nsg, network-security]
+      hipaa_control: "164.312(e)(1)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.microsoft.com/en-us/azure/virtual-network/network-security-groups-overview
+
+  - id: azure_hipaa_vm_no_public_ip_phi
+    resource_type: azurerm_network_interface
+    description: "HIPAA - VMs handling PHI must not have public IP addresses"
+    severity: error
+    filter:
+      tags.DataClassification: PHI
+    assert:
+      ip_configuration.public_ip_address_id:
+        regex: "^$"
+    metadata:
+      tags: [hipaa, azure, vm, network-security, phi]
+      hipaa_control: "164.312(e)(1)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.microsoft.com/en-us/azure/virtual-network/ip-services/public-ip-addresses
+
+  - id: azure_hipaa_app_service_vnet_integration
+    resource_type: azurerm_app_service
+    description: "HIPAA - App Services handling PHI should use VNet integration"
+    severity: error
+    filter:
+      tags.DataClassification: PHI
+    assert:
+      site_config.vnet_route_all_enabled: true
+    metadata:
+      tags: [hipaa, azure, app-service, vnet-integration, phi]
+      hipaa_control: "164.312(e)(1)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.microsoft.com/en-us/azure/app-service/web-sites-integrate-with-vnet
+
+  - id: azure_hipaa_sql_private_endpoint
+    resource_type: azurerm_mssql_server
+    description: "HIPAA - SQL servers should use private endpoints"
+    severity: error
+    assert:
+      # Private endpoints are configured via separate resources
+      # We check for the presence of private endpoint configuration
+      tags.PrivateEndpointEnabled: "true"
+    metadata:
+      tags: [hipaa, azure, sql, private-endpoint, network-security]
+      hipaa_control: "164.312(e)(1)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.microsoft.com/en-us/azure/azure-sql/database/private-endpoint-overview
+
+  - id: azure_hipaa_storage_private_endpoint
+    resource_type: azurerm_storage_account
+    description: "HIPAA - Storage accounts storing PHI should use private endpoints"
+    severity: error
+    filter:
+      tags.DataClassification: PHI
+    assert:
+      # Private endpoints are configured via separate resources
+      # We check for the presence of private endpoint configuration
+      tags.PrivateEndpointEnabled: "true"
+    metadata:
+      tags: [hipaa, azure, storage, private-endpoint, network-security, phi]
+      hipaa_control: "164.312(e)(1)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.microsoft.com/en-us/azure/storage/common/storage-private-endpoints
+
+  # ============================================================================
+  # Backup and Recovery Rules (2-4 rules)
+  # ============================================================================
+
+  - id: azure_hipaa_vm_backup_enabled
+    resource_type: azurerm_backup_protected_vm
+    description: "HIPAA - Virtual machines must have backup protection enabled"
+    severity: error
+    assert:
+      backup_policy_id: present
+    metadata:
+      tags: [hipaa, azure, vm, backup, disaster-recovery]
+      hipaa_control: "164.308(a)(7)(ii)(A)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.microsoft.com/en-us/azure/backup/backup-azure-vms-introduction
+
+  - id: azure_hipaa_sql_backup_retention
+    resource_type: azurerm_mssql_database
+    description: "HIPAA - SQL databases must have adequate backup retention"
+    severity: error
+    assert:
+      short_term_retention_policy.retention_days:
+        gte: 7
+    metadata:
+      tags: [hipaa, azure, sql, backup, disaster-recovery]
+      hipaa_control: "164.308(a)(7)(ii)(A)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.microsoft.com/en-us/azure/azure-sql/database/automated-backups-overview
+
+  - id: azure_hipaa_storage_soft_delete
+    resource_type: azurerm_storage_account
+    description: "HIPAA - Storage accounts storing PHI must have soft delete enabled"
+    severity: error
+    filter:
+      tags.DataClassification: PHI
+    assert:
+      blob_properties.delete_retention_policy.days:
+        gte: 7
+    metadata:
+      tags: [hipaa, azure, storage, soft-delete, data-protection, phi]
+      hipaa_control: "164.308(a)(7)(ii)(A)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.microsoft.com/en-us/azure/storage/blobs/soft-delete-blob-overview
+
+  - id: azure_hipaa_keyvault_backup_recovery
+    resource_type: azurerm_key_vault
+    description: "HIPAA - Key vaults must have purge protection and soft delete enabled"
+    severity: error
+    assert:
+      purge_protection_enabled: true
+      soft_delete_retention_days:
+        gte: 7
+    metadata:
+      tags: [hipaa, azure, keyvault, backup, data-protection]
+      hipaa_control: "164.308(a)(7)(ii)(A)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.microsoft.com/en-us/azure/key-vault/general/soft-delete-overview

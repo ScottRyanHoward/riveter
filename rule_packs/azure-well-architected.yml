@@ -1,0 +1,465 @@
+metadata:
+  name: azure-well-architected
+  version: 1.0.0
+  description: Azure Well-Architected Framework Rule Pack covering all 5 pillars
+  author: Riveter Team
+  created: 2025-10-27
+  updated: 2025-10-27
+  dependencies: []
+  tags: [well-architected, azure, best-practices, architecture]
+  min_riveter_version: 0.1.0
+
+rules:
+  # Cost Optimization Pillar (6-8 rules)
+  - id: azure_wa_cost_resource_tagging
+    resource_type: azurerm_linux_virtual_machine
+    description: "WAF Cost Optimization - Resources should have cost allocation tags"
+    severity: warning
+    assert:
+      tags.CostCenter: present
+      tags.Project: present
+    metadata:
+      tags: [azure, well-architected, cost-optimization, tagging]
+      pillar: Cost Optimization
+      references:
+        - https://learn.microsoft.com/azure/well-architected/cost-optimization/
+
+  - id: azure_wa_cost_vm_sizing
+    resource_type: azurerm_linux_virtual_machine
+    description: "WAF Cost Optimization - VMs should use appropriate sizes"
+    severity: info
+    assert:
+      size:
+        regex: "^Standard_(B|D|E)[0-9]+[a-z]*s_v[0-9]+$"
+    metadata:
+      tags: [azure, well-architected, cost-optimization, compute]
+      pillar: Cost Optimization
+      references:
+        - https://learn.microsoft.com/azure/well-architected/cost-optimization/
+
+  - id: azure_wa_cost_storage_tier
+    resource_type: azurerm_storage_account
+    description: "WAF Cost Optimization - Storage accounts should use appropriate tiers"
+    severity: info
+    assert:
+      account_tier:
+        regex: "^(Standard|Premium)$"
+    metadata:
+      tags: [azure, well-architected, cost-optimization, storage]
+      pillar: Cost Optimization
+      references:
+        - https://learn.microsoft.com/azure/well-architected/cost-optimization/
+
+  - id: azure_wa_cost_managed_disk_type
+    resource_type: azurerm_managed_disk
+    description: "WAF Cost Optimization - Managed disks should use cost-effective types"
+    severity: info
+    assert:
+      storage_account_type:
+        regex: "^(Standard_LRS|StandardSSD_LRS)$"
+    metadata:
+      tags: [azure, well-architected, cost-optimization, storage]
+      pillar: Cost Optimization
+      references:
+        - https://learn.microsoft.com/azure/well-architected/cost-optimization/
+
+  - id: azure_wa_cost_sql_sku
+    resource_type: azurerm_mssql_database
+    description: "WAF Cost Optimization - SQL databases should use appropriate SKUs"
+    severity: info
+    assert:
+      sku_name: present
+    metadata:
+      tags: [azure, well-architected, cost-optimization, database]
+      pillar: Cost Optimization
+      references:
+        - https://learn.microsoft.com/azure/well-architected/cost-optimization/
+
+  - id: azure_wa_cost_app_service_plan
+    resource_type: azurerm_service_plan
+    description: "WAF Cost Optimization - App Service plans should be right-sized"
+    severity: info
+    assert:
+      sku_name:
+        regex: "^(B[0-9]|S[0-9]|P[0-9]v[0-9])$"
+    metadata:
+      tags: [azure, well-architected, cost-optimization, app-service]
+      pillar: Cost Optimization
+      references:
+        - https://learn.microsoft.com/azure/well-architected/cost-optimization/
+
+  - id: azure_wa_cost_reserved_capacity
+    resource_type: azurerm_linux_virtual_machine
+    description: "WAF Cost Optimization - Production VMs should consider reserved capacity"
+    severity: info
+    filter:
+      tags.Environment: production
+    assert:
+      tags.ReservedCapacity: present
+    metadata:
+      tags: [azure, well-architected, cost-optimization, compute]
+      pillar: Cost Optimization
+      references:
+        - https://learn.microsoft.com/azure/well-architected/cost-optimization/
+
+  # Operational Excellence Pillar (6-8 rules)
+  - id: azure_wa_opex_monitoring_enabled
+    resource_type: azurerm_linux_virtual_machine
+    description: "WAF Operational Excellence - VMs should have monitoring enabled"
+    severity: warning
+    assert:
+      tags.Monitoring: present
+    metadata:
+      tags: [azure, well-architected, operational-excellence, monitoring]
+      pillar: Operational Excellence
+      references:
+        - https://learn.microsoft.com/azure/well-architected/operational-excellence/
+
+  - id: azure_wa_opex_diagnostic_settings
+    resource_type: azurerm_monitor_diagnostic_setting
+    description: "WAF Operational Excellence - Resources should have diagnostic settings"
+    severity: warning
+    assert:
+      enabled_log:
+        length:
+          gte: 1
+    metadata:
+      tags: [azure, well-architected, operational-excellence, logging]
+      pillar: Operational Excellence
+      references:
+        - https://learn.microsoft.com/azure/well-architected/operational-excellence/
+
+  - id: azure_wa_opex_resource_naming
+    resource_type: azurerm_linux_virtual_machine
+    description: "WAF Operational Excellence - Resources should follow naming conventions"
+    severity: info
+    assert:
+      name:
+        regex: "^[a-z0-9-]+$"
+    metadata:
+      tags: [azure, well-architected, operational-excellence, governance]
+      pillar: Operational Excellence
+      references:
+        - https://learn.microsoft.com/azure/well-architected/operational-excellence/
+
+  - id: azure_wa_opex_resource_tags
+    resource_type: azurerm_linux_virtual_machine
+    description: "WAF Operational Excellence - Resources should have operational tags"
+    severity: warning
+    assert:
+      tags.Environment: present
+      tags.Owner: present
+      tags.Application: present
+    metadata:
+      tags: [azure, well-architected, operational-excellence, tagging]
+      pillar: Operational Excellence
+      references:
+        - https://learn.microsoft.com/azure/well-architected/operational-excellence/
+
+  - id: azure_wa_opex_automation_account
+    resource_type: azurerm_automation_account
+    description: "WAF Operational Excellence - Automation accounts should be configured"
+    severity: info
+    assert:
+      name: present
+    metadata:
+      tags: [azure, well-architected, operational-excellence, automation]
+      pillar: Operational Excellence
+      references:
+        - https://learn.microsoft.com/azure/well-architected/operational-excellence/
+
+  - id: azure_wa_opex_log_analytics
+    resource_type: azurerm_log_analytics_workspace
+    description: "WAF Operational Excellence - Log Analytics workspaces should have retention"
+    severity: warning
+    assert:
+      retention_in_days:
+        gte: 30
+    metadata:
+      tags: [azure, well-architected, operational-excellence, logging]
+      pillar: Operational Excellence
+      references:
+        - https://learn.microsoft.com/azure/well-architected/operational-excellence/
+
+  - id: azure_wa_opex_action_groups
+    resource_type: azurerm_monitor_action_group
+    description: "WAF Operational Excellence - Action groups should be configured for alerts"
+    severity: info
+    assert:
+      enabled: true
+    metadata:
+      tags: [azure, well-architected, operational-excellence, alerting]
+      pillar: Operational Excellence
+      references:
+        - https://learn.microsoft.com/azure/well-architected/operational-excellence/
+
+  # Performance Efficiency Pillar (6-8 rules)
+  - id: azure_wa_performance_cdn_profile
+    resource_type: azurerm_cdn_profile
+    description: "WAF Performance - CDN should be used for content delivery"
+    severity: info
+    assert:
+      sku:
+        regex: "^(Standard_Microsoft|Standard_Akamai|Standard_Verizon|Premium_Verizon)$"
+    metadata:
+      tags: [azure, well-architected, performance, cdn]
+      pillar: Performance Efficiency
+      references:
+        - https://learn.microsoft.com/azure/well-architected/performance-efficiency/
+
+  - id: azure_wa_performance_redis_cache
+    resource_type: azurerm_redis_cache
+    description: "WAF Performance - Redis cache should be used for caching"
+    severity: info
+    assert:
+      capacity:
+        gte: 1
+      family: present
+    metadata:
+      tags: [azure, well-architected, performance, caching]
+      pillar: Performance Efficiency
+      references:
+        - https://learn.microsoft.com/azure/well-architected/performance-efficiency/
+
+  - id: azure_wa_performance_premium_storage
+    resource_type: azurerm_managed_disk
+    description: "WAF Performance - Production disks should use premium storage"
+    severity: warning
+    filter:
+      tags.Environment: production
+    assert:
+      storage_account_type:
+        regex: "^(Premium_LRS|Premium_ZRS|PremiumV2_LRS)$"
+    metadata:
+      tags: [azure, well-architected, performance, storage]
+      pillar: Performance Efficiency
+      references:
+        - https://learn.microsoft.com/azure/well-architected/performance-efficiency/
+
+  - id: azure_wa_performance_vm_autoscale
+    resource_type: azurerm_monitor_autoscale_setting
+    description: "WAF Performance - Autoscaling should be configured"
+    severity: warning
+    assert:
+      profile:
+        length:
+          gte: 1
+    metadata:
+      tags: [azure, well-architected, performance, autoscaling]
+      pillar: Performance Efficiency
+      references:
+        - https://learn.microsoft.com/azure/well-architected/performance-efficiency/
+
+  - id: azure_wa_performance_sql_tier
+    resource_type: azurerm_mssql_database
+    description: "WAF Performance - SQL databases should use appropriate service tiers"
+    severity: info
+    assert:
+      sku_name:
+        regex: "^(S[0-9]|P[0-9]|GP_|BC_).*$"
+    metadata:
+      tags: [azure, well-architected, performance, database]
+      pillar: Performance Efficiency
+      references:
+        - https://learn.microsoft.com/azure/well-architected/performance-efficiency/
+
+  - id: azure_wa_performance_app_insights
+    resource_type: azurerm_application_insights
+    description: "WAF Performance - Application Insights should be configured"
+    severity: warning
+    assert:
+      application_type: present
+    metadata:
+      tags: [azure, well-architected, performance, monitoring]
+      pillar: Performance Efficiency
+      references:
+        - https://learn.microsoft.com/azure/well-architected/performance-efficiency/
+
+  - id: azure_wa_performance_front_door
+    resource_type: azurerm_frontdoor
+    description: "WAF Performance - Front Door should be used for global applications"
+    severity: info
+    assert:
+      enabled: true
+    metadata:
+      tags: [azure, well-architected, performance, global-distribution]
+      pillar: Performance Efficiency
+      references:
+        - https://learn.microsoft.com/azure/well-architected/performance-efficiency/
+
+  # Reliability Pillar (6-8 rules)
+  - id: azure_wa_reliability_availability_zones
+    resource_type: azurerm_linux_virtual_machine
+    description: "WAF Reliability - Production VMs should use availability zones"
+    severity: error
+    filter:
+      tags.Environment: production
+    assert:
+      zone: present
+    metadata:
+      tags: [azure, well-architected, reliability, availability]
+      pillar: Reliability
+      references:
+        - https://learn.microsoft.com/azure/well-architected/reliability/
+
+  - id: azure_wa_reliability_backup_policy
+    resource_type: azurerm_backup_policy_vm
+    description: "WAF Reliability - Backup policies should be configured"
+    severity: warning
+    assert:
+      backup:
+        frequency: present
+    metadata:
+      tags: [azure, well-architected, reliability, backup]
+      pillar: Reliability
+      references:
+        - https://learn.microsoft.com/azure/well-architected/reliability/
+
+  - id: azure_wa_reliability_sql_geo_replication
+    resource_type: azurerm_mssql_database
+    description: "WAF Reliability - Production SQL databases should have geo-replication"
+    severity: warning
+    filter:
+      tags.Environment: production
+    assert:
+      tags.GeoReplication: present
+    metadata:
+      tags: [azure, well-architected, reliability, database]
+      pillar: Reliability
+      references:
+        - https://learn.microsoft.com/azure/well-architected/reliability/
+
+  - id: azure_wa_reliability_storage_redundancy
+    resource_type: azurerm_storage_account
+    description: "WAF Reliability - Storage accounts should use appropriate redundancy"
+    severity: warning
+    assert:
+      account_replication_type:
+        regex: "^(LRS|ZRS|GRS|GZRS)$"
+    metadata:
+      tags: [azure, well-architected, reliability, storage]
+      pillar: Reliability
+      references:
+        - https://learn.microsoft.com/azure/well-architected/reliability/
+
+  - id: azure_wa_reliability_lb_health_probe
+    resource_type: azurerm_lb_probe
+    description: "WAF Reliability - Load balancers should have health probes"
+    severity: error
+    assert:
+      protocol: present
+      port: present
+    metadata:
+      tags: [azure, well-architected, reliability, load-balancing]
+      pillar: Reliability
+      references:
+        - https://learn.microsoft.com/azure/well-architected/reliability/
+
+  - id: azure_wa_reliability_app_service_slots
+    resource_type: azurerm_app_service_slot
+    description: "WAF Reliability - App Services should use deployment slots"
+    severity: info
+    assert:
+      name: present
+    metadata:
+      tags: [azure, well-architected, reliability, app-service]
+      pillar: Reliability
+      references:
+        - https://learn.microsoft.com/azure/well-architected/reliability/
+
+  - id: azure_wa_reliability_traffic_manager
+    resource_type: azurerm_traffic_manager_profile
+    description: "WAF Reliability - Traffic Manager should be used for multi-region"
+    severity: info
+    assert:
+      traffic_routing_method: present
+    metadata:
+      tags: [azure, well-architected, reliability, global-distribution]
+      pillar: Reliability
+      references:
+        - https://learn.microsoft.com/azure/well-architected/reliability/
+
+  # Security Pillar (6-8 rules)
+  - id: azure_wa_security_defender_enabled
+    resource_type: azurerm_security_center_subscription_pricing
+    description: "WAF Security - Defender for Cloud should be enabled"
+    severity: error
+    assert:
+      tier: Standard
+    metadata:
+      tags: [azure, well-architected, security, threat-detection]
+      pillar: Security
+      references:
+        - https://learn.microsoft.com/azure/well-architected/security/
+
+  - id: azure_wa_security_managed_identity
+    resource_type: azurerm_linux_virtual_machine
+    description: "WAF Security - VMs should use managed identities"
+    severity: warning
+    assert:
+      identity: present
+    metadata:
+      tags: [azure, well-architected, security, identity]
+      pillar: Security
+      references:
+        - https://learn.microsoft.com/azure/well-architected/security/
+
+  - id: azure_wa_security_key_vault_rbac
+    resource_type: azurerm_key_vault
+    description: "WAF Security - Key Vaults should use RBAC"
+    severity: error
+    assert:
+      enable_rbac_authorization: true
+    metadata:
+      tags: [azure, well-architected, security, key-management]
+      pillar: Security
+      references:
+        - https://learn.microsoft.com/azure/well-architected/security/
+
+  - id: azure_wa_security_storage_encryption
+    resource_type: azurerm_storage_account
+    description: "WAF Security - Storage accounts should have encryption enabled"
+    severity: error
+    assert:
+      enable_https_traffic_only: true
+    metadata:
+      tags: [azure, well-architected, security, encryption]
+      pillar: Security
+      references:
+        - https://learn.microsoft.com/azure/well-architected/security/
+
+  - id: azure_wa_security_nsg_flow_logs
+    resource_type: azurerm_network_watcher_flow_log
+    description: "WAF Security - NSG flow logs should be enabled"
+    severity: warning
+    assert:
+      enabled: true
+    metadata:
+      tags: [azure, well-architected, security, network]
+      pillar: Security
+      references:
+        - https://learn.microsoft.com/azure/well-architected/security/
+
+  - id: azure_wa_security_sql_tde
+    resource_type: azurerm_mssql_database
+    description: "WAF Security - SQL databases should have TDE enabled"
+    severity: error
+    assert:
+      tags.TDE: enabled
+    metadata:
+      tags: [azure, well-architected, security, encryption]
+      pillar: Security
+      references:
+        - https://learn.microsoft.com/azure/well-architected/security/
+
+  - id: azure_wa_security_private_endpoint
+    resource_type: azurerm_private_endpoint
+    description: "WAF Security - Private endpoints should be used for PaaS services"
+    severity: warning
+    assert:
+      private_service_connection: present
+    metadata:
+      tags: [azure, well-architected, security, network]
+      pillar: Security
+      references:
+        - https://learn.microsoft.com/azure/well-architected/security/

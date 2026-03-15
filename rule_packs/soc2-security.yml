@@ -1,0 +1,443 @@
+metadata:
+  name: soc2-security
+  version: 1.0.0
+  description: SOC 2 Security Trust Service Criteria Rule Pack
+  author: Riveter Team
+  created: 2024-10-22
+  updated: 2024-10-22
+  dependencies: []
+  tags: [compliance, soc2, security, trust-services]
+  min_riveter_version: 0.1.0
+
+rules:
+  # CC6.1 - Logical and Physical Access Controls
+  - id: soc2_cc6_1_access_control_policies
+    resource_type: aws_iam_policy
+    description: "SOC 2 CC6.1 - Implement logical access security measures to protect against threats"
+    severity: error
+    assert:
+      policy:
+        regex: "^(?!.*\"Action\":\\s*\"\\*\").*$"
+    metadata:
+      tags: [soc2, access-control, iam]
+      soc2_criteria: "CC6.1"
+      trust_service: "Security"
+      references:
+        - https://www.aicpa.org/content/dam/aicpa/interestareas/frc/assuranceadvisoryservices/downloadabledocuments/trust-services-criteria.pdf
+
+  - id: soc2_cc6_1_mfa_required
+    resource_type: aws_iam_user
+    description: "SOC 2 CC6.1 - Multi-factor authentication required for user access"
+    severity: error
+    assert:
+      # This would need custom logic to verify MFA is enabled
+      tags.MFAEnabled: present
+    metadata:
+      tags: [soc2, mfa, access-control]
+      soc2_criteria: "CC6.1"
+      trust_service: "Security"
+      references:
+        - https://www.aicpa.org/content/dam/aicpa/interestareas/frc/assuranceadvisoryservices/downloadabledocuments/trust-services-criteria.pdf
+
+  - id: soc2_cc6_1_privileged_access_controls
+    resource_type: aws_iam_role
+    description: "SOC 2 CC6.1 - Privileged access controls are implemented"
+    severity: error
+    filter:
+      name:
+        regex: ".*(admin|root|privileged).*"
+    assert:
+      assume_role_policy:
+        regex: ".*aws:MultiFactorAuthPresent.*true.*"
+    metadata:
+      tags: [soc2, privileged-access, iam]
+      soc2_criteria: "CC6.1"
+      trust_service: "Security"
+      references:
+        - https://www.aicpa.org/content/dam/aicpa/interestareas/frc/assuranceadvisoryservices/downloadabledocuments/trust-services-criteria.pdf
+
+  # CC6.2 - Authentication and Authorization
+  - id: soc2_cc6_2_password_policy
+    resource_type: aws_iam_account_password_policy
+    description: "SOC 2 CC6.2 - Strong password policies are enforced"
+    severity: error
+    assert:
+      minimum_password_length:
+        gte: 12
+      require_lowercase_characters: true
+      require_uppercase_characters: true
+      require_numbers: true
+      require_symbols: true
+      max_password_age:
+        lte: 90
+    metadata:
+      tags: [soc2, password-policy, authentication]
+      soc2_criteria: "CC6.2"
+      trust_service: "Security"
+      references:
+        - https://www.aicpa.org/content/dam/aicpa/interestareas/frc/assuranceadvisoryservices/downloadabledocuments/trust-services-criteria.pdf
+
+  - id: soc2_cc6_2_session_timeout
+    resource_type: aws_iam_role
+    description: "SOC 2 CC6.2 - Session timeout controls are implemented"
+    severity: warning
+    assert:
+      max_session_duration:
+        lte: 3600
+    metadata:
+      tags: [soc2, session-management, authentication]
+      soc2_criteria: "CC6.2"
+      trust_service: "Security"
+      references:
+        - https://www.aicpa.org/content/dam/aicpa/interestareas/frc/assuranceadvisoryservices/downloadabledocuments/trust-services-criteria.pdf
+
+  # CC6.3 - Network Security
+  - id: soc2_cc6_3_network_segmentation
+    resource_type: aws_security_group
+    description: "SOC 2 CC6.3 - Network segmentation controls are implemented"
+    severity: error
+    assert:
+      ingress:
+        subset:
+          - from_port:
+              ne: 22
+            cidr_blocks:
+              contains: "0.0.0.0/0"
+          - from_port:
+              ne: 3389
+            cidr_blocks:
+              contains: "0.0.0.0/0"
+    metadata:
+      tags: [soc2, network-security, segmentation]
+      soc2_criteria: "CC6.3"
+      trust_service: "Security"
+      references:
+        - https://www.aicpa.org/content/dam/aicpa/interestareas/frc/assuranceadvisoryservices/downloadabledocuments/trust-services-criteria.pdf
+
+  - id: soc2_cc6_3_vpc_flow_logs
+    resource_type: aws_flow_log
+    description: "SOC 2 CC6.3 - Network traffic monitoring is enabled"
+    severity: error
+    assert:
+      resource_type: VPC
+      traffic_type: ALL
+    metadata:
+      tags: [soc2, network-monitoring, vpc]
+      soc2_criteria: "CC6.3"
+      trust_service: "Security"
+      references:
+        - https://www.aicpa.org/content/dam/aicpa/interestareas/frc/assuranceadvisoryservices/downloadabledocuments/trust-services-criteria.pdf
+
+  # CC6.7 - Data Transmission and Disposal
+  - id: soc2_cc6_7_encryption_in_transit
+    resource_type: aws_lb_listener
+    description: "SOC 2 CC6.7 - Data transmission is encrypted"
+    severity: error
+    assert:
+      protocol: HTTPS
+      ssl_policy: present
+    metadata:
+      tags: [soc2, encryption-in-transit, load-balancer]
+      soc2_criteria: "CC6.7"
+      trust_service: "Security"
+      references:
+        - https://www.aicpa.org/content/dam/aicpa/interestareas/frc/assuranceadvisoryservices/downloadabledocuments/trust-services-criteria.pdf
+
+  - id: soc2_cc6_7_s3_ssl_only
+    resource_type: aws_s3_bucket_policy
+    description: "SOC 2 CC6.7 - S3 buckets require SSL for data transmission"
+    severity: error
+    assert:
+      policy:
+        regex: ".*aws:SecureTransport.*false.*Deny.*"
+    metadata:
+      tags: [soc2, encryption-in-transit, s3]
+      soc2_criteria: "CC6.7"
+      trust_service: "Security"
+      references:
+        - https://www.aicpa.org/content/dam/aicpa/interestareas/frc/assuranceadvisoryservices/downloadabledocuments/trust-services-criteria.pdf
+
+  # CC6.8 - Encryption
+  - id: soc2_cc6_8_data_at_rest_encryption
+    resource_type: aws_s3_bucket_server_side_encryption_configuration
+    description: "SOC 2 CC6.8 - Data at rest is encrypted"
+    severity: error
+    assert:
+      rule.apply_server_side_encryption_by_default.sse_algorithm: present
+    metadata:
+      tags: [soc2, encryption-at-rest, s3]
+      soc2_criteria: "CC6.8"
+      trust_service: "Security"
+      references:
+        - https://www.aicpa.org/content/dam/aicpa/interestareas/frc/assuranceadvisoryservices/downloadabledocuments/trust-services-criteria.pdf
+
+  - id: soc2_cc6_8_rds_encryption
+    resource_type: aws_db_instance
+    description: "SOC 2 CC6.8 - Database storage is encrypted"
+    severity: error
+    assert:
+      storage_encrypted: true
+    metadata:
+      tags: [soc2, encryption-at-rest, rds]
+      soc2_criteria: "CC6.8"
+      trust_service: "Security"
+      references:
+        - https://www.aicpa.org/content/dam/aicpa/interestareas/frc/assuranceadvisoryservices/downloadabledocuments/trust-services-criteria.pdf
+
+  - id: soc2_cc6_8_ebs_encryption
+    resource_type: aws_instance
+    description: "SOC 2 CC6.8 - EBS volumes are encrypted"
+    severity: error
+    assert:
+      root_block_device.encrypted: true
+    metadata:
+      tags: [soc2, encryption-at-rest, ebs]
+      soc2_criteria: "CC6.8"
+      trust_service: "Security"
+      references:
+        - https://www.aicpa.org/content/dam/aicpa/interestareas/frc/assuranceadvisoryservices/downloadabledocuments/trust-services-criteria.pdf
+
+  - id: soc2_cc6_8_key_management
+    resource_type: aws_kms_key
+    description: "SOC 2 CC6.8 - Encryption key management controls are implemented"
+    severity: error
+    assert:
+      enable_key_rotation: true
+      description:
+        regex: "^.{10,}$"
+    metadata:
+      tags: [soc2, key-management, kms]
+      soc2_criteria: "CC6.8"
+      trust_service: "Security"
+      references:
+        - https://www.aicpa.org/content/dam/aicpa/interestareas/frc/assuranceadvisoryservices/downloadabledocuments/trust-services-criteria.pdf
+
+  # CC7.1 - System Monitoring
+  - id: soc2_cc7_1_cloudtrail_logging
+    resource_type: aws_cloudtrail
+    description: "SOC 2 CC7.1 - System activities are logged and monitored"
+    severity: error
+    assert:
+      enable_logging: true
+      is_multi_region_trail: true
+      include_global_service_events: true
+      enable_log_file_validation: true
+    metadata:
+      tags: [soc2, monitoring, cloudtrail]
+      soc2_criteria: "CC7.1"
+      trust_service: "Security"
+      references:
+        - https://www.aicpa.org/content/dam/aicpa/interestareas/frc/assuranceadvisoryservices/downloadabledocuments/trust-services-criteria.pdf
+
+  - id: soc2_cc7_1_cloudwatch_alarms
+    resource_type: aws_cloudwatch_metric_alarm
+    description: "SOC 2 CC7.1 - Security monitoring alarms are configured"
+    severity: warning
+    filter:
+      alarm_name:
+        regex: ".*(security|unauthorized|failed).*"
+    assert:
+      alarm_actions:
+        length:
+          gte: 1
+    metadata:
+      tags: [soc2, monitoring, cloudwatch]
+      soc2_criteria: "CC7.1"
+      trust_service: "Security"
+      references:
+        - https://www.aicpa.org/content/dam/aicpa/interestareas/frc/assuranceadvisoryservices/downloadabledocuments/trust-services-criteria.pdf
+
+  # CC7.2 - Log Management
+  - id: soc2_cc7_2_log_retention
+    resource_type: aws_cloudwatch_log_group
+    description: "SOC 2 CC7.2 - Logs are retained for appropriate periods"
+    severity: error
+    assert:
+      retention_in_days:
+        gte: 365
+    metadata:
+      tags: [soc2, log-retention, cloudwatch]
+      soc2_criteria: "CC7.2"
+      trust_service: "Security"
+      references:
+        - https://www.aicpa.org/content/dam/aicpa/interestareas/frc/assuranceadvisoryservices/downloadabledocuments/trust-services-criteria.pdf
+
+  - id: soc2_cc7_2_s3_access_logging
+    resource_type: aws_s3_bucket_logging
+    description: "SOC 2 CC7.2 - S3 access logging is enabled"
+    severity: error
+    assert:
+      target_bucket: present
+      target_prefix: present
+    metadata:
+      tags: [soc2, access-logging, s3]
+      soc2_criteria: "CC7.2"
+      trust_service: "Security"
+      references:
+        - https://www.aicpa.org/content/dam/aicpa/interestareas/frc/assuranceadvisoryservices/downloadabledocuments/trust-services-criteria.pdf
+
+  # CC7.3 - Incident Response
+  - id: soc2_cc7_3_security_incident_response
+    resource_type: aws_sns_topic
+    description: "SOC 2 CC7.3 - Security incident response procedures are implemented"
+    severity: warning
+    filter:
+      name:
+        regex: ".*(security|incident|alert).*"
+    assert:
+      display_name: present
+    metadata:
+      tags: [soc2, incident-response, sns]
+      soc2_criteria: "CC7.3"
+      trust_service: "Security"
+      references:
+        - https://www.aicpa.org/content/dam/aicpa/interestareas/frc/assuranceadvisoryservices/downloadabledocuments/trust-services-criteria.pdf
+
+  # CC8.1 - Change Management
+  - id: soc2_cc8_1_change_management_tags
+    resource_type: aws_instance
+    description: "SOC 2 CC8.1 - Change management controls are implemented"
+    severity: warning
+    assert:
+      tags.ChangeTicket: present
+      tags.DeploymentDate: present
+    metadata:
+      tags: [soc2, change-management, governance]
+      soc2_criteria: "CC8.1"
+      trust_service: "Security"
+      references:
+        - https://www.aicpa.org/content/dam/aicpa/interestareas/frc/assuranceadvisoryservices/downloadabledocuments/trust-services-criteria.pdf
+
+  - id: soc2_cc8_1_version_control_tags
+    resource_type: aws_lambda_function
+    description: "SOC 2 CC8.1 - Version control information is tracked"
+    severity: info
+    assert:
+      tags.Version: present
+      tags.GitCommit: present
+    metadata:
+      tags: [soc2, version-control, lambda]
+      soc2_criteria: "CC8.1"
+      trust_service: "Security"
+      references:
+        - https://www.aicpa.org/content/dam/aicpa/interestareas/frc/assuranceadvisoryservices/downloadabledocuments/trust-services-criteria.pdf
+
+  # Azure SOC 2 Rules
+  - id: soc2_azure_cc6_1_rbac_assignments
+    resource_type: azurerm_role_assignment
+    description: "SOC 2 CC6.1 - Azure RBAC assignments follow least privilege"
+    severity: error
+    assert:
+      role_definition_name:
+        regex: "^(?!Owner|Contributor).*$"
+    metadata:
+      tags: [soc2, azure, rbac, least-privilege]
+      soc2_criteria: "CC6.1"
+      trust_service: "Security"
+      references:
+        - https://www.aicpa.org/content/dam/aicpa/interestareas/frc/assuranceadvisoryservices/downloadabledocuments/trust-services-criteria.pdf
+
+  - id: soc2_azure_cc6_7_storage_https_only
+    resource_type: azurerm_storage_account
+    description: "SOC 2 CC6.7 - Azure storage requires HTTPS"
+    severity: error
+    assert:
+      enable_https_traffic_only: true
+    metadata:
+      tags: [soc2, azure, storage, encryption-in-transit]
+      soc2_criteria: "CC6.7"
+      trust_service: "Security"
+      references:
+        - https://www.aicpa.org/content/dam/aicpa/interestareas/frc/assuranceadvisoryservices/downloadabledocuments/trust-services-criteria.pdf
+
+  - id: soc2_azure_cc6_8_storage_encryption
+    resource_type: azurerm_storage_account
+    description: "SOC 2 CC6.8 - Azure storage encryption is enabled"
+    severity: error
+    assert:
+      # This would need to check encryption settings
+      tags.EncryptionEnabled: present
+    metadata:
+      tags: [soc2, azure, storage, encryption-at-rest]
+      soc2_criteria: "CC6.8"
+      trust_service: "Security"
+      references:
+        - https://www.aicpa.org/content/dam/aicpa/interestareas/frc/assuranceadvisoryservices/downloadabledocuments/trust-services-criteria.pdf
+
+  - id: soc2_azure_cc7_1_activity_log_monitoring
+    resource_type: azurerm_monitor_diagnostic_setting
+    description: "SOC 2 CC7.1 - Azure activity log monitoring is enabled"
+    severity: error
+    filter:
+      target_resource_id:
+        regex: ".*subscriptions.*"
+    assert:
+      log:
+        length:
+          gte: 1
+      metric:
+        length:
+          gte: 1
+    metadata:
+      tags: [soc2, azure, monitoring, activity-log]
+      soc2_criteria: "CC7.1"
+      trust_service: "Security"
+      references:
+        - https://www.aicpa.org/content/dam/aicpa/interestareas/frc/assuranceadvisoryservices/downloadabledocuments/trust-services-criteria.pdf
+
+  - id: soc2_azure_cc7_2_log_analytics_retention
+    resource_type: azurerm_log_analytics_workspace
+    description: "SOC 2 CC7.2 - Azure Log Analytics retention is configured"
+    severity: error
+    assert:
+      retention_in_days:
+        gte: 365
+    metadata:
+      tags: [soc2, azure, log-analytics, retention]
+      soc2_criteria: "CC7.2"
+      trust_service: "Security"
+      references:
+        - https://www.aicpa.org/content/dam/aicpa/interestareas/frc/assuranceadvisoryservices/downloadabledocuments/trust-services-criteria.pdf
+
+  # GCP SOC 2 Rules
+  - id: soc2_gcp_cc6_1_iam_bindings
+    resource_type: google_project_iam_binding
+    description: "SOC 2 CC6.1 - GCP IAM bindings follow least privilege"
+    severity: error
+    assert:
+      role:
+        regex: "^(?!roles/owner|roles/editor).*$"
+    metadata:
+      tags: [soc2, gcp, iam, least-privilege]
+      soc2_criteria: "CC6.1"
+      trust_service: "Security"
+      references:
+        - https://www.aicpa.org/content/dam/aicpa/interestareas/frc/assuranceadvisoryservices/downloadabledocuments/trust-services-criteria.pdf
+
+  - id: soc2_gcp_cc6_8_storage_encryption
+    resource_type: google_storage_bucket
+    description: "SOC 2 CC6.8 - GCP storage bucket encryption is enabled"
+    severity: error
+    assert:
+      encryption.default_kms_key_name: present
+    metadata:
+      tags: [soc2, gcp, storage, encryption-at-rest]
+      soc2_criteria: "CC6.8"
+      trust_service: "Security"
+      references:
+        - https://www.aicpa.org/content/dam/aicpa/interestareas/frc/assuranceadvisoryservices/downloadabledocuments/trust-services-criteria.pdf
+
+  - id: soc2_gcp_cc7_1_audit_logging
+    resource_type: google_project_iam_audit_config
+    description: "SOC 2 CC7.1 - GCP audit logging is enabled"
+    severity: error
+    assert:
+      audit_log_config:
+        length:
+          gte: 1
+    metadata:
+      tags: [soc2, gcp, audit-logging, monitoring]
+      soc2_criteria: "CC7.1"
+      trust_service: "Security"
+      references:
+        - https://www.aicpa.org/content/dam/aicpa/interestareas/frc/assuranceadvisoryservices/downloadabledocuments/trust-services-criteria.pdf

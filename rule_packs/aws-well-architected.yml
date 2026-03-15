@@ -1,0 +1,454 @@
+metadata:
+  name: aws-well-architected
+  version: 1.0.0
+  description: AWS Well-Architected Framework Rule Pack covering all 6 pillars
+  author: Riveter Team
+  created: 2025-10-27
+  updated: 2025-10-27
+  dependencies: []
+  tags: [well-architected, aws, best-practices, architecture]
+  min_riveter_version: 0.1.0
+
+rules:
+  # Operational Excellence Pillar (6-8 rules)
+  - id: aws_wa_opex_cloudwatch_alarms
+    resource_type: aws_cloudwatch_metric_alarm
+    description: "WAF Operational Excellence - Critical resources should have CloudWatch alarms"
+    severity: warning
+    assert:
+      alarm_actions:
+        length:
+          gte: 1
+    metadata:
+      tags: [aws, well-architected, operational-excellence, monitoring]
+      pillar: Operational Excellence
+      references:
+        - https://docs.aws.amazon.com/wellarchitected/latest/operational-excellence-pillar/welcome.html
+
+  - id: aws_wa_opex_autoscaling_policies
+    resource_type: aws_autoscaling_policy
+    description: "WAF Operational Excellence - Auto Scaling groups should have scaling policies"
+    severity: warning
+    assert:
+      policy_type: present
+      autoscaling_group_name: present
+    metadata:
+      tags: [aws, well-architected, operational-excellence, autoscaling]
+      pillar: Operational Excellence
+      references:
+        - https://docs.aws.amazon.com/wellarchitected/latest/operational-excellence-pillar/welcome.html
+
+  - id: aws_wa_opex_resource_tagging
+    resource_type: aws_instance
+    description: "WAF Operational Excellence - Resources should have operational tags"
+    severity: warning
+    assert:
+      tags.Environment: present
+      tags.Owner: present
+      tags.Application: present
+    metadata:
+      tags: [aws, well-architected, operational-excellence, tagging]
+      pillar: Operational Excellence
+      references:
+        - https://docs.aws.amazon.com/wellarchitected/latest/operational-excellence-pillar/welcome.html
+
+  - id: aws_wa_opex_change_management_tags
+    resource_type: aws_instance
+    description: "WAF Operational Excellence - Resources should have change management tags"
+    severity: info
+    assert:
+      tags.ChangeTicket: present
+    metadata:
+      tags: [aws, well-architected, operational-excellence, change-management]
+      pillar: Operational Excellence
+      references:
+        - https://docs.aws.amazon.com/wellarchitected/latest/operational-excellence-pillar/welcome.html
+
+  - id: aws_wa_opex_lambda_dlq
+    resource_type: aws_lambda_function
+    description: "WAF Operational Excellence - Lambda functions should have dead letter queues"
+    severity: warning
+    assert:
+      dead_letter_config: present
+    metadata:
+      tags: [aws, well-architected, operational-excellence, lambda]
+      pillar: Operational Excellence
+      references:
+        - https://docs.aws.amazon.com/wellarchitected/latest/operational-excellence-pillar/welcome.html
+
+  - id: aws_wa_opex_sns_topic_subscriptions
+    resource_type: aws_sns_topic
+    description: "WAF Operational Excellence - SNS topics should have subscriptions for notifications"
+    severity: info
+    assert:
+      name: present
+    metadata:
+      tags: [aws, well-architected, operational-excellence, notifications]
+      pillar: Operational Excellence
+      references:
+        - https://docs.aws.amazon.com/wellarchitected/latest/operational-excellence-pillar/welcome.html
+
+  - id: aws_wa_opex_cloudwatch_log_groups
+    resource_type: aws_cloudwatch_log_group
+    description: "WAF Operational Excellence - CloudWatch log groups should have retention policies"
+    severity: warning
+    assert:
+      retention_in_days: present
+    metadata:
+      tags: [aws, well-architected, operational-excellence, logging]
+      pillar: Operational Excellence
+      references:
+        - https://docs.aws.amazon.com/wellarchitected/latest/operational-excellence-pillar/welcome.html
+
+  # Security Pillar (6-8 rules)
+  - id: aws_wa_security_config_enabled
+    resource_type: aws_config_configuration_recorder
+    description: "WAF Security - AWS Config should be enabled for compliance monitoring"
+    severity: error
+    assert:
+      recording_group.all_supported: true
+    metadata:
+      tags: [aws, well-architected, security, compliance]
+      pillar: Security
+      references:
+        - https://docs.aws.amazon.com/wellarchitected/latest/security-pillar/welcome.html
+
+  - id: aws_wa_security_guardduty_detector
+    resource_type: aws_guardduty_detector
+    description: "WAF Security - GuardDuty should be enabled for threat detection"
+    severity: error
+    assert:
+      enable: true
+    metadata:
+      tags: [aws, well-architected, security, threat-detection]
+      pillar: Security
+      references:
+        - https://docs.aws.amazon.com/wellarchitected/latest/security-pillar/welcome.html
+
+  - id: aws_wa_security_kms_key_rotation
+    resource_type: aws_kms_key
+    description: "WAF Security - KMS keys should have automatic rotation enabled"
+    severity: warning
+    assert:
+      enable_key_rotation: true
+    metadata:
+      tags: [aws, well-architected, security, encryption]
+      pillar: Security
+      references:
+        - https://docs.aws.amazon.com/wellarchitected/latest/security-pillar/welcome.html
+
+  - id: aws_wa_security_iam_password_policy
+    resource_type: aws_iam_account_password_policy
+    description: "WAF Security - IAM password policy should meet security requirements"
+    severity: error
+    assert:
+      minimum_password_length:
+        gte: 14
+      require_lowercase_characters: true
+      require_uppercase_characters: true
+      require_numbers: true
+      require_symbols: true
+    metadata:
+      tags: [aws, well-architected, security, iam]
+      pillar: Security
+      references:
+        - https://docs.aws.amazon.com/wellarchitected/latest/security-pillar/welcome.html
+
+  - id: aws_wa_security_s3_encryption
+    resource_type: aws_s3_bucket
+    description: "WAF Security - S3 buckets should have encryption enabled"
+    severity: error
+    assert:
+      server_side_encryption_configuration: present
+    metadata:
+      tags: [aws, well-architected, security, encryption]
+      pillar: Security
+      references:
+        - https://docs.aws.amazon.com/wellarchitected/latest/security-pillar/welcome.html
+
+  - id: aws_wa_security_vpc_flow_logs
+    resource_type: aws_flow_log
+    description: "WAF Security - VPC flow logs should be enabled for network monitoring"
+    severity: warning
+    assert:
+      traffic_type: ALL
+    metadata:
+      tags: [aws, well-architected, security, network]
+      pillar: Security
+      references:
+        - https://docs.aws.amazon.com/wellarchitected/latest/security-pillar/welcome.html
+
+  - id: aws_wa_security_cloudtrail_encryption
+    resource_type: aws_cloudtrail
+    description: "WAF Security - CloudTrail logs should be encrypted with KMS"
+    severity: error
+    assert:
+      kms_key_id: present
+    metadata:
+      tags: [aws, well-architected, security, audit]
+      pillar: Security
+      references:
+        - https://docs.aws.amazon.com/wellarchitected/latest/security-pillar/welcome.html
+
+  # Reliability Pillar (6-8 rules)
+  - id: aws_wa_reliability_rds_multi_az
+    resource_type: aws_db_instance
+    description: "WAF Reliability - Production RDS instances should use Multi-AZ"
+    severity: error
+    filter:
+      tags.Environment: production
+    assert:
+      multi_az: true
+    metadata:
+      tags: [aws, well-architected, reliability, database]
+      pillar: Reliability
+      references:
+        - https://docs.aws.amazon.com/wellarchitected/latest/reliability-pillar/welcome.html
+
+  - id: aws_wa_reliability_autoscaling_groups
+    resource_type: aws_autoscaling_group
+    description: "WAF Reliability - Auto Scaling groups should span multiple AZs"
+    severity: error
+    assert:
+      availability_zones:
+        length:
+          gte: 2
+    metadata:
+      tags: [aws, well-architected, reliability, autoscaling]
+      pillar: Reliability
+      references:
+        - https://docs.aws.amazon.com/wellarchitected/latest/reliability-pillar/welcome.html
+
+  - id: aws_wa_reliability_elb_health_checks
+    resource_type: aws_lb_target_group
+    description: "WAF Reliability - Load balancer target groups should have health checks"
+    severity: error
+    assert:
+      health_check: present
+    metadata:
+      tags: [aws, well-architected, reliability, load-balancing]
+      pillar: Reliability
+      references:
+        - https://docs.aws.amazon.com/wellarchitected/latest/reliability-pillar/welcome.html
+
+  - id: aws_wa_reliability_rds_backup_retention
+    resource_type: aws_db_instance
+    description: "WAF Reliability - RDS instances should have adequate backup retention"
+    severity: warning
+    assert:
+      backup_retention_period:
+        gte: 7
+    metadata:
+      tags: [aws, well-architected, reliability, backup]
+      pillar: Reliability
+      references:
+        - https://docs.aws.amazon.com/wellarchitected/latest/reliability-pillar/welcome.html
+
+  - id: aws_wa_reliability_dynamodb_pitr
+    resource_type: aws_dynamodb_table
+    description: "WAF Reliability - DynamoDB tables should have point-in-time recovery"
+    severity: warning
+    assert:
+      point_in_time_recovery.enabled: true
+    metadata:
+      tags: [aws, well-architected, reliability, dynamodb]
+      pillar: Reliability
+      references:
+        - https://docs.aws.amazon.com/wellarchitected/latest/reliability-pillar/welcome.html
+
+  - id: aws_wa_reliability_s3_versioning
+    resource_type: aws_s3_bucket_versioning
+    description: "WAF Reliability - S3 buckets should have versioning enabled"
+    severity: warning
+    assert:
+      versioning_configuration.status: Enabled
+    metadata:
+      tags: [aws, well-architected, reliability, storage]
+      pillar: Reliability
+      references:
+        - https://docs.aws.amazon.com/wellarchitected/latest/reliability-pillar/welcome.html
+
+  - id: aws_wa_reliability_elb_cross_zone
+    resource_type: aws_lb
+    description: "WAF Reliability - Load balancers should have cross-zone load balancing"
+    severity: warning
+    assert:
+      enable_cross_zone_load_balancing: true
+    metadata:
+      tags: [aws, well-architected, reliability, load-balancing]
+      pillar: Reliability
+      references:
+        - https://docs.aws.amazon.com/wellarchitected/latest/reliability-pillar/welcome.html
+
+  # Performance Efficiency Pillar (4-6 rules)
+  - id: aws_wa_performance_cloudfront_distribution
+    resource_type: aws_cloudfront_distribution
+    description: "WAF Performance - CloudFront should be used for content delivery"
+    severity: info
+    assert:
+      enabled: true
+    metadata:
+      tags: [aws, well-architected, performance, cdn]
+      pillar: Performance Efficiency
+      references:
+        - https://docs.aws.amazon.com/wellarchitected/latest/performance-efficiency-pillar/welcome.html
+
+  - id: aws_wa_performance_elasticache_cluster
+    resource_type: aws_elasticache_cluster
+    description: "WAF Performance - ElastiCache should be used for caching"
+    severity: info
+    assert:
+      engine: present
+      num_cache_nodes:
+        gte: 1
+    metadata:
+      tags: [aws, well-architected, performance, caching]
+      pillar: Performance Efficiency
+      references:
+        - https://docs.aws.amazon.com/wellarchitected/latest/performance-efficiency-pillar/welcome.html
+
+  - id: aws_wa_performance_ebs_volume_type
+    resource_type: aws_ebs_volume
+    description: "WAF Performance - EBS volumes should use appropriate volume types"
+    severity: warning
+    assert:
+      type:
+        regex: "^(gp3|io1|io2)$"
+    metadata:
+      tags: [aws, well-architected, performance, storage]
+      pillar: Performance Efficiency
+      references:
+        - https://docs.aws.amazon.com/wellarchitected/latest/performance-efficiency-pillar/welcome.html
+
+  - id: aws_wa_performance_lambda_memory
+    resource_type: aws_lambda_function
+    description: "WAF Performance - Lambda functions should have appropriate memory allocation"
+    severity: info
+    assert:
+      memory_size:
+        gte: 512
+    metadata:
+      tags: [aws, well-architected, performance, lambda]
+      pillar: Performance Efficiency
+      references:
+        - https://docs.aws.amazon.com/wellarchitected/latest/performance-efficiency-pillar/welcome.html
+
+  - id: aws_wa_performance_rds_instance_type
+    resource_type: aws_db_instance
+    description: "WAF Performance - RDS instances should use current generation instance types"
+    severity: warning
+    assert:
+      instance_class:
+        regex: "^db\\.(t3|t4g|m5|m6i|r5|r6i)\\."
+    metadata:
+      tags: [aws, well-architected, performance, database]
+      pillar: Performance Efficiency
+      references:
+        - https://docs.aws.amazon.com/wellarchitected/latest/performance-efficiency-pillar/welcome.html
+
+  # Cost Optimization Pillar (4-6 rules)
+  - id: aws_wa_cost_resource_tagging
+    resource_type: aws_instance
+    description: "WAF Cost Optimization - Resources should have cost allocation tags"
+    severity: warning
+    assert:
+      tags.CostCenter: present
+      tags.Project: present
+    metadata:
+      tags: [aws, well-architected, cost-optimization, tagging]
+      pillar: Cost Optimization
+      references:
+        - https://docs.aws.amazon.com/wellarchitected/latest/cost-optimization-pillar/welcome.html
+
+  - id: aws_wa_cost_s3_lifecycle_policy
+    resource_type: aws_s3_bucket_lifecycle_configuration
+    description: "WAF Cost Optimization - S3 buckets should have lifecycle policies"
+    severity: warning
+    assert:
+      rule:
+        length:
+          gte: 1
+    metadata:
+      tags: [aws, well-architected, cost-optimization, storage]
+      pillar: Cost Optimization
+      references:
+        - https://docs.aws.amazon.com/wellarchitected/latest/cost-optimization-pillar/welcome.html
+
+  - id: aws_wa_cost_ebs_volume_optimization
+    resource_type: aws_ebs_volume
+    description: "WAF Cost Optimization - EBS volumes should use cost-effective types"
+    severity: info
+    assert:
+      type:
+        regex: "^(gp3|st1|sc1)$"
+    metadata:
+      tags: [aws, well-architected, cost-optimization, storage]
+      pillar: Cost Optimization
+      references:
+        - https://docs.aws.amazon.com/wellarchitected/latest/cost-optimization-pillar/welcome.html
+
+  - id: aws_wa_cost_instance_right_sizing
+    resource_type: aws_instance
+    description: "WAF Cost Optimization - EC2 instances should be right-sized"
+    severity: info
+    assert:
+      instance_type:
+        regex: "^(t3|t4g)\\.(micro|small|medium|large)$"
+    metadata:
+      tags: [aws, well-architected, cost-optimization, compute]
+      pillar: Cost Optimization
+      references:
+        - https://docs.aws.amazon.com/wellarchitected/latest/cost-optimization-pillar/welcome.html
+
+  - id: aws_wa_cost_rds_storage_autoscaling
+    resource_type: aws_db_instance
+    description: "WAF Cost Optimization - RDS instances should have storage autoscaling"
+    severity: info
+    assert:
+      max_allocated_storage: present
+    metadata:
+      tags: [aws, well-architected, cost-optimization, database]
+      pillar: Cost Optimization
+      references:
+        - https://docs.aws.amazon.com/wellarchitected/latest/cost-optimization-pillar/welcome.html
+
+  # Sustainability Pillar (2-4 rules)
+  - id: aws_wa_sustainability_region_selection
+    resource_type: aws_instance
+    description: "WAF Sustainability - Resources should be deployed in sustainable regions"
+    severity: info
+    assert:
+      availability_zone:
+        regex: "^(us-west-2|eu-west-1|eu-north-1)"
+    metadata:
+      tags: [aws, well-architected, sustainability, region]
+      pillar: Sustainability
+      references:
+        - https://docs.aws.amazon.com/wellarchitected/latest/sustainability-pillar/welcome.html
+
+  - id: aws_wa_sustainability_lambda_usage
+    resource_type: aws_lambda_function
+    description: "WAF Sustainability - Serverless should be preferred for sustainability"
+    severity: info
+    assert:
+      function_name: present
+    metadata:
+      tags: [aws, well-architected, sustainability, serverless]
+      pillar: Sustainability
+      references:
+        - https://docs.aws.amazon.com/wellarchitected/latest/sustainability-pillar/welcome.html
+
+  - id: aws_wa_sustainability_autoscaling_enabled
+    resource_type: aws_autoscaling_group
+    description: "WAF Sustainability - Auto Scaling should be used for resource optimization"
+    severity: info
+    assert:
+      min_size:
+        gte: 1
+      max_size:
+        gte: 2
+    metadata:
+      tags: [aws, well-architected, sustainability, autoscaling]
+      pillar: Sustainability
+      references:
+        - https://docs.aws.amazon.com/wellarchitected/latest/sustainability-pillar/welcome.html

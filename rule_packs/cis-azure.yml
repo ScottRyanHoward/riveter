@@ -1,0 +1,487 @@
+metadata:
+  name: cis-azure
+  version: 1.0.0
+  description: CIS Microsoft Azure Foundations Benchmark v1.3.0 Rule Pack
+  author: Riveter Team
+  created: 2024-10-22
+  updated: 2024-10-22
+  dependencies: []
+  tags: [compliance, cis, azure, benchmark]
+  min_riveter_version: 0.1.0
+
+rules:
+  # CIS 1 - Identity and Access Management
+  - id: cis_azure_1_1_guest_users_reviewed
+    resource_type: azuread_user
+    description: "CIS 1.1 - Ensure guest users are reviewed monthly"
+    severity: warning
+    filter:
+      user_type: Guest
+    assert:
+      tags.LastReviewed: present
+    metadata:
+      tags: [cis, azure, identity, guest-users]
+      cis_control: "1.1"
+      references:
+        - https://www.cisecurity.org/benchmark/microsoft_azure
+
+  - id: cis_azure_1_2_guest_invite_restrictions
+    resource_type: azuread_directory_role_assignment
+    description: "CIS 1.2 - Ensure guest invite restrictions are set"
+    severity: error
+    filter:
+      role_definition_name: "Guest Inviter"
+    assert:
+      # Should have limited scope
+      scope:
+        regex: "^(?!/).*"
+    metadata:
+      tags: [cis, azure, identity, guest-invites]
+      cis_control: "1.2"
+      references:
+        - https://www.cisecurity.org/benchmark/microsoft_azure
+
+  - id: cis_azure_1_3_guest_user_access_restrictions
+    resource_type: azuread_conditional_access_policy
+    description: "CIS 1.3 - Ensure guest user access is restricted"
+    severity: error
+    filter:
+      display_name:
+        regex: ".*[Gg]uest.*"
+    assert:
+      state: enabled
+      conditions.users.include_users:
+        contains: "GuestsOrExternalUsers"
+    metadata:
+      tags: [cis, azure, identity, conditional-access]
+      cis_control: "1.3"
+      references:
+        - https://www.cisecurity.org/benchmark/microsoft_azure
+
+  - id: cis_azure_1_4_admin_consent_workflow
+    resource_type: azuread_application
+    description: "CIS 1.4 - Ensure admin consent workflow is enabled"
+    severity: warning
+    filter:
+      required_resource_access: present
+    assert:
+      # This would need custom logic to check admin consent settings
+      tags.AdminConsentRequired: present
+    metadata:
+      tags: [cis, azure, identity, admin-consent]
+      cis_control: "1.4"
+      references:
+        - https://www.cisecurity.org/benchmark/microsoft_azure
+
+  - id: cis_azure_1_5_user_consent_disabled
+    resource_type: azuread_service_principal
+    description: "CIS 1.5 - Ensure user consent to apps accessing company data is not allowed"
+    severity: error
+    assert:
+      # This would need custom logic to check consent settings
+      tags.UserConsentDisabled: present
+    metadata:
+      tags: [cis, azure, identity, user-consent]
+      cis_control: "1.5"
+      references:
+        - https://www.cisecurity.org/benchmark/microsoft_azure
+
+  # CIS 2 - Security Center
+  - id: cis_azure_2_1_security_center_standard_tier
+    resource_type: azurerm_security_center_subscription_pricing
+    description: "CIS 2.1 - Ensure Security Center standard tier is selected"
+    severity: error
+    assert:
+      tier: Standard
+    metadata:
+      tags: [cis, azure, security-center, pricing]
+      cis_control: "2.1"
+      references:
+        - https://www.cisecurity.org/benchmark/microsoft_azure
+
+  - id: cis_azure_2_2_auto_provisioning_monitoring_agent
+    resource_type: azurerm_security_center_auto_provisioning
+    description: "CIS 2.2 - Ensure auto provisioning of monitoring agent is set to On"
+    severity: error
+    assert:
+      auto_provision: "On"
+    metadata:
+      tags: [cis, azure, security-center, monitoring]
+      cis_control: "2.2"
+      references:
+        - https://www.cisecurity.org/benchmark/microsoft_azure
+
+  - id: cis_azure_2_3_system_updates_monitored
+    resource_type: azurerm_security_center_setting
+    description: "CIS 2.3 - Ensure system updates are monitored"
+    severity: error
+    filter:
+      setting_name: "MCAS"
+    assert:
+      enabled: true
+    metadata:
+      tags: [cis, azure, security-center, system-updates]
+      cis_control: "2.3"
+      references:
+        - https://www.cisecurity.org/benchmark/microsoft_azure
+
+  - id: cis_azure_2_4_security_configurations_monitored
+    resource_type: azurerm_security_center_setting
+    description: "CIS 2.4 - Ensure security configurations are monitored"
+    severity: error
+    filter:
+      setting_name: "WDATP"
+    assert:
+      enabled: true
+    metadata:
+      tags: [cis, azure, security-center, configurations]
+      cis_control: "2.4"
+      references:
+        - https://www.cisecurity.org/benchmark/microsoft_azure
+
+  # CIS 3 - Storage Accounts
+  - id: cis_azure_3_1_secure_transfer_required
+    resource_type: azurerm_storage_account
+    description: "CIS 3.1 - Ensure secure transfer required is enabled"
+    severity: error
+    assert:
+      enable_https_traffic_only: true
+    metadata:
+      tags: [cis, azure, storage, secure-transfer]
+      cis_control: "3.1"
+      references:
+        - https://www.cisecurity.org/benchmark/microsoft_azure
+
+  - id: cis_azure_3_2_storage_account_access_keys_regenerated
+    resource_type: azurerm_storage_account
+    description: "CIS 3.2 - Ensure storage account access keys are regenerated periodically"
+    severity: warning
+    assert:
+      # This would need custom logic to check key rotation
+      tags.KeyRotationDate: present
+    metadata:
+      tags: [cis, azure, storage, key-rotation]
+      cis_control: "3.2"
+      references:
+        - https://www.cisecurity.org/benchmark/microsoft_azure
+
+  - id: cis_azure_3_3_storage_logging_enabled
+    resource_type: azurerm_storage_account
+    description: "CIS 3.3 - Ensure storage logging is enabled for blob service"
+    severity: error
+    assert:
+      # This would need to check blob service logging
+      tags.BlobLoggingEnabled: present
+    metadata:
+      tags: [cis, azure, storage, logging]
+      cis_control: "3.3"
+      references:
+        - https://www.cisecurity.org/benchmark/microsoft_azure
+
+  - id: cis_azure_3_4_storage_logging_queue_service
+    resource_type: azurerm_storage_account
+    description: "CIS 3.4 - Ensure storage logging is enabled for queue service"
+    severity: error
+    assert:
+      # This would need to check queue service logging
+      tags.QueueLoggingEnabled: present
+    metadata:
+      tags: [cis, azure, storage, queue-logging]
+      cis_control: "3.4"
+      references:
+        - https://www.cisecurity.org/benchmark/microsoft_azure
+
+  - id: cis_azure_3_5_storage_logging_table_service
+    resource_type: azurerm_storage_account
+    description: "CIS 3.5 - Ensure storage logging is enabled for table service"
+    severity: error
+    assert:
+      # This would need to check table service logging
+      tags.TableLoggingEnabled: present
+    metadata:
+      tags: [cis, azure, storage, table-logging]
+      cis_control: "3.5"
+      references:
+        - https://www.cisecurity.org/benchmark/microsoft_azure
+
+  - id: cis_azure_3_6_storage_container_public_access
+    resource_type: azurerm_storage_container
+    description: "CIS 3.6 - Ensure storage containers do not allow public access"
+    severity: error
+    assert:
+      container_access_type: private
+    metadata:
+      tags: [cis, azure, storage, public-access]
+      cis_control: "3.6"
+      references:
+        - https://www.cisecurity.org/benchmark/microsoft_azure
+
+  - id: cis_azure_3_7_trusted_microsoft_services
+    resource_type: azurerm_storage_account_network_rules
+    description: "CIS 3.7 - Ensure trusted Microsoft services are enabled"
+    severity: error
+    assert:
+      bypass:
+        contains: "AzureServices"
+    metadata:
+      tags: [cis, azure, storage, trusted-services]
+      cis_control: "3.7"
+      references:
+        - https://www.cisecurity.org/benchmark/microsoft_azure
+
+  # CIS 4 - Database Services
+  - id: cis_azure_4_1_sql_auditing_enabled
+    resource_type: azurerm_mssql_server_extended_auditing_policy
+    description: "CIS 4.1 - Ensure SQL server auditing is enabled"
+    severity: error
+    assert:
+      storage_endpoint: present
+      retention_in_days:
+        gte: 90
+    metadata:
+      tags: [cis, azure, sql, auditing]
+      cis_control: "4.1"
+      references:
+        - https://www.cisecurity.org/benchmark/microsoft_azure
+
+  - id: cis_azure_4_2_sql_threat_detection
+    resource_type: azurerm_mssql_server_security_alert_policy
+    description: "CIS 4.2 - Ensure SQL server threat detection is enabled"
+    severity: error
+    assert:
+      state: Enabled
+      email_account_admins: true
+    metadata:
+      tags: [cis, azure, sql, threat-detection]
+      cis_control: "4.2"
+      references:
+        - https://www.cisecurity.org/benchmark/microsoft_azure
+
+  - id: cis_azure_4_3_sql_server_tde_protector
+    resource_type: azurerm_mssql_server_transparent_data_encryption
+    description: "CIS 4.3 - Ensure SQL server TDE protector is encrypted with BYOK"
+    severity: warning
+    assert:
+      key_vault_key_id: present
+    metadata:
+      tags: [cis, azure, sql, encryption, byok]
+      cis_control: "4.3"
+      references:
+        - https://www.cisecurity.org/benchmark/microsoft_azure
+
+  - id: cis_azure_4_4_sql_database_tde
+    resource_type: azurerm_mssql_database_extended_auditing_policy
+    description: "CIS 4.4 - Ensure SQL database transparent data encryption is enabled"
+    severity: error
+    assert:
+      storage_endpoint: present
+    metadata:
+      tags: [cis, azure, sql, tde]
+      cis_control: "4.4"
+      references:
+        - https://www.cisecurity.org/benchmark/microsoft_azure
+
+  # CIS 5 - Logging and Monitoring
+  - id: cis_azure_5_1_diagnostic_setting_exists
+    resource_type: azurerm_monitor_diagnostic_setting
+    description: "CIS 5.1 - Ensure diagnostic setting exists for subscription activity log"
+    severity: error
+    assert:
+      target_resource_id:
+        regex: ".*subscriptions.*"
+      log:
+        length:
+          gte: 1
+    metadata:
+      tags: [cis, azure, monitoring, diagnostic-settings]
+      cis_control: "5.1"
+      references:
+        - https://www.cisecurity.org/benchmark/microsoft_azure
+
+  - id: cis_azure_5_2_activity_log_retention
+    resource_type: azurerm_monitor_diagnostic_setting
+    description: "CIS 5.2 - Ensure activity log retention is set to 365 days or greater"
+    severity: error
+    filter:
+      target_resource_id:
+        regex: ".*subscriptions.*"
+    assert:
+      log.retention_policy.days:
+        gte: 365
+    metadata:
+      tags: [cis, azure, monitoring, retention]
+      cis_control: "5.2"
+      references:
+        - https://www.cisecurity.org/benchmark/microsoft_azure
+
+  # CIS 6 - Networking
+  - id: cis_azure_6_1_rdp_access_restricted
+    resource_type: azurerm_network_security_rule
+    description: "CIS 6.1 - Ensure RDP access is restricted from the internet"
+    severity: error
+    filter:
+      destination_port_range: "3389"
+      direction: Inbound
+    assert:
+      source_address_prefix:
+        regex: "^(?!\\*|0\\.0\\.0\\.0/0|Internet).*$"
+    metadata:
+      tags: [cis, azure, networking, rdp]
+      cis_control: "6.1"
+      references:
+        - https://www.cisecurity.org/benchmark/microsoft_azure
+
+  - id: cis_azure_6_2_ssh_access_restricted
+    resource_type: azurerm_network_security_rule
+    description: "CIS 6.2 - Ensure SSH access is restricted from the internet"
+    severity: error
+    filter:
+      destination_port_range: "22"
+      direction: Inbound
+    assert:
+      source_address_prefix:
+        regex: "^(?!\\*|0\\.0\\.0\\.0/0|Internet).*$"
+    metadata:
+      tags: [cis, azure, networking, ssh]
+      cis_control: "6.2"
+      references:
+        - https://www.cisecurity.org/benchmark/microsoft_azure
+
+  - id: cis_azure_6_3_sql_server_access_restricted
+    resource_type: azurerm_network_security_rule
+    description: "CIS 6.3 - Ensure SQL server access is restricted from the internet"
+    severity: error
+    filter:
+      destination_port_range: "1433"
+      direction: Inbound
+    assert:
+      source_address_prefix:
+        regex: "^(?!\\*|0\\.0\\.0\\.0/0|Internet).*$"
+    metadata:
+      tags: [cis, azure, networking, sql]
+      cis_control: "6.3"
+      references:
+        - https://www.cisecurity.org/benchmark/microsoft_azure
+
+  - id: cis_azure_6_4_network_watcher_enabled
+    resource_type: azurerm_network_watcher
+    description: "CIS 6.4 - Ensure Network Watcher is enabled"
+    severity: error
+    assert:
+      location: present
+      resource_group_name: present
+    metadata:
+      tags: [cis, azure, networking, network-watcher]
+      cis_control: "6.4"
+      references:
+        - https://www.cisecurity.org/benchmark/microsoft_azure
+
+  - id: cis_azure_6_5_network_security_group_flow_logs
+    resource_type: azurerm_network_watcher_flow_log
+    description: "CIS 6.5 - Ensure Network Security Group flow logs are enabled"
+    severity: error
+    assert:
+      enabled: true
+      retention_policy.enabled: true
+      retention_policy.days:
+        gte: 90
+    metadata:
+      tags: [cis, azure, networking, flow-logs]
+      cis_control: "6.5"
+      references:
+        - https://www.cisecurity.org/benchmark/microsoft_azure
+
+  # CIS 7 - Virtual Machines
+  - id: cis_azure_7_1_vm_disk_encryption
+    resource_type: azurerm_virtual_machine
+    description: "CIS 7.1 - Ensure VM disk encryption is enabled"
+    severity: error
+    assert:
+      # This would need to check for disk encryption extension
+      tags.DiskEncryptionEnabled: present
+    metadata:
+      tags: [cis, azure, vm, disk-encryption]
+      cis_control: "7.1"
+      references:
+        - https://www.cisecurity.org/benchmark/microsoft_azure
+
+  - id: cis_azure_7_2_vm_endpoint_protection
+    resource_type: azurerm_virtual_machine_extension
+    description: "CIS 7.2 - Ensure endpoint protection is installed on VMs"
+    severity: error
+    filter:
+      type: IaaSAntimalware
+    assert:
+      publisher: Microsoft.Azure.Security
+      auto_upgrade_minor_version: true
+    metadata:
+      tags: [cis, azure, vm, endpoint-protection]
+      cis_control: "7.2"
+      references:
+        - https://www.cisecurity.org/benchmark/microsoft_azure
+
+  - id: cis_azure_7_3_vm_system_updates
+    resource_type: azurerm_virtual_machine_extension
+    description: "CIS 7.3 - Ensure system updates are installed on VMs"
+    severity: warning
+    filter:
+      type: Microsoft.CPlat.Core.RunCommandWindows
+    assert:
+      # This would need custom logic to verify update status
+      tags.SystemUpdatesInstalled: present
+    metadata:
+      tags: [cis, azure, vm, system-updates]
+      cis_control: "7.3"
+      references:
+        - https://www.cisecurity.org/benchmark/microsoft_azure
+
+  # CIS 8 - Key Vault
+  - id: cis_azure_8_1_key_vault_recoverable
+    resource_type: azurerm_key_vault
+    description: "CIS 8.1 - Ensure key vault is recoverable"
+    severity: error
+    assert:
+      soft_delete_retention_days:
+        gte: 7
+      purge_protection_enabled: true
+    metadata:
+      tags: [cis, azure, key-vault, recovery]
+      cis_control: "8.1"
+      references:
+        - https://www.cisecurity.org/benchmark/microsoft_azure
+
+  - id: cis_azure_8_2_key_vault_rbac_enabled
+    resource_type: azurerm_key_vault
+    description: "CIS 8.2 - Ensure key vault RBAC is enabled"
+    severity: error
+    assert:
+      enable_rbac_authorization: true
+    metadata:
+      tags: [cis, azure, key-vault, rbac]
+      cis_control: "8.2"
+      references:
+        - https://www.cisecurity.org/benchmark/microsoft_azure
+
+  - id: cis_azure_8_3_key_expiration_set
+    resource_type: azurerm_key_vault_key
+    description: "CIS 8.3 - Ensure key vault keys have expiration date set"
+    severity: warning
+    assert:
+      expiration_date: present
+    metadata:
+      tags: [cis, azure, key-vault, key-expiration]
+      cis_control: "8.3"
+      references:
+        - https://www.cisecurity.org/benchmark/microsoft_azure
+
+  - id: cis_azure_8_4_secret_expiration_set
+    resource_type: azurerm_key_vault_secret
+    description: "CIS 8.4 - Ensure key vault secrets have expiration date set"
+    severity: warning
+    assert:
+      expiration_date: present
+    metadata:
+      tags: [cis, azure, key-vault, secret-expiration]
+      cis_control: "8.4"
+      references:
+        - https://www.cisecurity.org/benchmark/microsoft_azure

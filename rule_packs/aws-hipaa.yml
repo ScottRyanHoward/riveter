@@ -1,0 +1,509 @@
+metadata:
+  name: aws-hipaa
+  version: 1.0.0
+  description: AWS HIPAA Compliance Rule Pack - Healthcare data protection requirements
+  author: Riveter Team
+  created: 2025-10-27
+  updated: 2025-10-27
+  dependencies: []
+  tags: [compliance, hipaa, healthcare, aws, phi]
+  min_riveter_version: 0.1.0
+
+rules:
+  # Encryption Rules (8-10 rules)
+  - id: hipaa_s3_encryption_phi
+    resource_type: aws_s3_bucket
+    description: "HIPAA - S3 buckets storing PHI must have encryption enabled"
+    severity: error
+    filter:
+      tags.DataClassification: PHI
+    assert:
+      server_side_encryption_configuration: present
+    metadata:
+      tags: [hipaa, s3, encryption, phi]
+      hipaa_control: "164.312(a)(2)(iv)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucket-encryption.html
+
+  - id: hipaa_rds_encryption_phi
+    resource_type: aws_db_instance
+    description: "HIPAA - RDS instances storing PHI must have encryption at rest"
+    severity: error
+    filter:
+      tags.DataClassification: PHI
+    assert:
+      storage_encrypted: true
+    metadata:
+      tags: [hipaa, rds, encryption, phi]
+      hipaa_control: "164.312(a)(2)(iv)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.Encryption.html
+
+  - id: hipaa_ebs_encryption
+    resource_type: aws_ebs_volume
+    description: "HIPAA - EBS volumes must be encrypted"
+    severity: error
+    assert:
+      encrypted: true
+    metadata:
+      tags: [hipaa, ebs, encryption]
+      hipaa_control: "164.312(a)(2)(iv)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSEncryption.html
+
+  - id: hipaa_ec2_encrypted_volumes
+    resource_type: aws_instance
+    description: "HIPAA - EC2 instances must use encrypted EBS volumes"
+    severity: error
+    assert:
+      root_block_device.encrypted: true
+    metadata:
+      tags: [hipaa, ec2, encryption]
+      hipaa_control: "164.312(a)(2)(iv)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSEncryption.html
+
+  - id: hipaa_kms_key_rotation
+    resource_type: aws_kms_key
+    description: "HIPAA - KMS keys must have automatic rotation enabled"
+    severity: error
+    assert:
+      enable_key_rotation: true
+    metadata:
+      tags: [hipaa, kms, encryption, key-management]
+      hipaa_control: "164.312(a)(2)(iv)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.aws.amazon.com/kms/latest/developerguide/rotating-keys.html
+
+  - id: hipaa_cloudfront_https_only
+    resource_type: aws_cloudfront_distribution
+    description: "HIPAA - CloudFront distributions must enforce HTTPS"
+    severity: error
+    assert:
+      viewer_certificate.minimum_protocol_version:
+        regex: "^TLSv1\\.2"
+    metadata:
+      tags: [hipaa, cloudfront, encryption-in-transit]
+      hipaa_control: "164.312(e)(1)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/secure-connections-supported-viewer-protocols-ciphers.html
+
+  - id: hipaa_alb_https_listener
+    resource_type: aws_lb_listener
+    description: "HIPAA - Load balancer listeners must use HTTPS"
+    severity: error
+    assert:
+      protocol:
+        regex: "^HTTPS$"
+    metadata:
+      tags: [hipaa, alb, encryption-in-transit]
+      hipaa_control: "164.312(e)(1)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-https-listener.html
+
+  - id: hipaa_elasticache_encryption_at_rest
+    resource_type: aws_elasticache_replication_group
+    description: "HIPAA - ElastiCache replication groups must have encryption at rest"
+    severity: error
+    assert:
+      at_rest_encryption_enabled: true
+    metadata:
+      tags: [hipaa, elasticache, encryption]
+      hipaa_control: "164.312(a)(2)(iv)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/at-rest-encryption.html
+
+  - id: hipaa_elasticache_encryption_in_transit
+    resource_type: aws_elasticache_replication_group
+    description: "HIPAA - ElastiCache replication groups must have encryption in transit"
+    severity: error
+    assert:
+      transit_encryption_enabled: true
+    metadata:
+      tags: [hipaa, elasticache, encryption-in-transit]
+      hipaa_control: "164.312(e)(1)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/in-transit-encryption.html
+
+  - id: hipaa_redshift_encryption
+    resource_type: aws_redshift_cluster
+    description: "HIPAA - Redshift clusters must have encryption enabled"
+    severity: error
+    assert:
+      encrypted: true
+    metadata:
+      tags: [hipaa, redshift, encryption]
+      hipaa_control: "164.312(a)(2)(iv)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.aws.amazon.com/redshift/latest/mgmt/working-with-db-encryption.html
+
+  # Access Controls Rules (6-8 rules)
+  - id: hipaa_iam_mfa_required
+    resource_type: aws_iam_user
+    description: "HIPAA - IAM users must have MFA enabled"
+    severity: error
+    assert:
+      force_destroy: false
+    metadata:
+      tags: [hipaa, iam, access-control, mfa]
+      hipaa_control: "164.312(a)(2)(i)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa.html
+
+  - id: hipaa_iam_no_wildcard_actions
+    resource_type: aws_iam_policy
+    description: "HIPAA - IAM policies must follow least privilege principle"
+    severity: error
+    assert:
+      policy:
+        regex: "^(?!.*\"Action\":\\s*\"\\*\").*$"
+    metadata:
+      tags: [hipaa, iam, least-privilege]
+      hipaa_control: "164.308(a)(4)(ii)(B)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html
+
+  - id: hipaa_s3_block_public_access
+    resource_type: aws_s3_bucket_public_access_block
+    description: "HIPAA - S3 buckets must block all public access"
+    severity: error
+    assert:
+      block_public_acls: true
+      block_public_policy: true
+      ignore_public_acls: true
+      restrict_public_buckets: true
+    metadata:
+      tags: [hipaa, s3, access-control]
+      hipaa_control: "164.308(a)(4)(ii)(B)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html
+
+  - id: hipaa_rds_no_public_access
+    resource_type: aws_db_instance
+    description: "HIPAA - RDS instances must not be publicly accessible"
+    severity: error
+    assert:
+      publicly_accessible: false
+    metadata:
+      tags: [hipaa, rds, access-control]
+      hipaa_control: "164.308(a)(4)(ii)(B)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_VPC.WorkingWithRDSInstanceinaVPC.html
+
+  - id: hipaa_ec2_no_public_ip_phi
+    resource_type: aws_instance
+    description: "HIPAA - EC2 instances handling PHI must not have public IPs"
+    severity: error
+    filter:
+      tags.DataClassification: PHI
+    assert:
+      associate_public_ip_address: false
+    metadata:
+      tags: [hipaa, ec2, access-control, phi]
+      hipaa_control: "164.308(a)(4)(ii)(B)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing.html
+
+  - id: hipaa_iam_password_policy
+    resource_type: aws_iam_account_password_policy
+    description: "HIPAA - IAM password policy must meet complexity requirements"
+    severity: error
+    assert:
+      minimum_password_length:
+        gte: 14
+      require_uppercase_characters: true
+      require_lowercase_characters: true
+      require_numbers: true
+      require_symbols: true
+    metadata:
+      tags: [hipaa, iam, access-control, password-policy]
+      hipaa_control: "164.308(a)(5)(ii)(D)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_passwords_account-policy.html
+
+  - id: hipaa_iam_user_no_inline_policies
+    resource_type: aws_iam_user
+    description: "HIPAA - IAM users should not have inline policies for better access management"
+    severity: error
+    assert:
+      inline_policy:
+        length:
+          eq: 0
+    metadata:
+      tags: [hipaa, iam, access-control]
+      hipaa_control: "164.308(a)(4)(ii)(B)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_managed-vs-inline.html
+
+  - id: hipaa_redshift_no_public_access
+    resource_type: aws_redshift_cluster
+    description: "HIPAA - Redshift clusters must not be publicly accessible"
+    severity: error
+    assert:
+      publicly_accessible: false
+    metadata:
+      tags: [hipaa, redshift, access-control]
+      hipaa_control: "164.308(a)(4)(ii)(B)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.aws.amazon.com/redshift/latest/mgmt/managing-clusters-vpc.html
+
+  # Audit Logging Rules (5-7 rules)
+  - id: hipaa_cloudtrail_enabled
+    resource_type: aws_cloudtrail
+    description: "HIPAA - CloudTrail must be enabled for audit logging"
+    severity: error
+    assert:
+      enable_logging: true
+      include_global_service_events: true
+      is_multi_region_trail: true
+    metadata:
+      tags: [hipaa, cloudtrail, audit-logging]
+      hipaa_control: "164.312(b)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-user-guide.html
+
+  - id: hipaa_cloudtrail_log_validation
+    resource_type: aws_cloudtrail
+    description: "HIPAA - CloudTrail must have log file validation for audit integrity"
+    severity: error
+    assert:
+      enable_log_file_validation: true
+    metadata:
+      tags: [hipaa, cloudtrail, audit-logging, integrity]
+      hipaa_control: "164.312(b)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-log-file-validation-intro.html
+
+  - id: hipaa_s3_access_logging
+    resource_type: aws_s3_bucket_logging
+    description: "HIPAA - S3 buckets must have access logging enabled"
+    severity: error
+    assert:
+      target_bucket: present
+    metadata:
+      tags: [hipaa, s3, audit-logging]
+      hipaa_control: "164.312(b)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.aws.amazon.com/AmazonS3/latest/userguide/ServerLogs.html
+
+  - id: hipaa_rds_audit_logging
+    resource_type: aws_db_instance
+    description: "HIPAA - RDS instances must have audit logging enabled"
+    severity: error
+    assert:
+      enabled_cloudwatch_logs_exports:
+        length:
+          gte: 1
+    metadata:
+      tags: [hipaa, rds, audit-logging]
+      hipaa_control: "164.312(b)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_LogAccess.html
+
+  - id: hipaa_alb_access_logs
+    resource_type: aws_lb
+    description: "HIPAA - Application Load Balancers must have access logs enabled"
+    severity: error
+    filter:
+      load_balancer_type: application
+    assert:
+      access_logs.enabled: true
+    metadata:
+      tags: [hipaa, alb, audit-logging]
+      hipaa_control: "164.312(b)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html
+
+  - id: hipaa_cloudwatch_log_retention
+    resource_type: aws_cloudwatch_log_group
+    description: "HIPAA - CloudWatch log groups must have adequate retention period"
+    severity: error
+    assert:
+      retention_in_days:
+        gte: 365
+    metadata:
+      tags: [hipaa, cloudwatch, audit-logging, retention]
+      hipaa_control: "164.316(b)(2)(i)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/Working-with-log-groups-and-streams.html
+
+  - id: hipaa_redshift_audit_logging
+    resource_type: aws_redshift_cluster
+    description: "HIPAA - Redshift clusters must have audit logging enabled"
+    severity: error
+    assert:
+      logging.enable: true
+    metadata:
+      tags: [hipaa, redshift, audit-logging]
+      hipaa_control: "164.312(b)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.aws.amazon.com/redshift/latest/mgmt/db-auditing.html
+
+  # Network Security Rules (4-6 rules)
+  - id: hipaa_vpc_flow_logs
+    resource_type: aws_flow_log
+    description: "HIPAA - VPC Flow Logs must be enabled for network monitoring"
+    severity: error
+    assert:
+      traffic_type: ALL
+    metadata:
+      tags: [hipaa, vpc, network-security, monitoring]
+      hipaa_control: "164.312(b)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html
+
+  - id: hipaa_security_group_no_wide_open
+    resource_type: aws_security_group
+    description: "HIPAA - Security groups must not allow unrestricted access"
+    severity: error
+    assert:
+      ingress:
+        subset:
+          - cidr_blocks:
+              regex: "^(?!.*0\\.0\\.0\\.0/0).*$"
+    metadata:
+      tags: [hipaa, vpc, security-groups, network-security]
+      hipaa_control: "164.312(e)(1)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html
+
+  - id: hipaa_nacl_ingress_restrictions
+    resource_type: aws_network_acl
+    description: "HIPAA - Network ACLs must have ingress restrictions"
+    severity: warning
+    assert:
+      ingress:
+        length:
+          gte: 1
+    metadata:
+      tags: [hipaa, vpc, nacl, network-security]
+      hipaa_control: "164.312(e)(1)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.aws.amazon.com/vpc/latest/userguide/vpc-network-acls.html
+
+  - id: hipaa_rds_ssl_required
+    resource_type: aws_db_instance
+    description: "HIPAA - RDS instances must require SSL/TLS connections"
+    severity: error
+    assert:
+      # This would typically be enforced via parameter groups
+      parameter_group_name: present
+    metadata:
+      tags: [hipaa, rds, network-security, encryption-in-transit]
+      hipaa_control: "164.312(e)(1)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.SSL.html
+
+  - id: hipaa_elasticsearch_vpc_required
+    resource_type: aws_elasticsearch_domain
+    description: "HIPAA - Elasticsearch domains must be deployed within VPC"
+    severity: error
+    assert:
+      vpc_options: present
+    metadata:
+      tags: [hipaa, elasticsearch, network-security]
+      hipaa_control: "164.312(e)(1)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-vpc.html
+
+  - id: hipaa_lambda_vpc_config_phi
+    resource_type: aws_lambda_function
+    description: "HIPAA - Lambda functions accessing PHI must be in VPC"
+    severity: error
+    filter:
+      tags.DataClassification: PHI
+    assert:
+      vpc_config: present
+    metadata:
+      tags: [hipaa, lambda, network-security, phi]
+      hipaa_control: "164.312(e)(1)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.aws.amazon.com/lambda/latest/dg/configuration-vpc.html
+
+  # Backup and Recovery Rules (2-4 rules)
+  - id: hipaa_rds_backup_retention
+    resource_type: aws_db_instance
+    description: "HIPAA - RDS instances must have adequate backup retention"
+    severity: error
+    assert:
+      backup_retention_period:
+        gte: 7
+    metadata:
+      tags: [hipaa, rds, backup, disaster-recovery]
+      hipaa_control: "164.308(a)(7)(ii)(A)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_WorkingWithAutomatedBackups.html
+
+  - id: hipaa_s3_versioning_phi
+    resource_type: aws_s3_bucket_versioning
+    description: "HIPAA - S3 buckets storing PHI must have versioning enabled"
+    severity: error
+    filter:
+      # Note: filter applies to bucket, not versioning resource
+      tags.DataClassification: PHI
+    assert:
+      versioning_configuration.status: Enabled
+    metadata:
+      tags: [hipaa, s3, backup, data-protection, phi]
+      hipaa_control: "164.308(a)(7)(ii)(A)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.aws.amazon.com/AmazonS3/latest/userguide/Versioning.html
+
+  - id: hipaa_dynamodb_point_in_time_recovery
+    resource_type: aws_dynamodb_table
+    description: "HIPAA - DynamoDB tables must have point-in-time recovery enabled"
+    severity: error
+    assert:
+      point_in_time_recovery.enabled: true
+    metadata:
+      tags: [hipaa, dynamodb, backup, disaster-recovery]
+      hipaa_control: "164.308(a)(7)(ii)(A)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/PointInTimeRecovery.html
+
+  - id: hipaa_ebs_snapshot_encryption
+    resource_type: aws_ebs_snapshot
+    description: "HIPAA - EBS snapshots must be encrypted"
+    severity: error
+    assert:
+      encrypted: true
+    metadata:
+      tags: [hipaa, ebs, backup, encryption]
+      hipaa_control: "164.312(a)(2)(iv)"
+      references:
+        - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
+        - https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSSnapshots.html

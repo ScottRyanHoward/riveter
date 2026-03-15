@@ -1,0 +1,602 @@
+metadata:
+  name: multi-cloud-security
+  version: 1.0.0
+  description: Multi-Cloud Security Best Practices Rule Pack - Common security patterns across AWS, Azure, and GCP
+  author: Riveter Team
+  created: 2024-10-27
+  updated: 2024-10-27
+  dependencies: []
+  tags: [security, multi-cloud, aws, azure, gcp, best-practices]
+  min_riveter_version: 0.1.0
+
+rules:
+  # ============================================================================
+  # AWS Encryption Rules
+  # ============================================================================
+
+  - id: multi_cloud_aws_s3_encryption
+    resource_type: aws_s3_bucket_server_side_encryption_configuration
+    description: "Multi-Cloud AWS - S3 buckets must have server-side encryption enabled"
+    severity: error
+    assert:
+      rule: present
+    metadata:
+      tags: [multi-cloud, encryption, storage, aws]
+      providers: [aws]
+      references:
+        - https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucket-encryption.html
+
+  - id: multi_cloud_aws_rds_encryption
+    resource_type: aws_db_instance
+    description: "Multi-Cloud AWS - RDS instances must have storage encryption enabled"
+    severity: error
+    assert:
+      storage_encrypted: true
+    metadata:
+      tags: [multi-cloud, encryption, database, aws]
+      providers: [aws]
+      references:
+        - https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.Encryption.html
+
+  - id: multi_cloud_aws_ec2_encryption
+    resource_type: aws_instance
+    description: "Multi-Cloud AWS - EC2 instances must have encrypted EBS volumes"
+    severity: error
+    assert:
+      root_block_device.encrypted: true
+    metadata:
+      tags: [multi-cloud, encryption, compute, aws]
+      providers: [aws]
+      references:
+        - https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSEncryption.html
+
+  - id: multi_cloud_aws_kms_rotation
+    resource_type: aws_kms_key
+    description: "Multi-Cloud AWS - KMS keys should have automatic rotation enabled"
+    severity: warning
+    assert:
+      enable_key_rotation: true
+    metadata:
+      tags: [multi-cloud, encryption, key-management, aws]
+      providers: [aws]
+      references:
+        - https://docs.aws.amazon.com/kms/latest/developerguide/rotating-keys.html
+
+  # ============================================================================
+  # Azure Encryption Rules
+  # ============================================================================
+
+  - id: multi_cloud_azure_storage_https
+    resource_type: azurerm_storage_account
+    description: "Multi-Cloud Azure - Storage accounts must enforce HTTPS"
+    severity: error
+    assert:
+      enable_https_traffic_only: true
+    metadata:
+      tags: [multi-cloud, encryption, storage, azure]
+      providers: [azure]
+      references:
+        - https://docs.microsoft.com/en-us/azure/storage/common/storage-require-secure-transfer
+
+  - id: multi_cloud_azure_sql_tde
+    resource_type: azurerm_mssql_database
+    description: "Multi-Cloud Azure - SQL databases must have TDE enabled"
+    severity: error
+    assert:
+      transparent_data_encryption_enabled: true
+    metadata:
+      tags: [multi-cloud, encryption, database, azure]
+      providers: [azure]
+      references:
+        - https://docs.microsoft.com/en-us/azure/azure-sql/database/transparent-data-encryption-tde-overview
+
+  - id: multi_cloud_azure_disk_encryption
+    resource_type: azurerm_managed_disk
+    description: "Multi-Cloud Azure - Managed disks must have encryption enabled"
+    severity: error
+    assert:
+      encryption_settings.enabled: true
+    metadata:
+      tags: [multi-cloud, encryption, compute, azure]
+      providers: [azure]
+      references:
+        - https://docs.microsoft.com/en-us/azure/virtual-machines/disk-encryption
+
+  - id: multi_cloud_azure_tls_version
+    resource_type: azurerm_storage_account
+    description: "Multi-Cloud Azure - Storage accounts should use minimum TLS 1.2"
+    severity: error
+    assert:
+      min_tls_version: TLS1_2
+    metadata:
+      tags: [multi-cloud, encryption, tls, azure]
+      providers: [azure]
+      references:
+        - https://docs.microsoft.com/en-us/azure/storage/common/transport-layer-security-configure-minimum-version
+
+  # ============================================================================
+  # GCP Encryption Rules
+  # ============================================================================
+
+  - id: multi_cloud_gcp_storage_encryption
+    resource_type: google_storage_bucket
+    description: "Multi-Cloud GCP - Storage buckets should use customer-managed encryption"
+    severity: warning
+    assert:
+      encryption.default_kms_key_name: present
+    metadata:
+      tags: [multi-cloud, encryption, storage, gcp]
+      providers: [gcp]
+      references:
+        - https://cloud.google.com/storage/docs/encryption/customer-managed-keys
+
+  - id: multi_cloud_gcp_sql_encryption
+    resource_type: google_sql_database_instance
+    description: "Multi-Cloud GCP - Cloud SQL instances should use customer-managed encryption"
+    severity: warning
+    assert:
+      encryption_key_name: present
+    metadata:
+      tags: [multi-cloud, encryption, database, gcp]
+      providers: [gcp]
+      references:
+        - https://cloud.google.com/sql/docs/mysql/cmek
+
+  - id: multi_cloud_gcp_compute_encryption
+    resource_type: google_compute_disk
+    description: "Multi-Cloud GCP - Compute disks should use customer-managed encryption"
+    severity: warning
+    assert:
+      disk_encryption_key: present
+    metadata:
+      tags: [multi-cloud, encryption, compute, gcp]
+      providers: [gcp]
+      references:
+        - https://cloud.google.com/compute/docs/disks/customer-managed-encryption
+
+  - id: multi_cloud_gcp_kms_rotation
+    resource_type: google_kms_crypto_key
+    description: "Multi-Cloud GCP - KMS keys should have automatic rotation enabled"
+    severity: warning
+    assert:
+      rotation_period: present
+    metadata:
+      tags: [multi-cloud, encryption, key-management, gcp]
+      providers: [gcp]
+      references:
+        - https://cloud.google.com/kms/docs/key-rotation
+
+  # ============================================================================
+  # AWS Network Security Rules
+  # ============================================================================
+
+  - id: multi_cloud_aws_no_public_ec2
+    resource_type: aws_instance
+    description: "Multi-Cloud AWS - Production EC2 instances should not have public IPs"
+    severity: error
+    filter:
+      tags.Environment: production
+    assert:
+      associate_public_ip_address: false
+    metadata:
+      tags: [multi-cloud, network-security, compute, aws]
+      providers: [aws]
+      references:
+        - https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing.html
+
+  - id: multi_cloud_aws_sg_no_ssh_internet
+    resource_type: aws_security_group
+    description: "Multi-Cloud AWS - Security groups should not allow SSH from internet"
+    severity: error
+    assert:
+      ingress:
+        subset:
+          - from_port:
+              ne: 22
+            cidr_blocks:
+              contains: "0.0.0.0/0"
+    metadata:
+      tags: [multi-cloud, network-security, firewall, aws]
+      providers: [aws]
+      references:
+        - https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html
+
+  - id: multi_cloud_aws_rds_private
+    resource_type: aws_db_instance
+    description: "Multi-Cloud AWS - RDS instances should not be publicly accessible"
+    severity: error
+    assert:
+      publicly_accessible: false
+    metadata:
+      tags: [multi-cloud, network-security, database, aws]
+      providers: [aws]
+      references:
+        - https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_VPC.WorkingWithRDSInstanceinaVPC.html
+
+  # ============================================================================
+  # Azure Network Security Rules
+  # ============================================================================
+
+  - id: multi_cloud_azure_no_public_vm
+    resource_type: azurerm_network_interface
+    description: "Multi-Cloud Azure - Production VMs should not have public IPs"
+    severity: error
+    filter:
+      tags.Environment: production
+    assert:
+      ip_configuration.public_ip_address_id:
+        regex: "^$"
+    metadata:
+      tags: [multi-cloud, network-security, compute, azure]
+      providers: [azure]
+      references:
+        - https://docs.microsoft.com/en-us/azure/virtual-network/ip-services/public-ip-addresses
+
+  - id: multi_cloud_azure_nsg_no_ssh_internet
+    resource_type: azurerm_network_security_rule
+    description: "Multi-Cloud Azure - NSG rules should not allow SSH from internet"
+    severity: error
+    filter:
+      direction: Inbound
+      access: Allow
+    assert:
+      destination_port_range:
+        ne: "22"
+      source_address_prefix:
+        ne: "*"
+    metadata:
+      tags: [multi-cloud, network-security, firewall, azure]
+      providers: [azure]
+      references:
+        - https://docs.microsoft.com/en-us/azure/virtual-network/network-security-groups-overview
+
+  - id: multi_cloud_azure_sql_private
+    resource_type: azurerm_mssql_server
+    description: "Multi-Cloud Azure - SQL servers should disable public network access"
+    severity: error
+    assert:
+      public_network_access_enabled: false
+    metadata:
+      tags: [multi-cloud, network-security, database, azure]
+      providers: [azure]
+      references:
+        - https://docs.microsoft.com/en-us/azure/azure-sql/database/connectivity-settings
+
+  # ============================================================================
+  # GCP Network Security Rules
+  # ============================================================================
+
+  - id: multi_cloud_gcp_no_public_compute
+    resource_type: google_compute_instance
+    description: "Multi-Cloud GCP - Production compute instances should not have external IPs"
+    severity: error
+    filter:
+      labels.environment: production
+    assert:
+      network_interface.access_config:
+        length:
+          eq: 0
+    metadata:
+      tags: [multi-cloud, network-security, compute, gcp]
+      providers: [gcp]
+      references:
+        - https://cloud.google.com/compute/docs/ip-addresses
+
+  - id: multi_cloud_gcp_firewall_no_ssh_internet
+    resource_type: google_compute_firewall
+    description: "Multi-Cloud GCP - Firewall rules should not allow SSH from internet"
+    severity: error
+    filter:
+      direction: INGRESS
+    assert:
+      allow:
+        subset:
+          - ports:
+              regex: "^(?!22).*$"
+            source_ranges:
+              contains: "0.0.0.0/0"
+    metadata:
+      tags: [multi-cloud, network-security, firewall, gcp]
+      providers: [gcp]
+      references:
+        - https://cloud.google.com/vpc/docs/firewalls
+
+  - id: multi_cloud_gcp_sql_private
+    resource_type: google_sql_database_instance
+    description: "Multi-Cloud GCP - Cloud SQL instances should not have public IPs"
+    severity: error
+    assert:
+      settings.ip_configuration.ipv4_enabled: false
+    metadata:
+      tags: [multi-cloud, network-security, database, gcp]
+      providers: [gcp]
+      references:
+        - https://cloud.google.com/sql/docs/mysql/configure-private-ip
+
+  # ============================================================================
+  # AWS IAM Rules
+  # ============================================================================
+
+  - id: multi_cloud_aws_iam_no_wildcard
+    resource_type: aws_iam_policy
+    description: "Multi-Cloud AWS - IAM policies should not use wildcard actions"
+    severity: warning
+    assert:
+      policy:
+        regex: "^(?!.*\"Action\":\\s*\"\\*\").*$"
+    metadata:
+      tags: [multi-cloud, iam, least-privilege, aws]
+      providers: [aws]
+      references:
+        - https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html
+
+  - id: multi_cloud_aws_iam_role_policy
+    resource_type: aws_iam_role
+    description: "Multi-Cloud AWS - IAM roles must have assume role policy"
+    severity: error
+    assert:
+      assume_role_policy: present
+    metadata:
+      tags: [multi-cloud, iam, access-control, aws]
+      providers: [aws]
+      references:
+        - https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_terms-and-concepts.html
+
+  # ============================================================================
+  # Azure IAM Rules
+  # ============================================================================
+
+  - id: multi_cloud_azure_rbac_no_wildcard
+    resource_type: azurerm_role_assignment
+    description: "Multi-Cloud Azure - Role assignments should not use wildcard permissions"
+    severity: error
+    assert:
+      role_definition_name:
+        regex: "^(?!.*\\*).*$"
+    metadata:
+      tags: [multi-cloud, iam, least-privilege, azure]
+      providers: [azure]
+      references:
+        - https://docs.microsoft.com/en-us/azure/role-based-access-control/overview
+
+  - id: multi_cloud_azure_managed_identity
+    resource_type: azurerm_linux_virtual_machine
+    description: "Multi-Cloud Azure - VMs should use managed identities"
+    severity: info
+    assert:
+      identity: present
+    metadata:
+      tags: [multi-cloud, iam, managed-identity, azure]
+      providers: [azure]
+      references:
+        - https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview
+
+  # ============================================================================
+  # GCP IAM Rules
+  # ============================================================================
+
+  - id: multi_cloud_gcp_iam_no_primitive_roles
+    resource_type: google_project_iam_binding
+    description: "Multi-Cloud GCP - IAM bindings should not use primitive roles"
+    severity: error
+    assert:
+      role:
+        regex: "^(?!roles/owner|roles/editor|roles/viewer).*$"
+    metadata:
+      tags: [multi-cloud, iam, least-privilege, gcp]
+      providers: [gcp]
+      references:
+        - https://cloud.google.com/iam/docs/understanding-roles
+
+  - id: multi_cloud_gcp_service_account_name
+    resource_type: google_service_account
+    description: "Multi-Cloud GCP - Service accounts should have meaningful display names"
+    severity: warning
+    assert:
+      display_name:
+        regex: "^.{5,}$"
+    metadata:
+      tags: [multi-cloud, iam, governance, gcp]
+      providers: [gcp]
+      references:
+        - https://cloud.google.com/iam/docs/service-accounts
+
+  # ============================================================================
+  # AWS Logging Rules
+  # ============================================================================
+
+  - id: multi_cloud_aws_cloudtrail_enabled
+    resource_type: aws_cloudtrail
+    description: "Multi-Cloud AWS - CloudTrail should be enabled for audit logging"
+    severity: error
+    assert:
+      enable_logging: true
+      include_global_service_events: true
+      is_multi_region_trail: true
+    metadata:
+      tags: [multi-cloud, logging, audit, aws]
+      providers: [aws]
+      references:
+        - https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-user-guide.html
+
+  - id: multi_cloud_aws_cloudtrail_validation
+    resource_type: aws_cloudtrail
+    description: "Multi-Cloud AWS - CloudTrail should have log file validation enabled"
+    severity: error
+    assert:
+      enable_log_file_validation: true
+    metadata:
+      tags: [multi-cloud, logging, integrity, aws]
+      providers: [aws]
+      references:
+        - https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-log-file-validation-intro.html
+
+  - id: multi_cloud_aws_s3_access_logging
+    resource_type: aws_s3_bucket_logging
+    description: "Multi-Cloud AWS - S3 buckets should have access logging enabled"
+    severity: warning
+    assert:
+      target_bucket: present
+    metadata:
+      tags: [multi-cloud, logging, access-logs, aws]
+      providers: [aws]
+      references:
+        - https://docs.aws.amazon.com/AmazonS3/latest/userguide/ServerLogs.html
+
+  # ============================================================================
+  # Azure Logging Rules
+  # ============================================================================
+
+  - id: multi_cloud_azure_diagnostic_settings
+    resource_type: azurerm_monitor_diagnostic_setting
+    description: "Multi-Cloud Azure - Resources should have diagnostic settings enabled"
+    severity: warning
+    assert:
+      enabled_log:
+        length:
+          gte: 1
+    metadata:
+      tags: [multi-cloud, logging, audit, azure]
+      providers: [azure]
+      references:
+        - https://docs.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings
+
+  - id: multi_cloud_azure_sql_auditing
+    resource_type: azurerm_mssql_server
+    description: "Multi-Cloud Azure - SQL servers must have auditing enabled"
+    severity: error
+    assert:
+      extended_auditing_policy.enabled: true
+    metadata:
+      tags: [multi-cloud, logging, audit, azure]
+      providers: [azure]
+      references:
+        - https://docs.microsoft.com/en-us/azure/azure-sql/database/auditing-overview
+
+  # ============================================================================
+  # GCP Logging Rules
+  # ============================================================================
+
+  - id: multi_cloud_gcp_audit_logs
+    resource_type: google_project_iam_audit_config
+    description: "Multi-Cloud GCP - Projects should have audit logging configured"
+    severity: warning
+    assert:
+      audit_log_config:
+        length:
+          gte: 1
+    metadata:
+      tags: [multi-cloud, logging, audit, gcp]
+      providers: [gcp]
+      references:
+        - https://cloud.google.com/logging/docs/audit
+
+  - id: multi_cloud_gcp_storage_access_logging
+    resource_type: google_storage_bucket
+    description: "Multi-Cloud GCP - Storage buckets should have access logging enabled"
+    severity: warning
+    assert:
+      logging.log_bucket: present
+    metadata:
+      tags: [multi-cloud, logging, access-logs, gcp]
+      providers: [gcp]
+      references:
+        - https://cloud.google.com/storage/docs/access-logs
+
+  # ============================================================================
+  # AWS Monitoring Rules
+  # ============================================================================
+
+  - id: multi_cloud_aws_cloudwatch_alarms
+    resource_type: aws_cloudwatch_metric_alarm
+    description: "Multi-Cloud AWS - Critical metrics should have CloudWatch alarms"
+    severity: info
+    assert:
+      metric_name: present
+      comparison_operator: present
+    metadata:
+      tags: [multi-cloud, monitoring, alerts, aws]
+      providers: [aws]
+      references:
+        - https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html
+
+  # ============================================================================
+  # Azure Monitoring Rules
+  # ============================================================================
+
+  - id: multi_cloud_azure_metric_alerts
+    resource_type: azurerm_monitor_metric_alert
+    description: "Multi-Cloud Azure - Critical metrics should have alerts configured"
+    severity: info
+    assert:
+      criteria: present
+      enabled: true
+    metadata:
+      tags: [multi-cloud, monitoring, alerts, azure]
+      providers: [azure]
+      references:
+        - https://docs.microsoft.com/en-us/azure/azure-monitor/alerts/alerts-overview
+
+  # ============================================================================
+  # GCP Monitoring Rules
+  # ============================================================================
+
+  - id: multi_cloud_gcp_alert_policies
+    resource_type: google_monitoring_alert_policy
+    description: "Multi-Cloud GCP - Critical metrics should have alert policies"
+    severity: info
+    assert:
+      conditions:
+        length:
+          gte: 1
+    metadata:
+      tags: [multi-cloud, monitoring, alerts, gcp]
+      providers: [gcp]
+      references:
+        - https://cloud.google.com/monitoring/alerts
+
+  # ============================================================================
+  # Cross-Cloud Governance Rules
+  # ============================================================================
+
+  - id: multi_cloud_aws_resource_tagging
+    resource_type: aws_instance
+    description: "Multi-Cloud AWS - Resources must have required tags for governance"
+    severity: error
+    assert:
+      tags.Environment: present
+      tags.Owner: present
+      tags.Project: present
+    metadata:
+      tags: [multi-cloud, governance, tagging, aws]
+      providers: [aws]
+      references:
+        - https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html
+
+  - id: multi_cloud_azure_resource_tagging
+    resource_type: azurerm_linux_virtual_machine
+    description: "Multi-Cloud Azure - Resources must have required tags for governance"
+    severity: error
+    assert:
+      tags.Environment: present
+      tags.Owner: present
+      tags.CostCenter: present
+    metadata:
+      tags: [multi-cloud, governance, tagging, azure]
+      providers: [azure]
+      references:
+        - https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/tag-resources
+
+  - id: multi_cloud_gcp_resource_labeling
+    resource_type: google_compute_instance
+    description: "Multi-Cloud GCP - Resources must have required labels for governance"
+    severity: error
+    assert:
+      labels.environment: present
+      labels.owner: present
+      labels.project: present
+    metadata:
+      tags: [multi-cloud, governance, labeling, gcp]
+      providers: [gcp]
+      references:
+        - https://cloud.google.com/resource-manager/docs/creating-managing-labels

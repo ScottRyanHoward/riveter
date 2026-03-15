@@ -1,0 +1,336 @@
+metadata:
+  name: cis-aws
+  version: 1.0.0
+  description: CIS AWS Foundations Benchmark v1.4.0 Rule Pack
+  author: Riveter Team
+  created: 2024-10-22
+  updated: 2024-10-22
+  dependencies: []
+  tags: [compliance, cis, aws, benchmark]
+  min_riveter_version: 0.1.0
+
+rules:
+  # CIS 1.1 - Identity and Access Management
+  - id: cis_1_3_unused_credentials
+    resource_type: aws_iam_user
+    description: "CIS 1.3 - Ensure credentials unused for 90 days or greater are disabled"
+    severity: error
+    assert:
+      # This would need custom logic to check last used date
+      tags.LastUsed: present
+    metadata:
+      tags: [cis, iam, credentials]
+      cis_control: "1.3"
+      references:
+        - https://www.cisecurity.org/benchmark/amazon_web_services
+
+  - id: cis_1_4_access_keys_rotated
+    resource_type: aws_iam_access_key
+    description: "CIS 1.4 - Ensure access keys are rotated every 90 days"
+    severity: error
+    assert:
+      # This would need custom logic to check creation date
+      tags.CreatedDate: present
+    metadata:
+      tags: [cis, iam, access-keys]
+      cis_control: "1.4"
+      references:
+        - https://www.cisecurity.org/benchmark/amazon_web_services
+
+  - id: cis_1_5_iam_password_policy
+    resource_type: aws_iam_account_password_policy
+    description: "CIS 1.5-1.11 - Ensure IAM password policy meets requirements"
+    severity: error
+    assert:
+      minimum_password_length:
+        gte: 14
+      require_lowercase_characters: true
+      require_uppercase_characters: true
+      require_numbers: true
+      require_symbols: true
+      max_password_age:
+        lte: 90
+      password_reuse_prevention:
+        gte: 24
+    metadata:
+      tags: [cis, iam, password-policy]
+      cis_control: "1.5-1.11"
+      references:
+        - https://www.cisecurity.org/benchmark/amazon_web_services
+
+  - id: cis_1_12_root_access_key
+    resource_type: aws_iam_user
+    description: "CIS 1.12 - Ensure no root access keys exist"
+    severity: error
+    filter:
+      user_name: root
+    assert:
+      # Root user should not exist as IAM user
+      user_name:
+        ne: root
+    metadata:
+      tags: [cis, iam, root-access]
+      cis_control: "1.12"
+      references:
+        - https://www.cisecurity.org/benchmark/amazon_web_services
+
+  - id: cis_1_13_mfa_root_account
+    resource_type: aws_iam_virtual_mfa_device
+    description: "CIS 1.13 - Ensure MFA is enabled for root account"
+    severity: error
+    filter:
+      user_name: root
+    assert:
+      user_name: present
+    metadata:
+      tags: [cis, iam, mfa, root-access]
+      cis_control: "1.13"
+      references:
+        - https://www.cisecurity.org/benchmark/amazon_web_services
+
+  - id: cis_1_14_hardware_mfa_root
+    resource_type: aws_iam_virtual_mfa_device
+    description: "CIS 1.14 - Ensure hardware MFA is enabled for root account"
+    severity: warning
+    filter:
+      user_name: root
+    assert:
+      # This would need custom logic to verify hardware MFA
+      tags.HardwareMFA: present
+    metadata:
+      tags: [cis, iam, mfa, hardware, root-access]
+      cis_control: "1.14"
+      references:
+        - https://www.cisecurity.org/benchmark/amazon_web_services
+
+  - id: cis_1_16_iam_policies_attached_users
+    resource_type: aws_iam_user_policy_attachment
+    description: "CIS 1.16 - Ensure IAM policies are attached only to groups or roles"
+    severity: error
+    assert:
+      # Users should not have policies directly attached
+      policy_arn:
+        regex: "^$"
+    metadata:
+      tags: [cis, iam, policy-attachment]
+      cis_control: "1.16"
+      references:
+        - https://www.cisecurity.org/benchmark/amazon_web_services
+
+  # CIS 2.1 - Storage
+  - id: cis_2_1_1_s3_bucket_public_access
+    resource_type: aws_s3_bucket_public_access_block
+    description: "CIS 2.1.1 - Ensure S3 bucket access is restricted"
+    severity: error
+    assert:
+      block_public_acls: true
+      block_public_policy: true
+      ignore_public_acls: true
+      restrict_public_buckets: true
+    metadata:
+      tags: [cis, s3, public-access]
+      cis_control: "2.1.1"
+      references:
+        - https://www.cisecurity.org/benchmark/amazon_web_services
+
+  - id: cis_2_1_2_s3_bucket_public_read
+    resource_type: aws_s3_bucket_acl
+    description: "CIS 2.1.2 - Ensure S3 bucket is not publicly readable"
+    severity: error
+    assert:
+      acl:
+        regex: "^(?!public-read|public-read-write).*$"
+    metadata:
+      tags: [cis, s3, public-read]
+      cis_control: "2.1.2"
+      references:
+        - https://www.cisecurity.org/benchmark/amazon_web_services
+
+  - id: cis_2_1_3_s3_bucket_public_write
+    resource_type: aws_s3_bucket_acl
+    description: "CIS 2.1.3 - Ensure S3 bucket is not publicly writable"
+    severity: error
+    assert:
+      acl:
+        ne: public-read-write
+    metadata:
+      tags: [cis, s3, public-write]
+      cis_control: "2.1.3"
+      references:
+        - https://www.cisecurity.org/benchmark/amazon_web_services
+
+  - id: cis_2_1_5_s3_bucket_ssl_requests_only
+    resource_type: aws_s3_bucket_policy
+    description: "CIS 2.1.5 - Ensure S3 bucket has SSL requests only policy"
+    severity: error
+    assert:
+      policy:
+        regex: ".*aws:SecureTransport.*false.*Deny.*"
+    metadata:
+      tags: [cis, s3, ssl, encryption-in-transit]
+      cis_control: "2.1.5"
+      references:
+        - https://www.cisecurity.org/benchmark/amazon_web_services
+
+  # CIS 2.2 - Logging
+  - id: cis_2_2_1_cloudtrail_enabled
+    resource_type: aws_cloudtrail
+    description: "CIS 2.2.1 - Ensure CloudTrail is enabled in all regions"
+    severity: error
+    assert:
+      enable_logging: true
+      is_multi_region_trail: true
+      include_global_service_events: true
+    metadata:
+      tags: [cis, cloudtrail, logging]
+      cis_control: "2.2.1"
+      references:
+        - https://www.cisecurity.org/benchmark/amazon_web_services
+
+  - id: cis_2_2_2_cloudtrail_log_file_validation
+    resource_type: aws_cloudtrail
+    description: "CIS 2.2.2 - Ensure CloudTrail log file validation is enabled"
+    severity: error
+    assert:
+      enable_log_file_validation: true
+    metadata:
+      tags: [cis, cloudtrail, log-validation]
+      cis_control: "2.2.2"
+      references:
+        - https://www.cisecurity.org/benchmark/amazon_web_services
+
+  - id: cis_2_2_3_cloudtrail_s3_bucket_not_public
+    resource_type: aws_s3_bucket_public_access_block
+    description: "CIS 2.2.3 - Ensure CloudTrail S3 bucket is not publicly accessible"
+    severity: error
+    filter:
+      # This would need to identify CloudTrail buckets
+      tags.Purpose: cloudtrail
+    assert:
+      block_public_acls: true
+      block_public_policy: true
+      ignore_public_acls: true
+      restrict_public_buckets: true
+    metadata:
+      tags: [cis, cloudtrail, s3, public-access]
+      cis_control: "2.2.3"
+      references:
+        - https://www.cisecurity.org/benchmark/amazon_web_services
+
+  - id: cis_2_2_4_cloudtrail_cloudwatch_integration
+    resource_type: aws_cloudtrail
+    description: "CIS 2.2.4 - Ensure CloudTrail is integrated with CloudWatch Logs"
+    severity: error
+    assert:
+      cloud_watch_logs_group_arn: present
+      cloud_watch_logs_role_arn: present
+    metadata:
+      tags: [cis, cloudtrail, cloudwatch]
+      cis_control: "2.2.4"
+      references:
+        - https://www.cisecurity.org/benchmark/amazon_web_services
+
+  - id: cis_2_2_5_config_enabled
+    resource_type: aws_config_configuration_recorder
+    description: "CIS 2.2.5 - Ensure AWS Config is enabled in all regions"
+    severity: error
+    assert:
+      recording_group.all_supported: true
+      recording_group.include_global_resource_types: true
+    metadata:
+      tags: [cis, config, configuration-management]
+      cis_control: "2.2.5"
+      references:
+        - https://www.cisecurity.org/benchmark/amazon_web_services
+
+  - id: cis_2_2_6_s3_bucket_access_logging
+    resource_type: aws_s3_bucket_logging
+    description: "CIS 2.2.6 - Ensure S3 bucket access logging is enabled"
+    severity: error
+    assert:
+      target_bucket: present
+      target_prefix: present
+    metadata:
+      tags: [cis, s3, access-logging]
+      cis_control: "2.2.6"
+      references:
+        - https://www.cisecurity.org/benchmark/amazon_web_services
+
+  # CIS 2.3 - Monitoring
+  - id: cis_2_3_1_cloudwatch_log_group_retention
+    resource_type: aws_cloudwatch_log_group
+    description: "CIS 2.3.1 - Ensure CloudWatch log group retention is set"
+    severity: warning
+    assert:
+      retention_in_days:
+        gte: 90
+    metadata:
+      tags: [cis, cloudwatch, log-retention]
+      cis_control: "2.3.1"
+      references:
+        - https://www.cisecurity.org/benchmark/amazon_web_services
+
+  # CIS 4.1 - Networking
+  - id: cis_4_1_security_group_ingress_22
+    resource_type: aws_security_group
+    description: "CIS 4.1 - Ensure no security groups allow ingress from 0.0.0.0/0 to port 22"
+    severity: error
+    assert:
+      ingress:
+        subset:
+          - from_port:
+              ne: 22
+            cidr_blocks:
+              contains: "0.0.0.0/0"
+    metadata:
+      tags: [cis, security-groups, ssh]
+      cis_control: "4.1"
+      references:
+        - https://www.cisecurity.org/benchmark/amazon_web_services
+
+  - id: cis_4_2_security_group_ingress_3389
+    resource_type: aws_security_group
+    description: "CIS 4.2 - Ensure no security groups allow ingress from 0.0.0.0/0 to port 3389"
+    severity: error
+    assert:
+      ingress:
+        subset:
+          - from_port:
+              ne: 3389
+            cidr_blocks:
+              contains: "0.0.0.0/0"
+    metadata:
+      tags: [cis, security-groups, rdp]
+      cis_control: "4.2"
+      references:
+        - https://www.cisecurity.org/benchmark/amazon_web_services
+
+  - id: cis_4_3_vpc_flow_logs
+    resource_type: aws_flow_log
+    description: "CIS 4.3 - Ensure VPC flow logging is enabled in all VPCs"
+    severity: error
+    assert:
+      resource_type: VPC
+      traffic_type: ALL
+    metadata:
+      tags: [cis, vpc, flow-logs]
+      cis_control: "4.3"
+      references:
+        - https://www.cisecurity.org/benchmark/amazon_web_services
+
+  - id: cis_4_4_default_security_group
+    resource_type: aws_default_security_group
+    description: "CIS 4.4 - Ensure default security group restricts all traffic"
+    severity: error
+    assert:
+      ingress:
+        length:
+          eq: 0
+      egress:
+        length:
+          eq: 0
+    metadata:
+      tags: [cis, security-groups, default]
+      cis_control: "4.4"
+      references:
+        - https://www.cisecurity.org/benchmark/amazon_web_services

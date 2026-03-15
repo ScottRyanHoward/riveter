@@ -1,0 +1,302 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_bump:
+        description: "Version bump type"
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+permissions:
+  contents: write
+
+# ---------------------------------------------------------------------------
+# Job 1: Bump version, commit, tag, create draft release
+# ---------------------------------------------------------------------------
+jobs:
+  prepare:
+    name: Prepare release
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.bump.outputs.version }}
+      tag: ${{ steps.bump.outputs.tag }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compute new version
+        id: bump
+        run: |
+          # Read __version__ from _version.py
+          CURRENT=$(python -c "
+          with open('src/riveter/_version.py') as f:
+              for line in f:
+                  if line.startswith('__version__'):
+                      print(line.split('=')[1].strip().strip('\"'))
+          ")
+          echo "Current version: ${CURRENT}"
+
+          IFS='.' read -r MAJOR MINOR PATCH <<< "${CURRENT}"
+          case "${{ github.event.inputs.version_bump }}" in
+            major) NEW="${MAJOR+1}.0.0" ; MAJOR=$((MAJOR+1)) ; NEW="${MAJOR}.0.0" ;;
+            minor) NEW="${MAJOR}.$((MINOR+1)).0" ;;
+            patch) NEW="${MAJOR}.${MINOR}.$((PATCH+1))" ;;
+          esac
+
+          echo "version=${NEW}" >> "$GITHUB_OUTPUT"
+          echo "tag=v${NEW}"   >> "$GITHUB_OUTPUT"
+          echo "New version: ${NEW}"
+
+      - name: Update _version.py
+        run: |
+          VERSION="${{ steps.bump.outputs.version }}"
+          cat > src/riveter/_version.py << EOF
+          __version__ = "${VERSION}"
+
+
+          def get_version() -> str:
+              return __version__
+          EOF
+
+      - name: Update pyproject.toml
+        run: |
+          VERSION="${{ steps.bump.outputs.version }}"
+          sed -i "s/^version = .*/version = \"${VERSION}\"/" pyproject.toml
+
+      - name: Update CHANGELOG
+        run: |
+          VERSION="${{ steps.bump.outputs.version }}"
+          DATE=$(date +%Y-%m-%d)
+          # Insert new entry after the first line (the title)
+          python3 - << 'PYEOF'
+          import re, os, sys
+          version = os.environ['VERSION']
+          date    = os.environ['DATE']
+          with open('CHANGELOG.md') as f:
+              content = f.read()
+          entry = f"\n## [{version}] - {date}\n\n### Added\n- Release v{version}\n"
+          # Insert after first heading line
+          lines = content.split('\n', 2)
+          new_content = lines[0] + '\n' + entry + ('\n'.join(lines[1:]) if len(lines) > 1 else '')
+          with open('CHANGELOG.md', 'w') as f:
+              f.write(new_content)
+          PYEOF
+        env:
+          VERSION: ${{ steps.bump.outputs.version }}
+          DATE: $(date +%Y-%m-%d)
+
+      - name: Commit and push
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add src/riveter/_version.py pyproject.toml CHANGELOG.md
+          git commit -m "chore: release v${{ steps.bump.outputs.version }}"
+          git push origin main
+
+      - name: Create and push tag
+        run: |
+          git tag "${{ steps.bump.outputs.tag }}"
+          git push origin "${{ steps.bump.outputs.tag }}"
+
+      - name: Create draft GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ steps.bump.outputs.tag }}" \
+            --title "v${{ steps.bump.outputs.version }}" \
+            --notes "## What's Changed\n\nSee [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details." \
+            --draft
+
+# ---------------------------------------------------------------------------
+# Job 2 (matrix): Build standalone binaries with PyInstaller
+# ---------------------------------------------------------------------------
+  build:
+    name: Build binary (${{ matrix.name }})
+    needs: prepare
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-14      # Apple Silicon
+            name: macos-arm64
+          - os: macos-13      # Intel
+            name: macos-intel
+          - os: ubuntu-latest
+            name: linux-x86_64
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.tag }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -e ".[dev]"
+
+      - name: Build binary
+        run: python build_binary.py
+
+      - name: Package binary
+        run: |
+          VERSION="${{ needs.prepare.outputs.version }}"
+          ARTIFACT="riveter-${VERSION}-${{ matrix.name }}.tar.gz"
+          cd dist
+          tar -czf "../${ARTIFACT}" riveter
+          cd ..
+          echo "ARTIFACT=${ARTIFACT}" >> "$GITHUB_ENV"
+
+      - name: Upload binary to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ needs.prepare.outputs.tag }}" "${{ env.ARTIFACT }}"
+
+# ---------------------------------------------------------------------------
+# Job 3: Update Homebrew tap formula and publish the release
+# ---------------------------------------------------------------------------
+  update-homebrew:
+    name: Update Homebrew formula
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out homebrew-riveter tap
+        uses: actions/checkout@v4
+        with:
+          repository: ScottRyanHoward/homebrew-riveter
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          path: homebrew-riveter
+
+      - name: Download release assets and compute SHA256
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ needs.prepare.outputs.version }}"
+          TAG="${{ needs.prepare.outputs.tag }}"
+
+          gh release download "${TAG}" \
+            --repo "${{ github.repository }}" \
+            --pattern "*.tar.gz"
+
+          ARM64_SHA=$(sha256sum "riveter-${VERSION}-macos-arm64.tar.gz" | awk '{print $1}')
+          INTEL_SHA=$(sha256sum "riveter-${VERSION}-macos-intel.tar.gz" | awk '{print $1}')
+          LINUX_SHA=$(sha256sum "riveter-${VERSION}-linux-x86_64.tar.gz" | awk '{print $1}')
+
+          # Source tarball (for rule_packs resource)
+          curl -fsSL "https://github.com/${{ github.repository }}/archive/${TAG}.tar.gz" \
+            -o source.tar.gz
+          SOURCE_SHA=$(sha256sum source.tar.gz | awk '{print $1}')
+
+          {
+            echo "ARM64_SHA=${ARM64_SHA}"
+            echo "INTEL_SHA=${INTEL_SHA}"
+            echo "LINUX_SHA=${LINUX_SHA}"
+            echo "SOURCE_SHA=${SOURCE_SHA}"
+          } >> "$GITHUB_ENV"
+
+      - name: Write updated formula
+        run: |
+          VERSION="${{ needs.prepare.outputs.version }}"
+          TAG="${{ needs.prepare.outputs.tag }}"
+          REPO="${{ github.repository }}"
+
+          python3 - << PYEOF
+          import os
+          version     = os.environ["VERSION"]
+          tag         = os.environ["TAG"]
+          repo        = os.environ["REPO"]
+          arm64_sha   = os.environ["ARM64_SHA"]
+          intel_sha   = os.environ["INTEL_SHA"]
+          linux_sha   = os.environ["LINUX_SHA"]
+          source_sha  = os.environ["SOURCE_SHA"]
+
+          formula = f"""class Riveter < Formula
+            desc "Infrastructure Rule Enforcement as Code for Terraform configurations"
+            homepage "https://github.com/{repo}"
+            version "{version}"
+            license "MIT"
+
+            if OS.mac? && Hardware::CPU.arm?
+              url "https://github.com/{repo}/releases/download/{tag}/riveter-{version}-macos-arm64.tar.gz"
+              sha256 "{arm64_sha}"
+            elsif OS.mac? && Hardware::CPU.intel?
+              url "https://github.com/{repo}/releases/download/{tag}/riveter-{version}-macos-intel.tar.gz"
+              sha256 "{intel_sha}"
+            elsif OS.linux?
+              url "https://github.com/{repo}/releases/download/{tag}/riveter-{version}-linux-x86_64.tar.gz"
+              sha256 "{linux_sha}"
+            end
+
+            resource "rule_packs" do
+              url "https://github.com/{repo}/archive/{tag}.tar.gz"
+              sha256 "{source_sha}"
+            end
+
+            def install
+              bin.install "riveter"
+
+              resource("rule_packs").stage do
+                (share/"riveter/rule_packs").install Dir["rule_packs/*.yml"]
+              end
+            end
+
+            def caveats
+              <<~EOS
+                Rule packs are installed to:
+                  \#{{share}}/riveter/rule_packs/
+
+                Usage:
+                  riveter scan -p aws-security -t main.tf
+                  riveter list-rule-packs
+                  riveter scan -r custom-rules.yml -t main.tf
+              EOS
+            end
+
+            test do
+              assert_match version.to_s, shell_output("\#{{bin}}/riveter --version")
+              assert_match "Infrastructure Rule Enforcement", shell_output("\#{{bin}}/riveter --help")
+              assert_predicate share/"riveter/rule_packs/aws-security.yml", :exist?
+            end
+          end
+          """
+
+          with open("homebrew-riveter/Formula/riveter.rb", "w") as f:
+              f.write(formula)
+          print("Formula written.")
+          PYEOF
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+          TAG: ${{ needs.prepare.outputs.tag }}
+
+      - name: Commit and push formula
+        run: |
+          cd homebrew-riveter
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/riveter.rb
+          git commit -m "riveter ${{ needs.prepare.outputs.version }}"
+          git push
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release edit "${{ needs.prepare.outputs.tag }}" \
+            --repo "${{ github.repository }}" \
+            --draft=false

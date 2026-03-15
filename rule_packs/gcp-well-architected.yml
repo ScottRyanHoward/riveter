@@ -1,0 +1,410 @@
+metadata:
+  name: gcp-well-architected
+  version: 1.0.0
+  description: GCP Well-Architected Framework Rule Pack covering all 5 pillars
+  author: Riveter Team
+  created: 2025-10-27
+  updated: 2025-10-27
+  dependencies: []
+  tags: [well-architected, gcp, best-practices, architecture]
+  min_riveter_version: 0.1.0
+
+rules:
+  # Operational Excellence Pillar (5-7 rules)
+  - id: gcp_wa_opex_monitoring_enabled
+    resource_type: google_compute_instance
+    description: "WAF Operational Excellence - Instances should have monitoring enabled"
+    severity: warning
+    assert:
+      labels.monitoring: present
+    metadata:
+      tags: [gcp, well-architected, operational-excellence, monitoring]
+      pillar: Operational Excellence
+      references:
+        - https://cloud.google.com/architecture/framework/operational-excellence
+
+  - id: gcp_wa_opex_logging_enabled
+    resource_type: google_logging_project_sink
+    description: "WAF Operational Excellence - Project sinks should be configured"
+    severity: warning
+    assert:
+      destination: present
+    metadata:
+      tags: [gcp, well-architected, operational-excellence, logging]
+      pillar: Operational Excellence
+      references:
+        - https://cloud.google.com/architecture/framework/operational-excellence
+
+  - id: gcp_wa_opex_error_reporting
+    resource_type: google_project_service
+    description: "WAF Operational Excellence - Error Reporting should be enabled"
+    severity: info
+    filter:
+      service: errorreporting.googleapis.com
+    assert:
+      service: present
+    metadata:
+      tags: [gcp, well-architected, operational-excellence, error-reporting]
+      pillar: Operational Excellence
+      references:
+        - https://cloud.google.com/architecture/framework/operational-excellence
+
+  - id: gcp_wa_opex_resource_labels
+    resource_type: google_compute_instance
+    description: "WAF Operational Excellence - Resources should have operational labels"
+    severity: warning
+    assert:
+      labels.environment: present
+      labels.owner: present
+      labels.application: present
+    metadata:
+      tags: [gcp, well-architected, operational-excellence, labeling]
+      pillar: Operational Excellence
+      references:
+        - https://cloud.google.com/architecture/framework/operational-excellence
+
+  - id: gcp_wa_opex_uptime_checks
+    resource_type: google_monitoring_uptime_check_config
+    description: "WAF Operational Excellence - Uptime checks should be configured"
+    severity: info
+    assert:
+      monitored_resource: present
+    metadata:
+      tags: [gcp, well-architected, operational-excellence, monitoring]
+      pillar: Operational Excellence
+      references:
+        - https://cloud.google.com/architecture/framework/operational-excellence
+
+  - id: gcp_wa_opex_alert_policies
+    resource_type: google_monitoring_alert_policy
+    description: "WAF Operational Excellence - Alert policies should be configured"
+    severity: warning
+    assert:
+      enabled: true
+      notification_channels:
+        length:
+          gte: 1
+    metadata:
+      tags: [gcp, well-architected, operational-excellence, alerting]
+      pillar: Operational Excellence
+      references:
+        - https://cloud.google.com/architecture/framework/operational-excellence
+
+  # Security Pillar (5-7 rules)
+  - id: gcp_wa_security_command_center
+    resource_type: google_project_service
+    description: "WAF Security - Security Command Center should be enabled"
+    severity: error
+    filter:
+      service: securitycenter.googleapis.com
+    assert:
+      service: present
+    metadata:
+      tags: [gcp, well-architected, security, threat-detection]
+      pillar: Security
+      references:
+        - https://cloud.google.com/architecture/framework/security
+
+  - id: gcp_wa_security_vpc_service_controls
+    resource_type: google_access_context_manager_service_perimeter
+    description: "WAF Security - VPC Service Controls should be configured"
+    severity: warning
+    assert:
+      name: present
+    metadata:
+      tags: [gcp, well-architected, security, network]
+      pillar: Security
+      references:
+        - https://cloud.google.com/architecture/framework/security
+
+  - id: gcp_wa_security_binary_authorization
+    resource_type: google_binary_authorization_policy
+    description: "WAF Security - Binary Authorization should be configured for GKE"
+    severity: warning
+    assert:
+      admission_whitelist_patterns:
+        length:
+          gte: 0
+    metadata:
+      tags: [gcp, well-architected, security, containers]
+      pillar: Security
+      references:
+        - https://cloud.google.com/architecture/framework/security
+
+  - id: gcp_wa_security_kms_rotation
+    resource_type: google_kms_crypto_key
+    description: "WAF Security - KMS keys should have rotation enabled"
+    severity: warning
+    assert:
+      rotation_period: present
+    metadata:
+      tags: [gcp, well-architected, security, encryption]
+      pillar: Security
+      references:
+        - https://cloud.google.com/architecture/framework/security
+
+  - id: gcp_wa_security_service_account_keys
+    resource_type: google_service_account_key
+    description: "WAF Security - Service account keys should be managed carefully"
+    severity: warning
+    assert:
+      key_algorithm: present
+    metadata:
+      tags: [gcp, well-architected, security, identity]
+      pillar: Security
+      references:
+        - https://cloud.google.com/architecture/framework/security
+
+  - id: gcp_wa_security_private_google_access
+    resource_type: google_compute_subnetwork
+    description: "WAF Security - Subnets should have Private Google Access enabled"
+    severity: warning
+    assert:
+      private_ip_google_access: true
+    metadata:
+      tags: [gcp, well-architected, security, network]
+      pillar: Security
+      references:
+        - https://cloud.google.com/architecture/framework/security
+
+  # Reliability Pillar (5-7 rules)
+  - id: gcp_wa_reliability_regional_resources
+    resource_type: google_compute_instance
+    description: "WAF Reliability - Production instances should be in managed instance groups"
+    severity: warning
+    filter:
+      labels.environment: production
+    assert:
+      labels.instance_group: present
+    metadata:
+      tags: [gcp, well-architected, reliability, compute]
+      pillar: Reliability
+      references:
+        - https://cloud.google.com/architecture/framework/reliability
+
+  - id: gcp_wa_reliability_health_checks
+    resource_type: google_compute_health_check
+    description: "WAF Reliability - Health checks should be configured"
+    severity: error
+    assert:
+      check_interval_sec: present
+      timeout_sec: present
+    metadata:
+      tags: [gcp, well-architected, reliability, load-balancing]
+      pillar: Reliability
+      references:
+        - https://cloud.google.com/architecture/framework/reliability
+
+  - id: gcp_wa_reliability_sql_ha
+    resource_type: google_sql_database_instance
+    description: "WAF Reliability - Production SQL instances should have high availability"
+    severity: error
+    filter:
+      settings.user_labels.environment: production
+    assert:
+      settings.availability_type: REGIONAL
+    metadata:
+      tags: [gcp, well-architected, reliability, database]
+      pillar: Reliability
+      references:
+        - https://cloud.google.com/architecture/framework/reliability
+
+  - id: gcp_wa_reliability_backup_configuration
+    resource_type: google_sql_database_instance
+    description: "WAF Reliability - SQL instances should have backup configuration"
+    severity: warning
+    assert:
+      settings.backup_configuration.enabled: true
+    metadata:
+      tags: [gcp, well-architected, reliability, backup]
+      pillar: Reliability
+      references:
+        - https://cloud.google.com/architecture/framework/reliability
+
+  - id: gcp_wa_reliability_autoscaling
+    resource_type: google_compute_autoscaler
+    description: "WAF Reliability - Autoscaling should be configured"
+    severity: info
+    assert:
+      autoscaling_policy: present
+    metadata:
+      tags: [gcp, well-architected, reliability, autoscaling]
+      pillar: Reliability
+      references:
+        - https://cloud.google.com/architecture/framework/reliability
+
+  - id: gcp_wa_reliability_load_balancer
+    resource_type: google_compute_backend_service
+    description: "WAF Reliability - Backend services should have health checks"
+    severity: error
+    assert:
+      health_checks:
+        length:
+          gte: 1
+    metadata:
+      tags: [gcp, well-architected, reliability, load-balancing]
+      pillar: Reliability
+      references:
+        - https://cloud.google.com/architecture/framework/reliability
+
+  # Performance Pillar (5-7 rules)
+  - id: gcp_wa_performance_cdn_enabled
+    resource_type: google_compute_backend_service
+    description: "WAF Performance - Backend services should have CDN enabled"
+    severity: info
+    assert:
+      enable_cdn: true
+    metadata:
+      tags: [gcp, well-architected, performance, cdn]
+      pillar: Performance
+      references:
+        - https://cloud.google.com/architecture/framework/performance
+
+  - id: gcp_wa_performance_memorystore
+    resource_type: google_redis_instance
+    description: "WAF Performance - Memorystore should be used for caching"
+    severity: info
+    assert:
+      memory_size_gb:
+        gte: 1
+    metadata:
+      tags: [gcp, well-architected, performance, caching]
+      pillar: Performance
+      references:
+        - https://cloud.google.com/architecture/framework/performance
+
+  - id: gcp_wa_performance_ssd_disks
+    resource_type: google_compute_disk
+    description: "WAF Performance - Production disks should use SSD"
+    severity: warning
+    filter:
+      labels.environment: production
+    assert:
+      type:
+        regex: ".*-ssd$"
+    metadata:
+      tags: [gcp, well-architected, performance, storage]
+      pillar: Performance
+      references:
+        - https://cloud.google.com/architecture/framework/performance
+
+  - id: gcp_wa_performance_machine_types
+    resource_type: google_compute_instance
+    description: "WAF Performance - Instances should use current generation machine types"
+    severity: info
+    assert:
+      machine_type:
+        regex: ".*(n2|n2d|c2|c2d|m1|m2|e2)-.*"
+    metadata:
+      tags: [gcp, well-architected, performance, compute]
+      pillar: Performance
+      references:
+        - https://cloud.google.com/architecture/framework/performance
+
+  - id: gcp_wa_performance_sql_machine_type
+    resource_type: google_sql_database_instance
+    description: "WAF Performance - SQL instances should use appropriate machine types"
+    severity: info
+    assert:
+      settings.tier:
+        regex: "^db-(n1|custom)-.*"
+    metadata:
+      tags: [gcp, well-architected, performance, database]
+      pillar: Performance
+      references:
+        - https://cloud.google.com/architecture/framework/performance
+
+  - id: gcp_wa_performance_cloud_functions
+    resource_type: google_cloudfunctions_function
+    description: "WAF Performance - Cloud Functions should have appropriate memory"
+    severity: info
+    assert:
+      available_memory_mb:
+        gte: 256
+    metadata:
+      tags: [gcp, well-architected, performance, serverless]
+      pillar: Performance
+      references:
+        - https://cloud.google.com/architecture/framework/performance
+
+  # Cost Optimization Pillar (5-7 rules)
+  - id: gcp_wa_cost_resource_labels
+    resource_type: google_compute_instance
+    description: "WAF Cost Optimization - Resources should have cost allocation labels"
+    severity: warning
+    assert:
+      labels.cost_center: present
+      labels.project: present
+    metadata:
+      tags: [gcp, well-architected, cost-optimization, labeling]
+      pillar: Cost Optimization
+      references:
+        - https://cloud.google.com/architecture/framework/cost-optimization
+
+  - id: gcp_wa_cost_committed_use
+    resource_type: google_compute_instance
+    description: "WAF Cost Optimization - Production instances should consider committed use"
+    severity: info
+    filter:
+      labels.environment: production
+    assert:
+      labels.committed_use: present
+    metadata:
+      tags: [gcp, well-architected, cost-optimization, compute]
+      pillar: Cost Optimization
+      references:
+        - https://cloud.google.com/architecture/framework/cost-optimization
+
+  - id: gcp_wa_cost_preemptible_vms
+    resource_type: google_compute_instance
+    description: "WAF Cost Optimization - Non-production workloads should consider preemptible VMs"
+    severity: info
+    filter:
+      labels.environment: development
+    assert:
+      scheduling.preemptible: true
+    metadata:
+      tags: [gcp, well-architected, cost-optimization, compute]
+      pillar: Cost Optimization
+      references:
+        - https://cloud.google.com/architecture/framework/cost-optimization
+
+  - id: gcp_wa_cost_storage_class
+    resource_type: google_storage_bucket
+    description: "WAF Cost Optimization - Storage buckets should use appropriate storage classes"
+    severity: info
+    assert:
+      storage_class:
+        regex: "^(STANDARD|NEARLINE|COLDLINE|ARCHIVE)$"
+    metadata:
+      tags: [gcp, well-architected, cost-optimization, storage]
+      pillar: Cost Optimization
+      references:
+        - https://cloud.google.com/architecture/framework/cost-optimization
+
+  - id: gcp_wa_cost_lifecycle_rules
+    resource_type: google_storage_bucket
+    description: "WAF Cost Optimization - Storage buckets should have lifecycle rules"
+    severity: warning
+    assert:
+      lifecycle_rule:
+        length:
+          gte: 1
+    metadata:
+      tags: [gcp, well-architected, cost-optimization, storage]
+      pillar: Cost Optimization
+      references:
+        - https://cloud.google.com/architecture/framework/cost-optimization
+
+  - id: gcp_wa_cost_right_sizing
+    resource_type: google_compute_instance
+    description: "WAF Cost Optimization - Instances should be right-sized"
+    severity: info
+    assert:
+      machine_type:
+        regex: ".*(e2|n2|n2d)-(standard|highmem|highcpu)-(2|4|8)$"
+    metadata:
+      tags: [gcp, well-architected, cost-optimization, compute]
+      pillar: Cost Optimization
+      references:
+        - https://cloud.google.com/architecture/framework/cost-optimization

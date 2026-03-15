@@ -1,0 +1,369 @@
+metadata:
+  name: azure-security
+  version: 1.0.0
+  description: Azure Security Best Practices Rule Pack
+  author: Riveter Team
+  created: 2024-10-27
+  updated: 2024-10-27
+  dependencies: []
+  tags: [security, azure, best-practices]
+  min_riveter_version: 0.1.0
+
+rules:
+  # ============================================================================
+  # Virtual Machines Security Rules
+  # ============================================================================
+
+  - id: azure_vm_managed_disks
+    resource_type: azurerm_virtual_machine
+    description: Virtual machines should use managed disks
+    severity: error
+    assert:
+      storage_os_disk.managed_disk_type: present
+    metadata:
+      tags: [azure, vm, storage]
+      references:
+        - https://docs.microsoft.com/en-us/azure/virtual-machines/managed-disks-overview
+
+  - id: azure_vm_encryption_at_host
+    resource_type: azurerm_linux_virtual_machine
+    description: Virtual machines should have encryption at host enabled
+    severity: warning
+    assert:
+      encryption_at_host_enabled: true
+    metadata:
+      tags: [azure, vm, encryption]
+      references:
+        - https://docs.microsoft.com/en-us/azure/virtual-machines/disk-encryption
+
+  - id: azure_vm_boot_diagnostics
+    resource_type: azurerm_linux_virtual_machine
+    description: Virtual machines should have boot diagnostics enabled
+    severity: warning
+    assert:
+      boot_diagnostics: present
+    metadata:
+      tags: [azure, vm, diagnostics]
+      references:
+        - https://docs.microsoft.com/en-us/azure/virtual-machines/boot-diagnostics
+
+  - id: azure_vm_required_tags
+    resource_type: azurerm_linux_virtual_machine
+    description: Virtual machines must have required tags
+    severity: error
+    assert:
+      tags.Environment: present
+      tags.Owner: present
+      tags.CostCenter: present
+    metadata:
+      tags: [azure, vm, governance]
+      references:
+        - https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/tag-resources
+
+  - id: azure_vm_no_public_ip_prod
+    resource_type: azurerm_network_interface
+    description: Production VMs should not have public IP addresses
+    severity: error
+    filter:
+      tags.Environment: production
+    assert:
+      ip_configuration.public_ip_address_id:
+        regex: "^$"
+    metadata:
+      tags: [azure, vm, network-security]
+      references:
+        - https://docs.microsoft.com/en-us/azure/virtual-network/ip-services/public-ip-addresses
+
+  - id: azure_vm_disk_encryption
+    resource_type: azurerm_managed_disk
+    description: Managed disks should have encryption enabled
+    severity: error
+    assert:
+      encryption_settings.enabled: true
+    metadata:
+      tags: [azure, vm, disk-encryption]
+      references:
+        - https://docs.microsoft.com/en-us/azure/virtual-machines/disk-encryption
+
+  # ============================================================================
+  # Storage Accounts Security Rules
+  # ============================================================================
+
+  - id: azure_storage_secure_transfer
+    resource_type: azurerm_storage_account
+    description: Storage accounts must require secure transfer (HTTPS)
+    severity: error
+    assert:
+      enable_https_traffic_only: true
+    metadata:
+      tags: [azure, storage, encryption-in-transit]
+      references:
+        - https://docs.microsoft.com/en-us/azure/storage/common/storage-require-secure-transfer
+
+  - id: azure_storage_min_tls_version
+    resource_type: azurerm_storage_account
+    description: Storage accounts should use minimum TLS version 1.2
+    severity: error
+    assert:
+      min_tls_version: TLS1_2
+    metadata:
+      tags: [azure, storage, tls]
+      references:
+        - https://docs.microsoft.com/en-us/azure/storage/common/transport-layer-security-configure-minimum-version
+
+  - id: azure_storage_public_access_disabled
+    resource_type: azurerm_storage_account
+    description: Storage accounts should disable public blob access
+    severity: error
+    assert:
+      allow_blob_public_access: false
+    metadata:
+      tags: [azure, storage, public-access]
+      references:
+        - https://docs.microsoft.com/en-us/azure/storage/blobs/anonymous-read-access-prevent
+
+  - id: azure_storage_network_rules
+    resource_type: azurerm_storage_account
+    description: Storage accounts should have network rules configured
+    severity: warning
+    assert:
+      network_rules: present
+    metadata:
+      tags: [azure, storage, network-security]
+      references:
+        - https://docs.microsoft.com/en-us/azure/storage/common/storage-network-security
+
+  - id: azure_storage_encryption_cmk
+    resource_type: azurerm_storage_account
+    description: Storage accounts should use customer-managed keys for encryption
+    severity: warning
+    assert:
+      customer_managed_key: present
+    metadata:
+      tags: [azure, storage, encryption, cmk]
+      references:
+        - https://docs.microsoft.com/en-us/azure/storage/common/customer-managed-keys-overview
+
+  - id: azure_storage_blob_versioning
+    resource_type: azurerm_storage_account
+    description: Storage accounts should have blob versioning enabled
+    severity: info
+    assert:
+      blob_properties.versioning_enabled: true
+    metadata:
+      tags: [azure, storage, versioning]
+      references:
+        - https://docs.microsoft.com/en-us/azure/storage/blobs/versioning-overview
+
+  # ============================================================================
+  # SQL Databases Security Rules
+  # ============================================================================
+
+  - id: azure_sql_auditing_enabled
+    resource_type: azurerm_mssql_server
+    description: SQL servers must have auditing enabled
+    severity: error
+    assert:
+      extended_auditing_policy.enabled: true
+    metadata:
+      tags: [azure, sql, auditing]
+      references:
+        - https://docs.microsoft.com/en-us/azure/azure-sql/database/auditing-overview
+
+  - id: azure_sql_threat_detection
+    resource_type: azurerm_mssql_server_security_alert_policy
+    description: SQL servers should have threat detection enabled
+    severity: error
+    assert:
+      state: Enabled
+    metadata:
+      tags: [azure, sql, threat-detection]
+      references:
+        - https://docs.microsoft.com/en-us/azure/azure-sql/database/threat-detection-overview
+
+  - id: azure_sql_tde_enabled
+    resource_type: azurerm_mssql_database
+    description: SQL databases should have Transparent Data Encryption enabled
+    severity: error
+    assert:
+      transparent_data_encryption_enabled: true
+    metadata:
+      tags: [azure, sql, encryption]
+      references:
+        - https://docs.microsoft.com/en-us/azure/azure-sql/database/transparent-data-encryption-tde-overview
+
+  - id: azure_sql_min_tls_version
+    resource_type: azurerm_mssql_server
+    description: SQL servers should use minimum TLS version 1.2
+    severity: error
+    assert:
+      minimum_tls_version: "1.2"
+    metadata:
+      tags: [azure, sql, tls]
+      references:
+        - https://docs.microsoft.com/en-us/azure/azure-sql/database/connectivity-settings
+
+  - id: azure_sql_public_network_access
+    resource_type: azurerm_mssql_server
+    description: SQL servers should disable public network access
+    severity: error
+    assert:
+      public_network_access_enabled: false
+    metadata:
+      tags: [azure, sql, network-security]
+      references:
+        - https://docs.microsoft.com/en-us/azure/azure-sql/database/connectivity-settings
+
+  # ============================================================================
+  # Network Security Groups Rules
+  # ============================================================================
+
+  - id: azure_nsg_no_rdp_from_internet
+    resource_type: azurerm_network_security_rule
+    description: Network security rules should not allow RDP from the internet
+    severity: error
+    filter:
+      direction: Inbound
+      access: Allow
+    assert:
+      destination_port_range:
+        ne: "3389"
+      source_address_prefix:
+        ne: "*"
+    metadata:
+      tags: [azure, nsg, rdp]
+      references:
+        - https://docs.microsoft.com/en-us/azure/virtual-network/network-security-groups-overview
+
+  - id: azure_nsg_no_ssh_from_internet
+    resource_type: azurerm_network_security_rule
+    description: Network security rules should not allow SSH from the internet
+    severity: error
+    filter:
+      direction: Inbound
+      access: Allow
+    assert:
+      destination_port_range:
+        ne: "22"
+      source_address_prefix:
+        ne: "*"
+    metadata:
+      tags: [azure, nsg, ssh]
+      references:
+        - https://docs.microsoft.com/en-us/azure/virtual-network/network-security-groups-overview
+
+  - id: azure_nsg_flow_logs_enabled
+    resource_type: azurerm_network_watcher_flow_log
+    description: Network security groups should have flow logs enabled
+    severity: warning
+    assert:
+      enabled: true
+    metadata:
+      tags: [azure, nsg, flow-logs]
+      references:
+        - https://docs.microsoft.com/en-us/azure/network-watcher/network-watcher-nsg-flow-logging-overview
+
+  - id: azure_nsg_deny_all_inbound
+    resource_type: azurerm_network_security_group
+    description: Network security groups should have explicit deny all inbound rule
+    severity: info
+    assert:
+      security_rule:
+        subset:
+          - name: DenyAllInbound
+            priority:
+              gte: 4000
+            direction: Inbound
+            access: Deny
+    metadata:
+      tags: [azure, nsg, default-deny]
+      references:
+        - https://docs.microsoft.com/en-us/azure/virtual-network/network-security-groups-overview
+
+  # ============================================================================
+  # Key Vault Security Rules
+  # ============================================================================
+
+  - id: azure_keyvault_purge_protection
+    resource_type: azurerm_key_vault
+    description: Key vaults should have purge protection enabled
+    severity: error
+    assert:
+      purge_protection_enabled: true
+    metadata:
+      tags: [azure, keyvault, data-protection]
+      references:
+        - https://docs.microsoft.com/en-us/azure/key-vault/general/soft-delete-overview
+
+  - id: azure_keyvault_soft_delete
+    resource_type: azurerm_key_vault
+    description: Key vaults should have soft delete enabled
+    severity: error
+    assert:
+      soft_delete_retention_days:
+        gte: 7
+    metadata:
+      tags: [azure, keyvault, soft-delete]
+      references:
+        - https://docs.microsoft.com/en-us/azure/key-vault/general/soft-delete-overview
+
+  - id: azure_keyvault_network_acls
+    resource_type: azurerm_key_vault
+    description: Key vaults should have network ACLs configured
+    severity: warning
+    assert:
+      network_acls.default_action: Deny
+    metadata:
+      tags: [azure, keyvault, network-security]
+      references:
+        - https://docs.microsoft.com/en-us/azure/key-vault/general/network-security
+
+  - id: azure_keyvault_rbac_authorization
+    resource_type: azurerm_key_vault
+    description: Key vaults should use RBAC for authorization
+    severity: warning
+    assert:
+      enable_rbac_authorization: true
+    metadata:
+      tags: [azure, keyvault, rbac]
+      references:
+        - https://docs.microsoft.com/en-us/azure/key-vault/general/rbac-guide
+
+  # ============================================================================
+  # Azure AD/IAM Security Rules
+  # ============================================================================
+
+  - id: azure_role_assignment_no_wildcard
+    resource_type: azurerm_role_assignment
+    description: Role assignments should not use wildcard permissions
+    severity: error
+    assert:
+      role_definition_name:
+        regex: "^(?!.*\\*).*$"
+    metadata:
+      tags: [azure, iam, rbac]
+      references:
+        - https://docs.microsoft.com/en-us/azure/role-based-access-control/overview
+
+  - id: azure_custom_role_least_privilege
+    resource_type: azurerm_role_definition
+    description: Custom roles should follow least privilege principle
+    severity: warning
+    assert:
+      permissions.actions:
+        regex: "^(?!.*\\*).*$"
+    metadata:
+      tags: [azure, iam, custom-roles, least-privilege]
+      references:
+        - https://docs.microsoft.com/en-us/azure/role-based-access-control/custom-roles
+
+  - id: azure_managed_identity_preferred
+    resource_type: azurerm_linux_virtual_machine
+    description: Virtual machines should use managed identities
+    severity: info
+    assert:
+      identity: present
+    metadata:
+      tags: [azure, iam, managed-identity]
+      references:
+        - https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview

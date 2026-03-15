@@ -1,0 +1,340 @@
+metadata:
+  name: aws-security
+  version: 1.0.0
+  description: AWS Security Best Practices Rule Pack
+  author: Riveter Team
+  created: 2024-10-22
+  updated: 2024-10-22
+  dependencies: []
+  tags: [security, aws, best-practices]
+  min_riveter_version: 0.1.0
+
+rules:
+  # EC2 Security Rules
+  - id: ec2_no_public_ip
+    resource_type: aws_instance
+    description: EC2 instances should not have public IP addresses in production
+    severity: error
+    filter:
+      tags.Environment: production
+    assert:
+      associate_public_ip_address: false
+    metadata:
+      tags: [ec2, network-security]
+      references:
+        - https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing.html
+
+  - id: ec2_encrypted_ebs_volumes
+    resource_type: aws_instance
+    description: EC2 instances should use encrypted EBS volumes
+    severity: error
+    assert:
+      root_block_device.encrypted: true
+    metadata:
+      tags: [ec2, encryption]
+      references:
+        - https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSEncryption.html
+
+  - id: ec2_approved_instance_types
+    resource_type: aws_instance
+    description: EC2 instances should use approved instance types
+    severity: warning
+    assert:
+      instance_type:
+        regex: "^(t3|t4g|m5|m6i|c5|c6i|r5|r6i)\\.(large|xlarge|2xlarge)$"
+    metadata:
+      tags: [ec2, cost-optimization]
+      references:
+        - https://aws.amazon.com/ec2/instance-types/
+
+  - id: ec2_required_tags
+    resource_type: aws_instance
+    description: EC2 instances must have required tags
+    severity: error
+    assert:
+      tags.Environment: present
+      tags.Owner: present
+      tags.Project: present
+    metadata:
+      tags: [ec2, governance]
+      references:
+        - https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html
+
+  # S3 Security Rules
+  - id: s3_bucket_encryption
+    resource_type: aws_s3_bucket
+    description: S3 buckets must have server-side encryption enabled
+    severity: error
+    assert:
+      server_side_encryption_configuration: present
+    metadata:
+      tags: [s3, encryption]
+      references:
+        - https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucket-encryption.html
+
+  - id: s3_bucket_public_access_block
+    resource_type: aws_s3_bucket_public_access_block
+    description: S3 buckets should block all public access
+    severity: error
+    assert:
+      block_public_acls: true
+      block_public_policy: true
+      ignore_public_acls: true
+      restrict_public_buckets: true
+    metadata:
+      tags: [s3, access-control]
+      references:
+        - https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html
+
+  - id: s3_bucket_versioning
+    resource_type: aws_s3_bucket_versioning
+    description: S3 buckets should have versioning enabled
+    severity: warning
+    assert:
+      versioning_configuration.status: Enabled
+    metadata:
+      tags: [s3, data-protection]
+      references:
+        - https://docs.aws.amazon.com/AmazonS3/latest/userguide/Versioning.html
+
+  - id: s3_bucket_logging
+    resource_type: aws_s3_bucket_logging
+    description: S3 buckets should have access logging enabled
+    severity: warning
+    assert:
+      target_bucket: present
+    metadata:
+      tags: [s3, monitoring]
+      references:
+        - https://docs.aws.amazon.com/AmazonS3/latest/userguide/ServerLogs.html
+
+  # RDS Security Rules
+  - id: rds_encrypted_storage
+    resource_type: aws_db_instance
+    description: RDS instances must have encrypted storage
+    severity: error
+    assert:
+      storage_encrypted: true
+    metadata:
+      tags: [rds, encryption]
+      references:
+        - https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.Encryption.html
+
+  - id: rds_backup_retention
+    resource_type: aws_db_instance
+    description: RDS instances should have adequate backup retention
+    severity: warning
+    assert:
+      backup_retention_period:
+        gte: 7
+    metadata:
+      tags: [rds, backup]
+      references:
+        - https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_WorkingWithAutomatedBackups.html
+
+  - id: rds_multi_az
+    resource_type: aws_db_instance
+    description: Production RDS instances should use Multi-AZ deployment
+    severity: error
+    filter:
+      tags.Environment: production
+    assert:
+      multi_az: true
+    metadata:
+      tags: [rds, availability]
+      references:
+        - https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.MultiAZ.html
+
+  - id: rds_no_public_access
+    resource_type: aws_db_instance
+    description: RDS instances should not be publicly accessible
+    severity: error
+    assert:
+      publicly_accessible: false
+    metadata:
+      tags: [rds, network-security]
+      references:
+        - https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_VPC.WorkingWithRDSInstanceinaVPC.html
+
+  # VPC Security Rules
+  - id: vpc_flow_logs
+    resource_type: aws_vpc
+    description: VPCs should have flow logs enabled
+    severity: warning
+    assert:
+      enable_dns_hostnames: true
+      enable_dns_support: true
+    metadata:
+      tags: [vpc, monitoring]
+      references:
+        - https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html
+
+  - id: security_group_no_wide_open_ingress
+    resource_type: aws_security_group
+    description: Security groups should not allow ingress from 0.0.0.0/0 on sensitive ports
+    severity: error
+    assert:
+      ingress:
+        subset:
+          - from_port:
+              ne: 22
+            cidr_blocks:
+              contains: "0.0.0.0/0"
+          - from_port:
+              ne: 3389
+            cidr_blocks:
+              contains: "0.0.0.0/0"
+    metadata:
+      tags: [vpc, security-groups, network-security]
+      references:
+        - https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html
+
+  - id: security_group_description_required
+    resource_type: aws_security_group
+    description: Security groups must have meaningful descriptions
+    severity: warning
+    assert:
+      description:
+        regex: "^(?!Managed by Terraform).{10,}"
+    metadata:
+      tags: [vpc, security-groups, governance]
+      references:
+        - https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html
+
+  # IAM Security Rules
+  - id: iam_user_no_inline_policies
+    resource_type: aws_iam_user
+    description: IAM users should not have inline policies
+    severity: error
+    assert:
+      inline_policy:
+        length:
+          eq: 0
+    metadata:
+      tags: [iam, access-control]
+      references:
+        - https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_managed-vs-inline.html
+
+  - id: iam_role_assume_role_policy_required
+    resource_type: aws_iam_role
+    description: IAM roles must have assume role policy
+    severity: error
+    assert:
+      assume_role_policy: present
+    metadata:
+      tags: [iam, access-control]
+      references:
+        - https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_terms-and-concepts.html
+
+  - id: iam_policy_no_wildcard_actions
+    resource_type: aws_iam_policy
+    description: IAM policies should not use wildcard actions
+    severity: warning
+    assert:
+      policy:
+        regex: "^(?!.*\"Action\":\\s*\"\\*\").*$"
+    metadata:
+      tags: [iam, least-privilege]
+      references:
+        - https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html
+
+  # CloudTrail Security Rules
+  - id: cloudtrail_enabled
+    resource_type: aws_cloudtrail
+    description: CloudTrail should be enabled for audit logging
+    severity: error
+    assert:
+      enable_logging: true
+      include_global_service_events: true
+      is_multi_region_trail: true
+    metadata:
+      tags: [cloudtrail, monitoring, compliance]
+      references:
+        - https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-user-guide.html
+
+  - id: cloudtrail_log_file_validation
+    resource_type: aws_cloudtrail
+    description: CloudTrail should have log file validation enabled
+    severity: error
+    assert:
+      enable_log_file_validation: true
+    metadata:
+      tags: [cloudtrail, integrity]
+      references:
+        - https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-log-file-validation-intro.html
+
+  # KMS Security Rules
+  - id: kms_key_rotation
+    resource_type: aws_kms_key
+    description: KMS keys should have automatic rotation enabled
+    severity: warning
+    assert:
+      enable_key_rotation: true
+    metadata:
+      tags: [kms, encryption, key-management]
+      references:
+        - https://docs.aws.amazon.com/kms/latest/developerguide/rotating-keys.html
+
+  - id: kms_key_description_required
+    resource_type: aws_kms_key
+    description: KMS keys must have meaningful descriptions
+    severity: warning
+    assert:
+      description:
+        regex: "^.{10,}$"
+    metadata:
+      tags: [kms, governance]
+      references:
+        - https://docs.aws.amazon.com/kms/latest/developerguide/create-keys.html
+
+  # Lambda Security Rules
+  - id: lambda_function_dead_letter_queue
+    resource_type: aws_lambda_function
+    description: Lambda functions should have dead letter queues configured
+    severity: warning
+    assert:
+      dead_letter_config: present
+    metadata:
+      tags: [lambda, error-handling]
+      references:
+        - https://docs.aws.amazon.com/lambda/latest/dg/invocation-async.html
+
+  - id: lambda_function_vpc_config
+    resource_type: aws_lambda_function
+    description: Lambda functions accessing VPC resources should have VPC configuration
+    severity: info
+    filter:
+      environment.variables.VPC_ENABLED: "true"
+    assert:
+      vpc_config: present
+    metadata:
+      tags: [lambda, vpc, network]
+      references:
+        - https://docs.aws.amazon.com/lambda/latest/dg/configuration-vpc.html
+
+  # ELB/ALB Security Rules
+  - id: alb_access_logs_enabled
+    resource_type: aws_lb
+    description: Application Load Balancers should have access logs enabled
+    severity: warning
+    filter:
+      load_balancer_type: application
+    assert:
+      access_logs.enabled: true
+    metadata:
+      tags: [alb, monitoring]
+      references:
+        - https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html
+
+  - id: alb_deletion_protection
+    resource_type: aws_lb
+    description: Production ALBs should have deletion protection enabled
+    severity: error
+    filter:
+      tags.Environment: production
+    assert:
+      enable_deletion_protection: true
+    metadata:
+      tags: [alb, data-protection]
+      references:
+        - https://docs.aws.amazon.com/elasticloadbalancing/latest/application/application-load-balancers.html
