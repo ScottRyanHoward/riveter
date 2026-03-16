@@ -207,74 +207,81 @@ jobs:
           } >> "$GITHUB_ENV"
 
       - name: Write updated formula
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+          TAG: ${{ needs.prepare.outputs.tag }}
+          REPO: ${{ github.repository }}
         run: |
-          VERSION="${{ needs.prepare.outputs.version }}"
-          TAG="${{ needs.prepare.outputs.tag }}"
-          REPO="${{ github.repository }}"
-
-          python3 - << PYEOF
+          python3 - << 'PYEOF'
           import os
-          version     = os.environ["VERSION"]
-          tag         = os.environ["TAG"]
-          repo        = os.environ["REPO"]
-          arm64_sha   = os.environ["ARM64_SHA"]
-          linux_sha   = os.environ["LINUX_SHA"]
-          source_sha  = os.environ["SOURCE_SHA"]
+          version    = os.environ["VERSION"]
+          tag        = os.environ["TAG"]
+          repo       = os.environ["REPO"]
+          arm64_sha  = os.environ["ARM64_SHA"]
+          linux_sha  = os.environ["LINUX_SHA"]
+          source_sha = os.environ["SOURCE_SHA"]
 
-          formula = f"""class Riveter < Formula
-            desc "Infrastructure Rule Enforcement as Code for Terraform configurations"
-            homepage "https://github.com/{repo}"
-            version "{version}"
-            license "MIT"
+          # Ruby uses #{...} for interpolation; define as plain Python strings
+          # so we can embed them in the f-string without escape-sequence warnings.
+          rb_share = "#{share}"
+          rb_bin   = "#{bin}"
 
-            if OS.mac?
-              url "https://github.com/{repo}/releases/download/{tag}/riveter-{version}-macos-arm64.tar.gz"
-              sha256 "{arm64_sha}"
-            elsif OS.linux?
-              url "https://github.com/{repo}/releases/download/{tag}/riveter-{version}-linux-x86_64.tar.gz"
-              sha256 "{linux_sha}"
-            end
-
-            resource "rule_packs" do
-              url "https://github.com/{repo}/archive/{tag}.tar.gz"
-              sha256 "{source_sha}"
-            end
-
-            def install
-              bin.install "riveter"
-
-              resource("rule_packs").stage do
-                (share/"riveter/rule_packs").install Dir["rule_packs/*.yml"]
-              end
-            end
-
-            def caveats
-              <<~EOS
-                Rule packs are installed to:
-                  \#{{share}}/riveter/rule_packs/
-
-                Usage:
-                  riveter scan -p aws-security -t main.tf
-                  riveter list-rule-packs
-                  riveter scan -r custom-rules.yml -t main.tf
-              EOS
-            end
-
-            test do
-              assert_match version.to_s, shell_output("\#{{bin}}/riveter --version")
-              assert_match "Infrastructure Rule Enforcement", shell_output("\#{{bin}}/riveter --help")
-              assert_predicate share/"riveter/rule_packs/aws-security.yml", :exist?
-            end
-          end
-          """
+          formula = (
+              f"# This formula is auto-updated by the release workflow in {repo}.\n"
+              f"# To release a new version, run the \"Release\" workflow in that repository.\n"
+              f"class Riveter < Formula\n"
+              f"  desc \"Infrastructure Rule Enforcement as Code for Terraform configurations\"\n"
+              f"  homepage \"https://github.com/{repo}\"\n"
+              f"  version \"{version}\"\n"
+              f"  license \"MIT\"\n"
+              f"\n"
+              f"  if OS.mac?\n"
+              f"    url \"https://github.com/{repo}/releases/download/{tag}/riveter-{version}-macos-arm64.tar.gz\"\n"
+              f"    sha256 \"{arm64_sha}\"\n"
+              f"  elsif OS.linux?\n"
+              f"    url \"https://github.com/{repo}/releases/download/{tag}/riveter-{version}-linux-x86_64.tar.gz\"\n"
+              f"    sha256 \"{linux_sha}\"\n"
+              f"  end\n"
+              f"\n"
+              f"  resource \"rule_packs\" do\n"
+              f"    url \"https://github.com/{repo}/archive/{tag}.tar.gz\"\n"
+              f"    sha256 \"{source_sha}\"\n"
+              f"  end\n"
+              f"\n"
+              f"  def install\n"
+              f"    bin.install \"riveter\"\n"
+              f"\n"
+              f"    resource(\"rule_packs\").stage do\n"
+              f"      (share/\"riveter/rule_packs\").install Dir[\"rule_packs/*.yml\"]\n"
+              f"    end\n"
+              f"  end\n"
+              f"\n"
+              f"  def caveats\n"
+              f"    <<~EOS\n"
+              f"      Rule packs are installed to:\n"
+              f"        {rb_share}/riveter/rule_packs/\n"
+              f"\n"
+              f"      Usage:\n"
+              f"        riveter scan -p aws-security -t main.tf\n"
+              f"        riveter list-rule-packs\n"
+              f"        riveter scan -r custom-rules.yml -t main.tf\n"
+              f"\n"
+              f"      Note: Intel Mac users can run this binary via Rosetta 2.\n"
+              f"    EOS\n"
+              f"  end\n"
+              f"\n"
+              f"  test do\n"
+              f"    assert_match version.to_s, shell_output(\"{rb_bin}/riveter --version\")\n"
+              f"    assert_match \"Infrastructure Rule Enforcement\", shell_output(\"{rb_bin}/riveter --help\")\n"
+              f"    assert_predicate share/\"riveter/rule_packs/aws-security.yml\", :exist?\n"
+              f"  end\n"
+              f"end\n"
+          )
 
           with open("homebrew-riveter/Formula/riveter.rb", "w") as f:
               f.write(formula)
           print("Formula written.")
           PYEOF
-        env:
-          VERSION: ${{ needs.prepare.outputs.version }}
-          TAG: ${{ needs.prepare.outputs.tag }}
 
       - name: Commit and push formula
         run: |
