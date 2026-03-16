@@ -18,6 +18,7 @@ from rich.table import Table
 from ._version import get_version
 from .config import ConfigManager
 from .extract_config import extract_terraform_config
+from .extract_state import extract_terraform_state
 from .formatters import HTMLFormatter, JSONFormatter, JUnitXMLFormatter, SARIFFormatter
 from .rule_packs import RulePackManager
 from .rules import Rule, Severity, load_rules
@@ -307,6 +308,225 @@ def scan(
 
     console.print(
         f"\nScanning [bold]{len(resources)}[/bold] resource(s) against "
+        f"[bold]{len(all_rules)}[/bold] rule(s)...\n"
+    )
+
+    # -- Run validation -------------------------------------------------------
+    results = validate_resources(all_rules, resources, Severity(config.min_severity))
+
+    # -- Emit output ----------------------------------------------------------
+    fmt = config.output_format
+    if fmt == "json":
+        click.echo(JSONFormatter().format(results))
+    elif fmt == "junit":
+        click.echo(JUnitXMLFormatter().format(results))
+    elif fmt == "sarif":
+        click.echo(SARIFFormatter().format(results))
+    elif fmt == "html":
+        click.echo(HTMLFormatter().format(results))
+    else:
+        _display_table(results)
+        _print_summary(results)
+
+    # -- Exit code: non-zero on any failures ----------------------------------
+    failed = sum(1 for r in results if not r.passed and not r.message.startswith("SKIPPED:"))
+    if failed:
+        sys.exit(1)
+
+
+@main.command(name="scan-state")
+@click.option(
+    "--state",
+    "-s",
+    required=True,
+    help=(
+        "Path to a Terraform state file (terraform.tfstate), "
+        "or '-' to read from stdin (e.g. piped from 'terraform state pull')."
+    ),
+)
+@click.option(
+    "--rules",
+    "-r",
+    "rules_file",
+    type=click.Path(exists=True),
+    help="Path to a custom rules YAML file.",
+)
+@click.option(
+    "--rule-pack",
+    "-p",
+    "rule_packs",
+    multiple=True,
+    help="Built-in rule pack to use (can be repeated). Example: -p aws-security -p cis-aws",
+)
+@click.option(
+    "--output-format",
+    "-f",
+    type=click.Choice(["table", "json", "junit", "sarif", "html"], case_sensitive=False),
+    default=None,
+    help="Output format. Defaults to 'table'. Use 'html' for a shareable report.",
+)
+@click.option(
+    "--config",
+    "-c",
+    "config_file",
+    type=click.Path(exists=True),
+    help="Path to a Riveter config file (YAML or JSON). Auto-detected if not specified.",
+)
+@click.option(
+    "--min-severity",
+    type=click.Choice(["info", "warning", "error"], case_sensitive=False),
+    default=None,
+    help="Minimum severity to report. Checks below this level are skipped.",
+)
+@click.option(
+    "--include-rules",
+    multiple=True,
+    metavar="PATTERN",
+    help="Only run rules whose ID matches this glob pattern (can be repeated).",
+)
+@click.option(
+    "--exclude-rules",
+    multiple=True,
+    metavar="PATTERN",
+    help="Skip rules whose ID matches this glob pattern (can be repeated).",
+)
+@click.option(
+    "--debug",
+    is_flag=True,
+    help="Enable debug logging.",
+)
+def scan_state(
+    state: str,
+    rules_file: Optional[str],
+    rule_packs: Tuple[str, ...],
+    output_format: Optional[str],
+    config_file: Optional[str],
+    min_severity: Optional[str],
+    include_rules: Tuple[str, ...],
+    exclude_rules: Tuple[str, ...],
+    debug: bool,
+) -> None:
+    """Validate a Terraform state file against rules (drift detection).
+
+    \b
+    Examples:
+      # Scan a local state file
+      riveter scan-state -r rules.yml -s terraform.tfstate
+
+      # Use a built-in rule pack
+      riveter scan-state -p aws-security -s terraform.tfstate
+
+      # Pipe remote state from any Terraform backend
+      terraform state pull | riveter scan-state -p aws-security -s -
+
+      # Generate an HTML report
+      riveter scan-state -p aws-security -s terraform.tfstate -f html > report.html
+
+      # Side-by-side drift detection
+      riveter scan       -p aws-security -t main.tf           -f json > hcl.json
+      riveter scan-state -p aws-security -s terraform.tfstate -f json > state.json
+    """
+    _setup_logging(debug)
+
+    # -- Resolve configuration ------------------------------------------------
+    cli_overrides: Dict[str, Any] = {}
+    if output_format:
+        cli_overrides["output_format"] = output_format
+    if min_severity:
+        cli_overrides["min_severity"] = min_severity
+    if include_rules:
+        cli_overrides["include_rules"] = list(include_rules)
+    if exclude_rules:
+        cli_overrides["exclude_rules"] = list(exclude_rules)
+    if rule_packs:
+        cli_overrides["rule_packs"] = list(rule_packs)
+    if debug:
+        cli_overrides["debug"] = True
+
+    try:
+        mgr = ConfigManager()
+        config = mgr.load_config(config_file=config_file, cli_overrides=cli_overrides)
+        errors = mgr.validate(config)
+        if errors:
+            for e in errors:
+                err_console.print(f"[red]Config error:[/red] {e}")
+            sys.exit(1)
+    except Exception as exc:
+        err_console.print(f"[red]Configuration error:[/red] {exc}")
+        sys.exit(1)
+
+    # -- Validate that we have at least one rule source -----------------------
+    has_rules_file = bool(rules_file)
+    has_packs = bool(config.rule_packs)
+    if not has_rules_file and not has_packs:
+        err_console.print(
+            "[red]Error:[/red] Specify at least one rule source: "
+            "--rules <file> or --rule-pack <name>"
+        )
+        sys.exit(1)
+
+    # -- Load rules -----------------------------------------------------------
+    all_rules: List[Rule] = []
+
+    if rules_file:
+        try:
+            loaded = load_rules(rules_file)
+            all_rules.extend(loaded)
+            console.print(
+                f"Loaded [bold]{len(loaded)}[/bold] rule(s) from [cyan]{rules_file}[/cyan]"
+            )
+        except Exception as exc:
+            err_console.print(f"[red]Error loading rules file:[/red] {exc}")
+            sys.exit(1)
+
+    if config.rule_packs:
+        pack_mgr = RulePackManager(extra_dirs=config.rule_dirs or None)
+        for pack_name in config.rule_packs:
+            try:
+                pack = pack_mgr.load_rule_pack(pack_name)
+                all_rules.extend(pack.rules)
+                console.print(
+                    f"Loaded [bold]{len(pack.rules)}[/bold] rule(s) from pack "
+                    f"[cyan]{pack_name}[/cyan]"
+                )
+            except FileNotFoundError:
+                err_console.print(
+                    f"[red]Error:[/red] Rule pack '{pack_name}' not found. "
+                    "Run 'riveter list-rule-packs' to see available packs."
+                )
+                sys.exit(1)
+            except Exception as exc:
+                err_console.print(f"[red]Error loading rule pack '{pack_name}':[/red] {exc}")
+                sys.exit(1)
+
+    if not all_rules:
+        err_console.print("[red]Error:[/red] No rules were loaded.")
+        sys.exit(1)
+
+    # -- Apply include/exclude filters ----------------------------------------
+    if config.include_rules or config.exclude_rules:
+        all_rules = _filter_by_pattern(all_rules, config.include_rules, config.exclude_rules)
+        if not all_rules:
+            console.print("[yellow]Warning:[/yellow] No rules remain after filtering.")
+            sys.exit(0)
+
+    # -- Parse state file -----------------------------------------------------
+    source_label = "stdin" if state == "-" else state
+    try:
+        state_config = extract_terraform_state(state)
+    except Exception as exc:
+        err_console.print(f"[red]Error parsing state file:[/red] {exc}")
+        sys.exit(1)
+
+    resources = state_config.get("resources", [])
+    if not resources:
+        console.print(
+            f"[yellow]Warning:[/yellow] No managed resources found in {source_label}."
+        )
+        sys.exit(0)
+
+    console.print(
+        f"\nScanning [bold]{len(resources)}[/bold] resource(s) from state against "
         f"[bold]{len(all_rules)}[/bold] rule(s)...\n"
     )
 

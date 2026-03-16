@@ -1,39 +1,50 @@
 # Changelog
 
-## [0.2.3] - 2026-03-16
+All notable changes to Riveter are documented here.
+
+## [Unreleased]
 
 ### Added
-- Release v0.2.3
+- **`riveter scan-state` command**: validates a `terraform.tfstate` file against the same YAML rule packs used by `riveter scan`, enabling drift detection. Supports all output formats (`table`, `json`, `junit`, `sarif`, `html`), all filtering flags, and reading state from stdin (`-s -`) for use with any remote Terraform backend via `terraform state pull`.
+- New `extract_state.py` module: parses Terraform state format v4+ JSON into the same resource dict shape as `extract_config.py`, so the scanner and all formatters work without modification. Handles `count`/`for_each` multi-instance resources, module-prefixed addresses, data source exclusion, and a 50 MB size guard.
+
+Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+Versions follow [Semantic Versioning](https://semver.org/).
+
+---
+
+## [0.2.3] - 2026-03-16
+
+### Fixed
+- `brew upgrade riveter` now correctly picks up the latest release after running `brew update` to sync the tap.
+
+---
 
 ## [0.2.2] - 2026-03-16
 
 ### Added
-- Release v0.2.2
+- **HTML output format** (`-f html`): generates a fully self-contained HTML report with embedded CSS and JavaScript. Features include summary cards with pass/fail/skip/severity counts, client-side filtering by status, severity, and free-text search, and expandable rows showing per-assertion details. No external dependencies — the report can be emailed or opened offline.
+
+### Fixed
+- `Invalid output_format 'html'` error when using `-f html` via a `riveter.yml` config file. The `_VALID_FORMATS` constant in `config.py` now includes `html` to match the CLI's `click.Choice` list.
+
+---
 
 ## [0.2.1] - 2026-03-16
 
-### Added
-- Release v0.2.1
+### Fixed
+- PyInstaller binary now correctly bundles the `hcl2.lark` grammar file required by `python-hcl2`. Previously the binary raised `FileNotFoundError: hcl2/hcl2.lark` at runtime. Fixed by adding `--collect-data hcl2` and `--collect-data lark` to the PyInstaller build arguments.
+
+---
 
 ## [0.2.0] - 2026-03-16
 
-### Added
-- Release v0.2.0
+### Changed
+- Release workflow now builds binaries for **macOS Apple Silicon** (`macos-14`) and **Linux x86_64** (`ubuntu-latest`) only. The retired `macos-13` (Intel) GitHub Actions runner has been removed. Intel Mac users can run the Apple Silicon binary transparently via Rosetta 2.
 
-## [0.3.0] - 2026-03-16
-
-### Added
-- Release v0.3.0
-
-## [0.2.0] - 2026-03-16
-
-### Added
-- Release v0.2.0
-
-All notable changes to Riveter are documented here.
-
-Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
-Versions follow [Semantic Versioning](https://semver.org/).
+### Fixed
+- Release workflow: `KeyError: 'REPO'` in the Homebrew formula generation step. The `REPO` variable is now passed via the step's `env:` block so it is visible to `os.environ` inside the Python script.
+- Release workflow: `SyntaxWarning: invalid escape sequence '\#'` on Python 3.12+. Ruby interpolation sequences (`#{share}`, `#{bin}`) are now stored as plain Python string variables to avoid the invalid escape.
 
 ---
 

@@ -8,6 +8,7 @@ This guide is for contributors and maintainers. It covers the architecture, code
 
 ```
 User runs: riveter scan -p aws-security -t main.tf
+           riveter scan-state -p aws-security -s terraform.tfstate
 
          cli.py                    (Click CLI, orchestration)
             │
@@ -17,11 +18,12 @@ User runs: riveter scan -p aws-security -t main.tf
             │       └── rules.py   (Parse individual rules, Severity enum)
             │               └── operators.py  (Comparison operators)
             │
-            ├── extract_config.py  (Parse HCL → resource dicts via hcl2)
+            ├── extract_config.py  (Parse HCL → resource dicts via hcl2)     ← scan
+            ├── extract_state.py   (Parse .tfstate JSON → resource dicts)    ← scan-state
             │
             ├── scanner.py         (Apply rules to resources → ValidationResults)
             │
-            └── formatters.py      (Serialize results → JSON / JUnit / SARIF)
+            └── formatters.py      (Serialize results → JSON / JUnit / SARIF / HTML)
 ```
 
 ### Data flow
@@ -41,7 +43,7 @@ User runs: riveter scan -p aws-security -t main.tf
 Single source of truth for the package version. Updated automatically by the release workflow.
 
 ```python
-__version__ = "0.1.0"
+__version__ = "0.2.3"
 def get_version() -> str: ...
 ```
 
@@ -88,6 +90,14 @@ Stateless comparison operators implementing `ComparisonOperator(ABC)`:
 
 `extract_terraform_config(path)` handles files and directories. Security checks: symlink resolution, 10 MB size limit. Returns `{"resources": [...]}`.
 
+### `extract_state.py`
+
+`extract_terraform_state(path)` parses a `terraform.tfstate` JSON file (format v4+) into the same `{"resources": [...]}` shape as `extract_config.py`, so the scanner and formatters consume both without modification. Pass `path="-"` to read from stdin (enables piping from `terraform state pull`).
+
+Only managed resources (`"mode": "managed"`) are included. Data sources are skipped. Each `count` / `for_each` instance produces a separate resource dict. The resource `id` encodes the full address including module prefix and instance index: e.g. `module.vpc.aws_instance.web[0]`.
+
+Size limit: 50 MB (larger than the per-HCL-file limit because state files aggregate all resources in a workspace).
+
 ### `rule_packs.py`
 
 `RulePackManager` searches for pack files in:
@@ -104,11 +114,23 @@ Extra dirs can be added via the `extra_dirs` constructor arg or `config.rule_dir
 
 ### `formatters.py`
 
-Three formatter classes extending `OutputFormatter(ABC)`: `JSONFormatter`, `JUnitXMLFormatter`, `SARIFFormatter`. The table format is rendered directly in `cli.py` using Rich.
+Four formatter classes extending `OutputFormatter(ABC)`: `JSONFormatter`, `JUnitXMLFormatter`, `SARIFFormatter`, `HTMLFormatter`. The table format is rendered directly in `cli.py` using Rich.
+
+`HTMLFormatter` produces a fully self-contained HTML report with embedded CSS and JavaScript. It serialises all result data as a JSON constant inside a `<script>` tag, which the page's JS reads to power client-side filtering (status, severity, free-text search) and expandable assertion-detail rows. Python templating uses `__PLACEHOLDER__` string replacement rather than `str.format()` to avoid escaping every CSS/JS `{` and `}` brace.
+
+#### Adding a new output formatter
+
+1. Add a class extending `OutputFormatter` with a `format(results: List[ValidationResult]) -> str` method.
+2. Add the format name to `click.Choice` in `cli.py` and wire up the new class in the format-dispatch block.
+3. Add the format name to `_VALID_FORMATS` in `config.py`.
+4. Write tests in `tests/test_formatters.py` following the existing pattern.
+5. Document the format in `README.md` and `docs/user-guide.md`.
 
 ### `cli.py`
 
-Click group with two commands: `scan` and `list-rule-packs`. Orchestrates all the other modules. Exits with code 1 on any check failure.
+Click group with three commands: `scan`, `scan-state`, and `list-rule-packs`. Orchestrates all the other modules. Exits with code 1 on any check failure.
+
+`scan` and `scan-state` share the same pipeline — config loading, rule loading, filtering, validation, and output — differing only in the parsing step (`extract_config.py` vs `extract_state.py`). All helper functions (`_display_table`, `_print_summary`, `_filter_by_pattern`) are shared.
 
 ---
 
@@ -163,9 +185,10 @@ make build
 ```
 
 The release workflow builds for:
-- `macos-14` → macOS arm64
-- `macos-13` → macOS Intel
+- `macos-14` → macOS Apple Silicon (arm64)
 - `ubuntu-latest` → Linux x86_64
+
+> **Note:** Intel Mac binaries are not published separately. Intel Mac users can run the Apple Silicon binary via Rosetta 2, which macOS installs automatically on first use.
 
 ---
 

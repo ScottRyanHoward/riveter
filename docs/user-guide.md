@@ -13,8 +13,9 @@ This guide covers everything you need to use Riveter to validate Terraform confi
 5. [Configuration File](#configuration-file)
 6. [Output Formats](#output-formats)
 7. [Filtering](#filtering)
-8. [CI/CD Integration](#cicd-integration)
-9. [Troubleshooting](#troubleshooting)
+8. [State File Scanning](#state-file-scanning)
+9. [CI/CD Integration](#cicd-integration)
+10. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -278,6 +279,23 @@ riveter scan -p aws-security -t main.tf -f sarif > results.sarif
 # Upload to GitHub Code Scanning, SonarQube, etc.
 ```
 
+### HTML
+
+```bash
+riveter scan -p aws-security -t main.tf -f html -o report.html
+open report.html
+```
+
+Produces a fully self-contained HTML report — CSS and JavaScript are embedded inline, so the file can be emailed or opened on any machine without an internet connection.
+
+**Report features:**
+- Summary cards showing total, passed, failed, and skipped counts (with error/warning/info breakdown for failures)
+- Filter by status (All / Pass / Fail / Skip), severity (All / Error / Warning / Info), or free-text search across resource and rule IDs
+- Click any row to expand assertion details showing the property path, expected value, actual value, and operator for each check
+- Riveter version and report timestamp embedded in the header
+
+Ideal for sharing scan results with auditors or stakeholders who need a readable view of findings.
+
 ---
 
 ## Filtering
@@ -309,6 +327,80 @@ Exclude test/example rules:
 ```bash
 riveter scan -p aws-security -t main.tf --exclude-rules "*example*" --exclude-rules "*test*"
 ```
+
+---
+
+## State File Scanning
+
+`riveter scan-state` validates a **deployed** Terraform state file against the same YAML rules used by `riveter scan`. Where `scan` checks your *intended* configuration (`.tf` source files), `scan-state` checks what is *actually deployed* — making it the key tool for **drift detection**.
+
+### What is drift?
+
+Drift occurs when deployed infrastructure diverges from its IaC definition. Common causes:
+- Manual changes made in a cloud console
+- Out-of-band automation (scripts, third-party tools) modifying resources
+- Partial applies or interrupted deployments
+
+### Basic usage
+
+```bash
+riveter scan-state -p aws-security -s terraform.tfstate
+```
+
+### Remote state (any Terraform backend)
+
+Use `terraform state pull` to export state from any backend (S3, Terraform Cloud, GCS, Azure Storage, etc.) and pipe it directly to Riveter:
+
+```bash
+# Terraform Cloud / HCP Terraform
+terraform state pull | riveter scan-state -p aws-security -s -
+
+# S3 backend (state is fetched by the Terraform CLI)
+cd your-infra-dir && terraform state pull | riveter scan-state -p aws-security -s -
+```
+
+The `-s -` flag tells Riveter to read state JSON from stdin.
+
+### Drift detection workflow
+
+Run both commands with the same rule pack and compare results to identify drift:
+
+```bash
+# Check intended config
+riveter scan -p aws-security -t main.tf -f json > hcl-results.json
+
+# Check deployed state
+terraform state pull | riveter scan-state -p aws-security -s - -f json > state-results.json
+
+# Resources that pass in HCL but fail in state have drifted
+```
+
+Or generate shareable HTML reports for both:
+
+```bash
+riveter scan       -p aws-security -t main.tf           -f html > hcl-report.html
+riveter scan-state -p aws-security -s terraform.tfstate -f html > state-report.html
+```
+
+### State format requirements
+
+- Requires Terraform state format **version 4** (introduced in Terraform 0.13)
+- **Data sources** (`data` blocks) are automatically excluded — only managed resources are validated
+- Supports `count` and `for_each` resources: each instance is validated separately
+
+### All `scan-state` flags
+
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--state PATH` | `-s` | **Required.** Path to `.tfstate` file, or `-` for stdin |
+| `--rule-pack NAME` | `-p` | Built-in rule pack (repeatable) |
+| `--rules FILE` | `-r` | Custom rules YAML file |
+| `--output-format FMT` | `-f` | `table`, `json`, `junit`, `sarif`, `html` |
+| `--min-severity LEVEL` | | `info`, `warning`, `error` |
+| `--include-rules PATTERN` | | Only run matching rules (repeatable) |
+| `--exclude-rules PATTERN` | | Skip matching rules (repeatable) |
+| `--config FILE` | `-c` | Config file (auto-detected if omitted) |
+| `--debug` | | Enable debug logging |
 
 ---
 

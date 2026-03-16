@@ -29,6 +29,12 @@ riveter scan -p aws-security -p cis-aws -t main.tf
 # Scan an entire directory
 riveter scan -p aws-security -t ./infra/
 
+# Validate deployed state (drift detection)
+riveter scan-state -p aws-security -s terraform.tfstate
+
+# Pipe remote state from any Terraform backend
+terraform state pull | riveter scan-state -p aws-security -s -
+
 # See available rule packs
 riveter list-rule-packs
 ```
@@ -46,12 +52,30 @@ Validates Terraform against rules and exits non-zero if any checks fail.
 | `--terraform PATH` | `-t` | **Required.** Path to a `.tf` file or directory |
 | `--rule-pack NAME` | `-p` | Built-in rule pack (repeatable) |
 | `--rules FILE` | `-r` | Custom rules YAML file |
-| `--output-format FMT` | `-f` | `table` (default), `json`, `junit`, `sarif` |
+| `--output-format FMT` | `-f` | `table` (default), `json`, `junit`, `sarif`, `html` |
 | `--min-severity LEVEL` | | `info` (default), `warning`, `error` |
 | `--include-rules PATTERN` | | Only run rules matching glob pattern (repeatable) |
 | `--exclude-rules PATTERN` | | Skip rules matching glob pattern (repeatable) |
 | `--config FILE` | `-c` | Config file path (auto-detected if omitted) |
 | `--debug` | | Enable debug logging |
+
+### `riveter scan-state`
+
+Validates a Terraform **state file** against rules for drift detection.
+
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--state PATH` | `-s` | **Required.** Path to `terraform.tfstate`, or `-` for stdin |
+| `--rule-pack NAME` | `-p` | Built-in rule pack (repeatable) |
+| `--rules FILE` | `-r` | Custom rules YAML file |
+| `--output-format FMT` | `-f` | `table` (default), `json`, `junit`, `sarif`, `html` |
+| `--min-severity LEVEL` | | `info` (default), `warning`, `error` |
+| `--include-rules PATTERN` | | Only run rules matching glob pattern (repeatable) |
+| `--exclude-rules PATTERN` | | Skip rules matching glob pattern (repeatable) |
+| `--config FILE` | `-c` | Config file path (auto-detected if omitted) |
+| `--debug` | | Enable debug logging |
+
+> **State format:** Requires Terraform state format v4 (Terraform 0.13+). Data sources are automatically excluded — only managed resources are validated.
 
 ### `riveter list-rule-packs`
 
@@ -202,6 +226,14 @@ riveter scan -p aws-security -t main.tf -f sarif > results.sarif
 ```
 
 Upload to GitHub Code Scanning for inline annotations.
+
+### HTML
+
+```bash
+riveter scan -p aws-security -t main.tf -f html -o report.html
+```
+
+Generates a self-contained HTML report with no external dependencies. Open in any browser to explore results with interactive filtering by status, severity, and resource/rule name. Useful for sharing scan results with stakeholders and auditors who can't easily read JSON or SARIF.
 
 ---
 
