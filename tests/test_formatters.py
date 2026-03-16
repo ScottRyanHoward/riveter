@@ -3,7 +3,7 @@
 import json
 import xml.etree.ElementTree as ET
 
-from riveter.formatters import JSONFormatter, JUnitXMLFormatter, SARIFFormatter
+from riveter.formatters import HTMLFormatter, JSONFormatter, JUnitXMLFormatter, SARIFFormatter
 from riveter.rules import Rule
 from riveter.scanner import ValidationResult
 
@@ -130,3 +130,74 @@ class TestSARIFFormatter:
         results = [_make_skipped()]
         data = json.loads(SARIFFormatter().format(results))
         assert data["runs"][0]["results"] == []
+
+
+class TestHTMLFormatter:
+    def test_output_is_valid_html(self):
+        results = [_make_result(True), _make_result(False)]
+        output = HTMLFormatter().format(results)
+        assert "<!DOCTYPE html>" in output
+        assert "<html" in output
+        assert "</html>" in output
+
+    def test_summary_counts_in_output(self):
+        results = [_make_result(True), _make_result(False), _make_skipped()]
+        output = HTMLFormatter().format(results)
+        # Summary card placeholders are replaced with real counts
+        assert ">3<" in output  # total
+        assert ">1<" in output  # passed (also failed and skipped each appear once)
+
+    def test_failed_result_present(self):
+        results = [_make_result(False, rule_id="ec2-no-public-ip")]
+        output = HTMLFormatter().format(results)
+        assert "ec2-no-public-ip" in output
+
+    def test_passed_result_present(self):
+        results = [_make_result(True, rule_id="s3-encrypted")]
+        output = HTMLFormatter().format(results)
+        assert "s3-encrypted" in output
+
+    def test_resource_id_in_output(self):
+        results = [_make_result(False)]
+        output = HTMLFormatter().format(results)
+        assert "my_resource" in output
+
+    def test_severity_values_present(self):
+        results = [
+            _make_result(False, rule_id="e", severity="error"),
+            _make_result(False, rule_id="w", severity="warning"),
+            _make_result(False, rule_id="i", severity="info"),
+        ]
+        output = HTMLFormatter().format(results)
+        assert "error" in output
+        assert "warning" in output
+        assert "info" in output
+
+    def test_skipped_count_correct(self):
+        results = [_make_skipped(), _make_skipped("skipped-2")]
+        output = HTMLFormatter().format(results)
+        # 0 failed, 2 skipped total — zero failure counts should appear
+        assert ">0<" in output
+
+    def test_empty_results_valid_html(self):
+        output = HTMLFormatter().format([])
+        assert "<!DOCTYPE html>" in output
+        assert ">0<" in output
+
+    def test_version_in_output(self):
+        output = HTMLFormatter().format([])
+        from riveter._version import __version__
+
+        assert __version__ in output
+
+    def test_data_json_embedded(self):
+        results = [_make_result(False, rule_id="my-rule")]
+        output = HTMLFormatter().format(results)
+        # The JS data constant should contain the rule id
+        assert '"my-rule"' in output
+
+    def test_js_and_css_present(self):
+        output = HTMLFormatter().format([])
+        assert "<style>" in output
+        assert "<script>" in output
+        assert "applyFilters" in output

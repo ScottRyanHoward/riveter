@@ -18,7 +18,7 @@ from rich.table import Table
 from ._version import get_version
 from .config import ConfigManager
 from .extract_config import extract_terraform_config
-from .formatters import JSONFormatter, JUnitXMLFormatter, SARIFFormatter
+from .formatters import HTMLFormatter, JSONFormatter, JUnitXMLFormatter, SARIFFormatter
 from .rule_packs import RulePackManager
 from .rules import Rule, Severity, load_rules
 from .scanner import ValidationResult, validate_resources
@@ -134,9 +134,9 @@ def main() -> None:
 @click.option(
     "--output-format",
     "-f",
-    type=click.Choice(["table", "json", "junit", "sarif"], case_sensitive=False),
+    type=click.Choice(["table", "json", "junit", "sarif", "html"], case_sensitive=False),
     default=None,
-    help="Output format. Defaults to 'table'. Use 'junit' or 'sarif' for CI integration.",
+    help="Output format. Defaults to 'table'. Use 'html' for a shareable report.",
 )
 @click.option(
     "--config",
@@ -321,6 +321,8 @@ def scan(
         click.echo(JUnitXMLFormatter().format(results))
     elif fmt == "sarif":
         click.echo(SARIFFormatter().format(results))
+    elif fmt == "html":
+        click.echo(HTMLFormatter().format(results))
     else:
         _display_table(results)
         _print_summary(results)
