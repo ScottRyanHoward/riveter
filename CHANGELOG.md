@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.2.0] - 2026-03-16
+
+### Added
+- Release v0.2.0
+
 All notable changes to Riveter are documented here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
