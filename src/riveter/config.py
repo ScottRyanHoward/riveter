@@ -42,7 +42,7 @@ _DEFAULT_CONFIG_FILES = [
 ]
 
 _VALID_SEVERITIES = ("info", "warning", "error")
-_VALID_FORMATS = ("table", "json", "junit", "sarif")
+_VALID_FORMATS = ("table", "json", "junit", "sarif", "html")
 
 
 @dataclass
