@@ -129,10 +129,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: macos-14      # Apple Silicon
+          - os: macos-14      # Apple Silicon (arm64)
             name: macos-arm64
-          - os: macos-13      # Intel
-            name: macos-intel
           - os: ubuntu-latest
             name: linux-x86_64
 
@@ -195,7 +193,6 @@ jobs:
             --pattern "*.tar.gz"
 
           ARM64_SHA=$(sha256sum "riveter-${VERSION}-macos-arm64.tar.gz" | awk '{print $1}')
-          INTEL_SHA=$(sha256sum "riveter-${VERSION}-macos-intel.tar.gz" | awk '{print $1}')
           LINUX_SHA=$(sha256sum "riveter-${VERSION}-linux-x86_64.tar.gz" | awk '{print $1}')
 
           # Source tarball (for rule_packs resource)
@@ -205,7 +202,6 @@ jobs:
 
           {
             echo "ARM64_SHA=${ARM64_SHA}"
-            echo "INTEL_SHA=${INTEL_SHA}"
             echo "LINUX_SHA=${LINUX_SHA}"
             echo "SOURCE_SHA=${SOURCE_SHA}"
           } >> "$GITHUB_ENV"
@@ -222,7 +218,6 @@ jobs:
           tag         = os.environ["TAG"]
           repo        = os.environ["REPO"]
           arm64_sha   = os.environ["ARM64_SHA"]
-          intel_sha   = os.environ["INTEL_SHA"]
           linux_sha   = os.environ["LINUX_SHA"]
           source_sha  = os.environ["SOURCE_SHA"]
 
@@ -232,12 +227,9 @@ jobs:
             version "{version}"
             license "MIT"
 
-            if OS.mac? && Hardware::CPU.arm?
+            if OS.mac?
               url "https://github.com/{repo}/releases/download/{tag}/riveter-{version}-macos-arm64.tar.gz"
               sha256 "{arm64_sha}"
-            elsif OS.mac? && Hardware::CPU.intel?
-              url "https://github.com/{repo}/releases/download/{tag}/riveter-{version}-macos-intel.tar.gz"
-              sha256 "{intel_sha}"
             elsif OS.linux?
               url "https://github.com/{repo}/releases/download/{tag}/riveter-{version}-linux-x86_64.tar.gz"
               sha256 "{linux_sha}"
