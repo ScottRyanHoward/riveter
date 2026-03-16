@@ -126,9 +126,7 @@ class SARIFFormatter(OutputFormatter):
                             "name": "Riveter",
                             "version": __version__,
                             "informationUri": "https://github.com/ScottRyanHoward/riveter",
-                            "shortDescription": {
-                                "text": "Infrastructure Rule Enforcement as Code"
-                            },
+                            "shortDescription": {"text": "Infrastructure Rule Enforcement as Code"},
                             "rules": self._sarif_rules(active),
                         }
                     },

@@ -2,7 +2,7 @@
 
 import pytest
 
-from riveter.rules import Rule, Severity
+from riveter.rules import Rule
 
 
 @pytest.fixture

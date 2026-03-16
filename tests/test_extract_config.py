@@ -1,12 +1,9 @@
 """Tests for Terraform HCL extraction."""
 
-from pathlib import Path
-
 import pytest
 
 from riveter.exceptions import FileSystemError, TerraformParsingError
 from riveter.extract_config import _build_resource, extract_terraform_config
-
 
 _SIMPLE_TF = """\
 resource "aws_instance" "web" {

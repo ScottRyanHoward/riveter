@@ -22,7 +22,6 @@ Rule pack file format:
 import logging
 import os
 import re
-import sys
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Union
 
@@ -49,8 +48,8 @@ def _default_search_dirs() -> List[str]:
     dirs.append(os.path.expanduser("~/.riveter/rule_packs"))
 
     # Homebrew system install locations
-    dirs.append("/opt/homebrew/share/riveter/rule_packs")   # Apple Silicon
-    dirs.append("/usr/local/share/riveter/rule_packs")       # Intel / Linux
+    dirs.append("/opt/homebrew/share/riveter/rule_packs")  # Apple Silicon
+    dirs.append("/usr/local/share/riveter/rule_packs")  # Intel / Linux
 
     return [d for d in dirs if os.path.isdir(d)]
 
@@ -138,9 +137,7 @@ class RulePackManager:
         path = self._find(pack_name)
         if path is None:
             searched = ", ".join(self.rule_pack_dirs) or "(none)"
-            raise FileNotFoundError(
-                f"Rule pack '{pack_name}' not found. Searched: {searched}"
-            )
+            raise FileNotFoundError(f"Rule pack '{pack_name}' not found. Searched: {searched}")
         return self._load_file(path)
 
     def load_rule_pack_from_file(self, file_path: str) -> RulePack:
@@ -240,14 +237,12 @@ class RulePackManager:
             raise RulePackError(
                 f"Invalid YAML in rule pack '{file_path}': {exc}",
                 pack_name=os.path.basename(file_path),
-            )
+            ) from exc
 
         if not isinstance(data, dict):
             raise RulePackError(f"Rule pack must be a YAML dict: {file_path}")
         if "metadata" not in data or "rules" not in data:
-            raise RulePackError(
-                f"Rule pack must have 'metadata' and 'rules' sections: {file_path}"
-            )
+            raise RulePackError(f"Rule pack must have 'metadata' and 'rules' sections: {file_path}")
 
         md = data["metadata"]
         try:
@@ -262,9 +257,7 @@ class RulePackManager:
                 min_riveter_version=md.get("min_riveter_version", "0.1.0"),
             )
         except KeyError as exc:
-            raise RulePackError(
-                f"Missing required metadata field {exc} in '{file_path}'"
-            ) from exc
+            raise RulePackError(f"Missing required metadata field {exc} in '{file_path}'") from exc
 
         from .rules import Rule  # local import to avoid circular
 

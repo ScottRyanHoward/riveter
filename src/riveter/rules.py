@@ -38,8 +38,16 @@ from .operators import AttributeResolutionError, NestedAttributeResolver, Operat
 log = logging.getLogger(__name__)
 
 _VALID_OPERATORS = {
-    "gt", "lt", "gte", "lte", "ne", "eq",
-    "regex", "contains", "length", "subset",
+    "gt",
+    "lt",
+    "gte",
+    "lte",
+    "ne",
+    "eq",
+    "regex",
+    "contains",
+    "length",
+    "subset",
 }
 
 
@@ -122,7 +130,10 @@ class Rule:
             )
         if not isinstance(rule_dict["id"], str) or not rule_dict["id"].strip():
             raise RuleValidationError("Rule 'id' must be a non-empty string")
-        if not isinstance(rule_dict["resource_type"], str) or not rule_dict["resource_type"].strip():
+        if (
+            not isinstance(rule_dict["resource_type"], str)
+            or not rule_dict["resource_type"].strip()
+        ):
             raise RuleValidationError("Rule 'resource_type' must be a non-empty string")
         if not isinstance(rule_dict["assert"], dict) or not rule_dict["assert"]:
             raise RuleValidationError(
@@ -133,11 +144,11 @@ class Rule:
     def _parse_severity(self, value: str) -> Severity:
         try:
             return Severity(str(value).lower())
-        except ValueError:
+        except ValueError as exc:
             raise RuleValidationError(
                 f"Invalid severity {value!r}. Must be one of: error, warning, info",
                 rule_id=self.id,
-            )
+            ) from exc
 
     def _is_operator_config(self, d: Dict[str, Any]) -> bool:
         """Returns True if d is a dict whose keys are all valid operator names."""
@@ -214,11 +225,7 @@ class Rule:
                         expected="present",
                         actual=actual,
                         passed=passed,
-                        message=(
-                            f"{path} is present"
-                            if passed
-                            else f"{path} is missing or empty"
-                        ),
+                        message=(f"{path} is present" if passed else f"{path} is missing or empty"),
                     )
                 )
 
@@ -261,15 +268,15 @@ def load_rules(rules_file: str) -> List[Rule]:
     try:
         with open(rules_file, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
-    except FileNotFoundError:
+    except FileNotFoundError as exc:
         raise FileSystemError(
             f"Rules file not found: {rules_file}",
             file_path=rules_file,
-        )
+        ) from exc
     except yaml.YAMLError as exc:
         raise RuleValidationError(
             f"Invalid YAML in rules file {rules_file!r}: {exc}",
-        )
+        ) from exc
 
     if not isinstance(data, dict) or "rules" not in data:
         raise RuleValidationError(
@@ -279,9 +286,7 @@ def load_rules(rules_file: str) -> List[Rule]:
     rules: List[Rule] = []
     for rule_dict in data["rules"]:
         if not isinstance(rule_dict, dict):
-            raise RuleValidationError(
-                f"Each item under 'rules' must be a dict in {rules_file!r}"
-            )
+            raise RuleValidationError(f"Each item under 'rules' must be a dict in {rules_file!r}")
         rules.append(Rule(rule_dict, rule_file=rules_file))
 
     log.debug("Loaded %d rules from %s", len(rules), rules_file)

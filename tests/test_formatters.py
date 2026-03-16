@@ -3,10 +3,8 @@
 import json
 import xml.etree.ElementTree as ET
 
-import pytest
-
 from riveter.formatters import JSONFormatter, JUnitXMLFormatter, SARIFFormatter
-from riveter.rules import Rule, Severity
+from riveter.rules import Rule
 from riveter.scanner import ValidationResult
 
 

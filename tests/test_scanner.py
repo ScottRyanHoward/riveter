@@ -1,7 +1,5 @@
 """Tests for the core validation engine."""
 
-import pytest
-
 from riveter.rules import Rule, Severity
 from riveter.scanner import ValidationResult, validate_resources
 
@@ -68,8 +66,12 @@ class TestValidateResources:
         assert len(non_skipped) >= 1
 
     def test_min_severity_filters_rules(self, ec2_resource):
-        info_rule = _make_rule("info-rule", "aws_instance", {"instance_type": "t3.large"}, severity="info")
-        error_rule = _make_rule("error-rule", "aws_instance", {"instance_type": "m5.large"}, severity="error")
+        info_rule = _make_rule(
+            "info-rule", "aws_instance", {"instance_type": "t3.large"}, severity="info"
+        )
+        error_rule = _make_rule(
+            "error-rule", "aws_instance", {"instance_type": "m5.large"}, severity="error"
+        )
 
         results = validate_resources([info_rule, error_rule], [ec2_resource], Severity.WARNING)
         rule_ids = {r.rule.id for r in results}

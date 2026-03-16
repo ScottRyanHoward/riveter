@@ -16,7 +16,7 @@ from rich.console import Console
 from rich.table import Table
 
 from ._version import get_version
-from .config import ConfigManager, RiveterConfig
+from .config import ConfigManager
 from .extract_config import extract_terraform_config
 from .formatters import JSONFormatter, JUnitXMLFormatter, SARIFFormatter
 from .rule_packs import RulePackManager
@@ -95,6 +95,7 @@ def _print_summary(results: List[ValidationResult]) -> None:
 # CLI definition
 # ---------------------------------------------------------------------------
 
+
 @click.group()
 @click.version_option(version=get_version(), prog_name="riveter")
 def main() -> None:
@@ -109,29 +110,38 @@ def main() -> None:
 
 @main.command()
 @click.option(
-    "--rules", "-r", "rules_file",
+    "--rules",
+    "-r",
+    "rules_file",
     type=click.Path(exists=True),
     help="Path to a custom rules YAML file.",
 )
 @click.option(
-    "--rule-pack", "-p", "rule_packs",
+    "--rule-pack",
+    "-p",
+    "rule_packs",
     multiple=True,
     help="Built-in rule pack to use (can be repeated). Example: -p aws-security -p cis-aws",
 )
 @click.option(
-    "--terraform", "-t", "terraform_path",
+    "--terraform",
+    "-t",
+    "terraform_path",
     required=True,
     type=click.Path(exists=True),
     help="Path to a Terraform .tf file or directory of .tf files.",
 )
 @click.option(
-    "--output-format", "-f",
+    "--output-format",
+    "-f",
     type=click.Choice(["table", "json", "junit", "sarif"], case_sensitive=False),
     default=None,
     help="Output format. Defaults to 'table'. Use 'junit' or 'sarif' for CI integration.",
 )
 @click.option(
-    "--config", "-c", "config_file",
+    "--config",
+    "-c",
+    "config_file",
     type=click.Path(exists=True),
     help="Path to a Riveter config file (YAML or JSON). Auto-detected if not specified.",
 )

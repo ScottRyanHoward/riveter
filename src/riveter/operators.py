@@ -41,7 +41,7 @@ class NumericOperator(ComparisonOperator):
                 "ne": lambda x, y: x != y,
                 "eq": lambda x, y: x == y,
             }
-            return ops[self.operator](a, e)
+            return bool(ops[self.operator](a, e))
         except (ValueError, TypeError):
             return False
 
@@ -83,7 +83,9 @@ class ListOperator(ComparisonOperator):
             if isinstance(expected, int):
                 return length == expected
             if isinstance(expected, dict):
-                return all(NumericOperator(op).evaluate(length, val) for op, val in expected.items())
+                return all(
+                    NumericOperator(op).evaluate(length, val) for op, val in expected.items()
+                )
             return False
         if self.operation == "subset":
             if not isinstance(actual, (list, tuple)) or not isinstance(expected, (list, tuple)):
@@ -181,9 +183,7 @@ class NestedAttributeResolver:
                 try:
                     parts.append(int(path[i + 1 : j]))
                 except ValueError as exc:
-                    raise AttributeResolutionError(
-                        f"Invalid array index in path: {path}"
-                    ) from exc
+                    raise AttributeResolutionError(f"Invalid array index in path: {path}") from exc
                 i = j
             else:
                 current += ch

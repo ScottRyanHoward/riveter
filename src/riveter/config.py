@@ -103,10 +103,18 @@ class RiveterConfig:
         merged.debug = overrides.debug or self.debug
 
         # Lists: extend base with override additions
-        merged.rule_dirs = self.rule_dirs + [d for d in overrides.rule_dirs if d not in self.rule_dirs]
-        merged.rule_packs = self.rule_packs + [p for p in overrides.rule_packs if p not in self.rule_packs]
-        merged.include_rules = self.include_rules + [r for r in overrides.include_rules if r not in self.include_rules]
-        merged.exclude_rules = self.exclude_rules + [r for r in overrides.exclude_rules if r not in self.exclude_rules]
+        merged.rule_dirs = self.rule_dirs + [
+            d for d in overrides.rule_dirs if d not in self.rule_dirs
+        ]
+        merged.rule_packs = self.rule_packs + [
+            p for p in overrides.rule_packs if p not in self.rule_packs
+        ]
+        merged.include_rules = self.include_rules + [
+            r for r in overrides.include_rules if r not in self.include_rules
+        ]
+        merged.exclude_rules = self.exclude_rules + [
+            r for r in overrides.exclude_rules if r not in self.exclude_rules
+        ]
 
         return merged
 
@@ -176,9 +184,13 @@ class ConfigManager:
             with open(path, "r", encoding="utf-8") as fh:
                 data = json.load(fh) if path.endswith(".json") else yaml.safe_load(fh)
         except (json.JSONDecodeError, yaml.YAMLError) as exc:
-            raise ConfigurationError(f"Invalid config file {path!r}: {exc}", config_file=path)
+            raise ConfigurationError(
+                f"Invalid config file {path!r}: {exc}", config_file=path
+            ) from exc
         except OSError as exc:
-            raise ConfigurationError(f"Cannot read config file {path!r}: {exc}", config_file=path)
+            raise ConfigurationError(
+                f"Cannot read config file {path!r}: {exc}", config_file=path
+            ) from exc
 
         if not isinstance(data, dict):
             raise ConfigurationError(

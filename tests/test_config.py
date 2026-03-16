@@ -1,10 +1,8 @@
 """Tests for configuration loading and merging."""
 
 import json
-from pathlib import Path
 
 import pytest
-import yaml
 
 from riveter.config import ConfigManager, RiveterConfig
 from riveter.exceptions import ConfigurationError
