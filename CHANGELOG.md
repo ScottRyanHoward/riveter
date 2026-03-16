@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.2.4] - 2026-03-16
+
+### Added
+- Release v0.2.4
+
 All notable changes to Riveter are documented here.
 
 ## [Unreleased]
