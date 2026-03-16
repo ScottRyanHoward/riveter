@@ -32,6 +32,10 @@ def main() -> None:
                 "--name", "riveter",
                 "--clean",
                 "--noconfirm",
+                # Collect data files from hcl2 (bundles hcl2.lark grammar file)
+                "--collect-data", "hcl2",
+                # Collect data files from lark (may have its own grammar files)
+                "--collect-data", "lark",
                 # Hidden imports that PyInstaller may not auto-detect
                 "--hidden-import", "hcl2",
                 "--hidden-import", "yaml",
