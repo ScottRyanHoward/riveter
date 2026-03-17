@@ -57,6 +57,7 @@ Validates Terraform against rules and exits non-zero if any checks fail.
 | `--include-rules PATTERN` | | Only run rules matching glob pattern (repeatable) |
 | `--exclude-rules PATTERN` | | Skip rules matching glob pattern (repeatable) |
 | `--config FILE` | `-c` | Config file path (auto-detected if omitted) |
+| `--explain` | `-e` | Attach AI-generated explanations to violations (requires `ANTHROPIC_API_KEY`) |
 | `--debug` | | Enable debug logging |
 
 ### `riveter scan-state`
@@ -234,6 +235,43 @@ riveter scan -p aws-security -t main.tf -f html -o report.html
 ```
 
 Generates a self-contained HTML report with no external dependencies. Open in any browser to explore results with interactive filtering by status, severity, and resource/rule name. Useful for sharing scan results with stakeholders and auditors who can't easily read JSON or SARIF.
+
+---
+
+## AI-Powered Explanations (Optional)
+
+Riveter can explain violations in plain English — why a rule matters, what the risk is, and
+exactly how to fix it in your Terraform config.
+
+This feature requires an Anthropic API key (pay-as-you-go, ~$0.001 per explanation).
+Get one at https://console.anthropic.com.
+
+Once you have a key:
+
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...
+```
+
+Then add `--explain` to any scan:
+
+```bash
+riveter scan -p aws-security -t main.tf --explain
+```
+
+Or drill into a specific violation after the fact:
+
+```bash
+riveter explain ec2-imdsv2-required \
+    --resource aws_instance.web_server --terraform main.tf -p aws-security
+```
+
+To always enable explanations, add this to `riveter.yml`:
+
+```yaml
+# ai:
+#   explain_on_fail: true
+#   model: claude-sonnet-4-20250514   # optional model override
+```
 
 ---
 

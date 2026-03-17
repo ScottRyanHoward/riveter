@@ -29,6 +29,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+ai = [
+    "anthropic>=0.25.0",
+]
 dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
@@ -81,6 +84,10 @@ warn_unused_configs = true
 
 [[tool.mypy.overrides]]
 module = "hcl2"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "anthropic"
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]

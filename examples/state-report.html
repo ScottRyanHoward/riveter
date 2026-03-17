@@ -1,0 +1,268 @@
+Loaded 26 rule(s) from pack aws-security
+
+Scanning 5 resource(s) from state against 26 rule(s)...
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Riveter Report — 2026-03-16 23:00:14 UTC</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+           font-size: 14px; color: #111827; background: #f1f5f9; min-height: 100vh; }
+
+    /* ── Header ── */
+    header { background: #1e293b; color: #fff; padding: 14px 24px;
+             display: flex; align-items: center; gap: 12px; }
+    header h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+    header .subtitle { color: #94a3b8; font-size: 13px; flex: 1; }
+    header .ts { color: #64748b; font-size: 12px; font-variant-numeric: tabular-nums; }
+
+    /* ── Summary cards ── */
+    .summary { display: flex; gap: 12px; padding: 20px 24px;
+               background: #fff; border-bottom: 1px solid #e2e8f0; flex-wrap: wrap; }
+    .card { flex: 1; min-width: 120px; padding: 14px 18px; border-radius: 8px;
+            border: 1px solid #e2e8f0; }
+    .card .count { font-size: 30px; font-weight: 700; line-height: 1; }
+    .card .label { font-size: 11px; color: #6b7280; text-transform: uppercase;
+                   letter-spacing: 0.6px; margin-top: 4px; }
+    .card .sev { font-size: 11px; color: #9ca3af; margin-top: 6px; }
+    .card.total { background: #f8fafc; }
+    .card.pass  { background: #f0fdf4; border-color: #bbf7d0; }
+    .card.pass .count { color: #16a34a; }
+    .card.fail  { background: #fef2f2; border-color: #fecaca; }
+    .card.fail .count { color: #dc2626; }
+    .card.skip  { background: #f9fafb; border-color: #e5e7eb; }
+    .card.skip .count { color: #6b7280; }
+
+    /* ── Filters ── */
+    .filters { display: flex; align-items: center; gap: 10px; padding: 12px 24px;
+               background: #fff; border-bottom: 1px solid #e2e8f0; flex-wrap: wrap; }
+    .filters select, .filters input {
+      padding: 6px 10px; border: 1px solid #d1d5db; border-radius: 6px;
+      font-size: 13px; color: #374151; background: #fff; }
+    .filters input { flex: 1; min-width: 160px; max-width: 300px; }
+    .filters select:focus, .filters input:focus {
+      outline: none; border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.12); }
+    #resultCount { margin-left: auto; font-size: 12px; color: #9ca3af;
+                   white-space: nowrap; }
+
+    /* ── Table ── */
+    .table-wrap { padding: 20px 24px 40px; }
+    table { width: 100%; border-collapse: collapse; background: #fff;
+            border-radius: 8px; overflow: hidden;
+            border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    thead th { padding: 9px 14px; text-align: left; font-size: 11px; font-weight: 600;
+               text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280;
+               background: #f9fafb; border-bottom: 1px solid #e2e8f0; white-space: nowrap; }
+    tbody td { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    .result-row { cursor: pointer; user-select: none; }
+    .result-row:hover td { background: #f8fafc; }
+    .result-row td.mono { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+                          font-size: 12px; }
+    .result-row td.msg { color: #6b7280; font-size: 13px; max-width: 320px;
+                         overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .no-results { text-align: center; padding: 48px; color: #9ca3af; font-style: italic; }
+
+    /* ── Badges ── */
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 4px;
+             font-size: 11px; font-weight: 600; letter-spacing: 0.3px; }
+    .badge-pass    { background: #dcfce7; color: #15803d; }
+    .badge-fail    { background: #fee2e2; color: #dc2626; }
+    .badge-skip    { background: #f3f4f6; color: #6b7280; }
+    .badge-error   { background: #fee2e2; color: #dc2626; }
+    .badge-warning { background: #fef9c3; color: #b45309; }
+    .badge-info    { background: #dbeafe; color: #2563eb; }
+
+    /* ── Detail row ── */
+    .detail-row td { background: #f8fafc; padding: 0; }
+    .detail-inner { padding: 16px 20px 20px; border-top: 2px solid #e0e7ff; }
+    .detail-meta { display: grid; grid-template-columns: max-content 1fr;
+                   gap: 5px 18px; margin-bottom: 14px; font-size: 13px; }
+    .detail-meta dt { color: #6b7280; font-weight: 500; }
+    .detail-meta dd code { font-family: monospace; font-size: 12px;
+                           background: #e5e7eb; padding: 1px 6px; border-radius: 3px; }
+    .assert-title { font-size: 12px; font-weight: 600; text-transform: uppercase;
+                    letter-spacing: 0.4px; color: #6b7280; margin-bottom: 8px; }
+    .assert-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .assert-table th { padding: 5px 10px; text-align: left; background: #e5e7eb;
+                       color: #374151; font-weight: 600; border: 1px solid #d1d5db; }
+    .assert-table td { padding: 5px 10px; border: 1px solid #e5e7eb;
+                       font-family: monospace; font-size: 12px; }
+    .assert-pass td { background: #f0fdf4; }
+    .assert-fail td { background: #fef2f2; }
+    .no-assert { color: #9ca3af; font-size: 12px; font-style: italic; }
+
+    /* ── Footer ── */
+    footer { text-align: center; padding: 18px; color: #9ca3af; font-size: 12px;
+             border-top: 1px solid #e2e8f0; background: #fff; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>&#x1F527; riveter</h1>
+  <span class="subtitle">Infrastructure Rule Enforcement Report</span>
+  <span class="ts">2026-03-16 23:00:14 UTC</span>
+</header>
+
+<section class="summary">
+  <div class="card total">
+    <div class="count">31</div>
+    <div class="label">Total checks</div>
+  </div>
+  <div class="card pass">
+    <div class="count">3</div>
+    <div class="label">Passed</div>
+  </div>
+  <div class="card fail">
+    <div class="count">9</div>
+    <div class="label">Failed</div>
+    <div class="sev">7 error &nbsp;&#x2022;&nbsp; 2 warning &nbsp;&#x2022;&nbsp; 0 info</div>
+  </div>
+  <div class="card skip">
+    <div class="count">19</div>
+    <div class="label">Skipped</div>
+  </div>
+</section>
+
+<div class="filters">
+  <select id="statusFilter">
+    <option value="all">All statuses</option>
+    <option value="fail">Failed</option>
+    <option value="pass">Passed</option>
+    <option value="skip">Skipped</option>
+  </select>
+  <select id="severityFilter">
+    <option value="all">All severities</option>
+    <option value="error">Error</option>
+    <option value="warning">Warning</option>
+    <option value="info">Info</option>
+  </select>
+  <input id="search" type="search" placeholder="Search rule ID or resource&#x2026;">
+  <span id="resultCount"></span>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Status</th>
+        <th>Severity</th>
+        <th>Rule ID</th>
+        <th>Resource</th>
+        <th>Message</th>
+      </tr>
+    </thead>
+    <tbody id="results"></tbody>
+  </table>
+</div>
+
+<footer>Generated by riveter v0.2.4 &nbsp;&#x2022;&nbsp; 2026-03-16 23:00:14 UTC</footer>
+
+<script>
+  const DATA = [{"status": "fail", "severity": "error", "rule_id": "ec2_no_public_ip", "description": "EC2 instances should not have public IP addresses in production", "resource_type": "aws_instance", "resource_id": "i-0abc123def456789", "message": "Expected 'associate_public_ip_address' to equal False, got True", "assertions": [{"property": "associate_public_ip_address", "operator": "eq", "expected": "False", "actual": "True", "passed": false, "message": "Expected 'associate_public_ip_address' to equal False, got True"}]}, {"status": "fail", "severity": "error", "rule_id": "ec2_encrypted_ebs_volumes", "description": "EC2 instances should use encrypted EBS volumes", "resource_type": "aws_instance", "resource_id": "i-0abc123def456789", "message": "Expected 'root_block_device.encrypted' to equal True, got False", "assertions": [{"property": "root_block_device.encrypted", "operator": "eq", "expected": "True", "actual": "False", "passed": false, "message": "Expected 'root_block_device.encrypted' to equal True, got False"}]}, {"status": "fail", "severity": "warning", "rule_id": "ec2_approved_instance_types", "description": "EC2 instances should use approved instance types", "resource_type": "aws_instance", "resource_id": "i-0abc123def456789", "message": "Value 't3.micro' does not match pattern '^(t3|t4g|m5|m6i|c5|c6i|r5|r6i)\\\\.(large|xlarge|2xlarge)$'", "assertions": [{"property": "instance_type", "operator": "regex", "expected": "^(t3|t4g|m5|m6i|c5|c6i|r5|r6i)\\.(large|xlarge|2xlarge)$", "actual": "t3.micro", "passed": false, "message": "Value 't3.micro' does not match pattern '^(t3|t4g|m5|m6i|c5|c6i|r5|r6i)\\\\.(large|xlarge|2xlarge)$'"}]}, {"status": "fail", "severity": "error", "rule_id": "ec2_required_tags", "description": "EC2 instances must have required tags", "resource_type": "aws_instance", "resource_id": "i-0abc123def456789", "message": "Failed checks: tags.Owner, tags.Project", "assertions": [{"property": "tags.Environment", "operator": "present", "expected": "present", "actual": "production", "passed": true, "message": "tags.Environment is present"}, {"property": "tags.Owner", "operator": "present", "expected": "present", "actual": "None", "passed": false, "message": "tags.Owner is missing or empty"}, {"property": "tags.Project", "operator": "present", "expected": "present", "actual": "None", "passed": false, "message": "tags.Project is missing or empty"}]}, {"status": "pass", "severity": "error", "rule_id": "ec2_no_public_ip", "description": "EC2 instances should not have public IP addresses in production", "resource_type": "aws_instance", "resource_id": "i-0def456ghi789012", "message": "All checks passed", "assertions": [{"property": "associate_public_ip_address", "operator": "eq", "expected": "False", "actual": "False", "passed": true, "message": "associate_public_ip_address equals False"}]}, {"status": "pass", "severity": "error", "rule_id": "ec2_encrypted_ebs_volumes", "description": "EC2 instances should use encrypted EBS volumes", "resource_type": "aws_instance", "resource_id": "i-0def456ghi789012", "message": "All checks passed", "assertions": [{"property": "root_block_device.encrypted", "operator": "eq", "expected": "True", "actual": "True", "passed": true, "message": "root_block_device.encrypted equals True"}]}, {"status": "fail", "severity": "warning", "rule_id": "ec2_approved_instance_types", "description": "EC2 instances should use approved instance types", "resource_type": "aws_instance", "resource_id": "i-0def456ghi789012", "message": "Value 't3.small' does not match pattern '^(t3|t4g|m5|m6i|c5|c6i|r5|r6i)\\\\.(large|xlarge|2xlarge)$'", "assertions": [{"property": "instance_type", "operator": "regex", "expected": "^(t3|t4g|m5|m6i|c5|c6i|r5|r6i)\\.(large|xlarge|2xlarge)$", "actual": "t3.small", "passed": false, "message": "Value 't3.small' does not match pattern '^(t3|t4g|m5|m6i|c5|c6i|r5|r6i)\\\\.(large|xlarge|2xlarge)$'"}]}, {"status": "fail", "severity": "error", "rule_id": "ec2_required_tags", "description": "EC2 instances must have required tags", "resource_type": "aws_instance", "resource_id": "i-0def456ghi789012", "message": "Failed checks: tags.Owner, tags.Project", "assertions": [{"property": "tags.Environment", "operator": "present", "expected": "present", "actual": "production", "passed": true, "message": "tags.Environment is present"}, {"property": "tags.Owner", "operator": "present", "expected": "present", "actual": "None", "passed": false, "message": "tags.Owner is missing or empty"}, {"property": "tags.Project", "operator": "present", "expected": "present", "actual": "None", "passed": false, "message": "tags.Project is missing or empty"}]}, {"status": "fail", "severity": "error", "rule_id": "s3_bucket_encryption", "description": "S3 buckets must have server-side encryption enabled", "resource_type": "aws_s3_bucket", "resource_id": "my-app-data-bucket-prod", "message": "server_side_encryption_configuration is missing or empty", "assertions": [{"property": "server_side_encryption_configuration", "operator": "present", "expected": "present", "actual": "None", "passed": false, "message": "server_side_encryption_configuration is missing or empty"}]}, {"status": "fail", "severity": "error", "rule_id": "s3_bucket_encryption", "description": "S3 buckets must have server-side encryption enabled", "resource_type": "aws_s3_bucket", "resource_id": "my-audit-logs-prod", "message": "server_side_encryption_configuration is missing or empty", "assertions": [{"property": "server_side_encryption_configuration", "operator": "present", "expected": "present", "actual": "None", "passed": false, "message": "server_side_encryption_configuration is missing or empty"}]}, {"status": "fail", "severity": "error", "rule_id": "security_group_no_wide_open_ingress", "description": "Security groups should not allow ingress from 0.0.0.0/0 on sensitive ports", "resource_type": "aws_security_group", "resource_id": "sg-0123456789abcdef0", "message": "Expected subset [{'from_port': {'ne': 22}, 'cidr_blocks': {'contains': '0.0.0.0/0'}}, {'from_port': {'ne': 3389}, 'cidr_blocks': {'contains': '0.0.0.0/0'}}] is not contained in [{'cidr_blocks': ['0.0.0.0/0'], 'from_port': 443, 'to_port': 443, 'protocol': 'tcp', 'description': 'HTTPS'}, {'cidr_blocks': ['0.0.0.0/0'], 'from_port': 22, 'to_port': 22, 'protocol': 'tcp', 'description': 'SSH open to world'}]", "assertions": [{"property": "ingress", "operator": "subset", "expected": "[{'from_port': {'ne': 22}, 'cidr_blocks': {'contains': '0.0.0.0/0'}}, {'from_port': {'ne': 3389}, 'cidr_blocks': {'contains': '0.0.0.0/0'}}]", "actual": "[{'cidr_blocks': ['0.0.0.0/0'], 'from_port': 443, 'to_port': 443, 'protocol': 'tcp', 'description': 'HTTPS'}, {'cidr_blocks': ['0.0.0.0/0'], 'from_port': 22, 'to_port': 22, 'protocol': 'tcp', 'description': 'SSH open to world'}]", "passed": false, "message": "Expected subset [{'from_port': {'ne': 22}, 'cidr_blocks': {'contains': '0.0.0.0/0'}}, {'from_port': {'ne': 3389}, 'cidr_blocks': {'contains': '0.0.0.0/0'}}] is not contained in [{'cidr_blocks': ['0.0.0.0/0'], 'from_port': 443, 'to_port': 443, 'protocol': 'tcp', 'description': 'HTTPS'}, {'cidr_blocks': ['0.0.0.0/0'], 'from_port': 22, 'to_port': 22, 'protocol': 'tcp', 'description': 'SSH open to world'}]"}]}, {"status": "pass", "severity": "warning", "rule_id": "security_group_description_required", "description": "Security groups must have meaningful descriptions", "resource_type": "aws_security_group", "resource_id": "sg-0123456789abcdef0", "message": "All checks passed", "assertions": [{"property": "description", "operator": "regex", "expected": "^(?!Managed by Terraform).{10,}", "actual": "Web server security group", "passed": true, "message": "description check passed"}]}, {"status": "skip", "severity": "error", "rule_id": "s3_bucket_public_access_block", "description": "S3 buckets should block all public access", "resource_type": "aws_s3_bucket_public_access_block", "resource_id": "N/A", "message": "SKIPPED: No matching resources found for this rule", "assertions": []}, {"status": "skip", "severity": "warning", "rule_id": "s3_bucket_versioning", "description": "S3 buckets should have versioning enabled", "resource_type": "aws_s3_bucket_versioning", "resource_id": "N/A", "message": "SKIPPED: No matching resources found for this rule", "assertions": []}, {"status": "skip", "severity": "warning", "rule_id": "s3_bucket_logging", "description": "S3 buckets should have access logging enabled", "resource_type": "aws_s3_bucket_logging", "resource_id": "N/A", "message": "SKIPPED: No matching resources found for this rule", "assertions": []}, {"status": "skip", "severity": "error", "rule_id": "rds_encrypted_storage", "description": "RDS instances must have encrypted storage", "resource_type": "aws_db_instance", "resource_id": "N/A", "message": "SKIPPED: No matching resources found for this rule", "assertions": []}, {"status": "skip", "severity": "warning", "rule_id": "rds_backup_retention", "description": "RDS instances should have adequate backup retention", "resource_type": "aws_db_instance", "resource_id": "N/A", "message": "SKIPPED: No matching resources found for this rule", "assertions": []}, {"status": "skip", "severity": "error", "rule_id": "rds_multi_az", "description": "Production RDS instances should use Multi-AZ deployment", "resource_type": "aws_db_instance", "resource_id": "N/A", "message": "SKIPPED: No matching resources found for this rule", "assertions": []}, {"status": "skip", "severity": "error", "rule_id": "rds_no_public_access", "description": "RDS instances should not be publicly accessible", "resource_type": "aws_db_instance", "resource_id": "N/A", "message": "SKIPPED: No matching resources found for this rule", "assertions": []}, {"status": "skip", "severity": "warning", "rule_id": "vpc_flow_logs", "description": "VPCs should have flow logs enabled", "resource_type": "aws_vpc", "resource_id": "N/A", "message": "SKIPPED: No matching resources found for this rule", "assertions": []}, {"status": "skip", "severity": "error", "rule_id": "iam_user_no_inline_policies", "description": "IAM users should not have inline policies", "resource_type": "aws_iam_user", "resource_id": "N/A", "message": "SKIPPED: No matching resources found for this rule", "assertions": []}, {"status": "skip", "severity": "error", "rule_id": "iam_role_assume_role_policy_required", "description": "IAM roles must have assume role policy", "resource_type": "aws_iam_role", "resource_id": "N/A", "message": "SKIPPED: No matching resources found for this rule", "assertions": []}, {"status": "skip", "severity": "warning", "rule_id": "iam_policy_no_wildcard_actions", "description": "IAM policies should not use wildcard actions", "resource_type": "aws_iam_policy", "resource_id": "N/A", "message": "SKIPPED: No matching resources found for this rule", "assertions": []}, {"status": "skip", "severity": "error", "rule_id": "cloudtrail_enabled", "description": "CloudTrail should be enabled for audit logging", "resource_type": "aws_cloudtrail", "resource_id": "N/A", "message": "SKIPPED: No matching resources found for this rule", "assertions": []}, {"status": "skip", "severity": "error", "rule_id": "cloudtrail_log_file_validation", "description": "CloudTrail should have log file validation enabled", "resource_type": "aws_cloudtrail", "resource_id": "N/A", "message": "SKIPPED: No matching resources found for this rule", "assertions": []}, {"status": "skip", "severity": "warning", "rule_id": "kms_key_rotation", "description": "KMS keys should have automatic rotation enabled", "resource_type": "aws_kms_key", "resource_id": "N/A", "message": "SKIPPED: No matching resources found for this rule", "assertions": []}, {"status": "skip", "severity": "warning", "rule_id": "kms_key_description_required", "description": "KMS keys must have meaningful descriptions", "resource_type": "aws_kms_key", "resource_id": "N/A", "message": "SKIPPED: No matching resources found for this rule", "assertions": []}, {"status": "skip", "severity": "warning", "rule_id": "lambda_function_dead_letter_queue", "description": "Lambda functions should have dead letter queues configured", "resource_type": "aws_lambda_function", "resource_id": "N/A", "message": "SKIPPED: No matching resources found for this rule", "assertions": []}, {"status": "skip", "severity": "info", "rule_id": "lambda_function_vpc_config", "description": "Lambda functions accessing VPC resources should have VPC configuration", "resource_type": "aws_lambda_function", "resource_id": "N/A", "message": "SKIPPED: No matching resources found for this rule", "assertions": []}, {"status": "skip", "severity": "warning", "rule_id": "alb_access_logs_enabled", "description": "Application Load Balancers should have access logs enabled", "resource_type": "aws_lb", "resource_id": "N/A", "message": "SKIPPED: No matching resources found for this rule", "assertions": []}, {"status": "skip", "severity": "error", "rule_id": "alb_deletion_protection", "description": "Production ALBs should have deletion protection enabled", "resource_type": "aws_lb", "resource_id": "N/A", "message": "SKIPPED: No matching resources found for this rule", "assertions": []}];
+
+  function esc(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function statusBadge(s) {
+    const labels = { pass: 'PASS', fail: 'FAIL', skip: 'SKIP' };
+    return '<span class="badge badge-' + s + '">' + (labels[s] || s.toUpperCase()) + '</span>';
+  }
+
+  function severityBadge(s) {
+    return '<span class="badge badge-' + s + '">' + s + '</span>';
+  }
+
+  function assertionDetail(assertions) {
+    if (!assertions || !assertions.length) {
+      return '<p class="no-assert">No assertion details available.</p>';
+    }
+    const rows = assertions.map(function(a) {
+      var cls = a.passed ? 'assert-pass' : 'assert-fail';
+      return '<tr class="' + cls + '">'
+        + '<td>' + esc(a.property) + '</td>'
+        + '<td>' + esc(a.operator) + '</td>'
+        + '<td>' + esc(a.expected) + '</td>'
+        + '<td>' + esc(a.actual)   + '</td>'
+        + '<td>' + (a.passed ? '&#x2713;' : '&#x2717;') + '</td>'
+        + '</tr>';
+    }).join('');
+    return '<p class="assert-title">Assertions</p>'
+      + '<table class="assert-table">'
+      + '<thead><tr><th>Property</th><th>Operator</th><th>Expected</th>'
+      + '<th>Actual</th><th></th></tr></thead>'
+      + '<tbody>' + rows + '</tbody></table>';
+  }
+
+  function renderTable(data) {
+    var tbody = document.getElementById('results');
+    var count = document.getElementById('resultCount');
+    if (!data.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="no-results">No matching results.</td></tr>';
+      count.textContent = '0 results';
+      return;
+    }
+    tbody.innerHTML = data.map(function(r, i) {
+      var detailHtml = '<div class="detail-inner">'
+        + '<dl class="detail-meta">'
+        + '<dt>Description</dt><dd>' + esc(r.description) + '</dd>'
+        + '<dt>Resource type</dt><dd><code>' + esc(r.resource_type) + '</code></dd>'
+        + '</dl>'
+        + assertionDetail(r.assertions)
+        + '</div>';
+
+      return '<tr class="result-row" onclick="toggleDetail(' + i + ')">'
+        + '<td>' + statusBadge(r.status) + '</td>'
+        + '<td>' + severityBadge(r.severity) + '</td>'
+        + '<td class="mono">' + esc(r.rule_id) + '</td>'
+        + '<td class="mono">' + (r.resource_id ? esc(r.resource_id) : '<em style="color:#9ca3af">—</em>') + '</td>'
+        + '<td class="msg" title="' + esc(r.message) + '">' + esc(r.message) + '</td>'
+        + '</tr>'
+        + '<tr id="detail-' + i + '" class="detail-row" style="display:none">'
+        + '<td colspan="5">' + detailHtml + '</td>'
+        + '</tr>';
+    }).join('');
+    var n = data.length;
+    count.textContent = n + ' result' + (n !== 1 ? 's' : '');
+  }
+
+  function applyFilters() {
+    var status   = document.getElementById('statusFilter').value;
+    var severity = document.getElementById('severityFilter').value;
+    var search   = document.getElementById('search').value.toLowerCase();
+    var filtered = DATA.filter(function(r) {
+      if (status !== 'all' && r.status !== status) return false;
+      if (severity !== 'all' && r.severity !== severity) return false;
+      if (search) {
+        var haystack = (r.rule_id + ' ' + r.resource_id).toLowerCase();
+        if (haystack.indexOf(search) === -1) return false;
+      }
+      return true;
+    });
+    renderTable(filtered);
+  }
+
+  function toggleDetail(i) {
+    var row = document.getElementById('detail-' + i);
+    row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
+  }
+
+  document.getElementById('statusFilter').addEventListener('change', applyFilters);
+  document.getElementById('severityFilter').addEventListener('change', applyFilters);
+  document.getElementById('search').addEventListener('input', applyFilters);
+
+  renderTable(DATA);
+</script>
+</body>
+</html>
+

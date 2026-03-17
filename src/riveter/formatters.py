@@ -101,7 +101,10 @@ class JUnitXMLFormatter(OutputFormatter):
                             f"Actual:   {ar.actual}\n"
                             f"Message:  {ar.message}"
                         )
-                failure.text = "\n\n".join(details) if details else result.message
+                body = "\n\n".join(details) if details else result.message
+                if result.explanation:
+                    body = f"{body}\n\nExplanation: {result.explanation}"
+                failure.text = body
 
         return ET.tostring(ts, encoding="unicode", xml_declaration=True)
 
@@ -169,10 +172,13 @@ class SARIFFormatter(OutputFormatter):
         for r in results:
             if r.passed:
                 continue
+            message_text = r.message
+            if r.explanation:
+                message_text = f"{r.message}  {r.explanation}"
             entry: Dict[str, Any] = {
                 "ruleId": r.rule.id,
                 "level": self._LEVEL_MAP.get(r.severity.value, "warning"),
-                "message": {"text": r.message},
+                "message": {"text": message_text},
                 "locations": [
                     {
                         "logicalLocations": [

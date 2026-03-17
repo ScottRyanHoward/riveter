@@ -2,12 +2,14 @@
 
 Commands:
     riveter scan             Validate Terraform files against rules.
+    riveter explain          AI-powered explanation of a single rule violation.
     riveter list-rule-packs  List all available built-in rule packs.
 """
 
 import fnmatch
 import logging
 import sys
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Dict, List, Optional, Tuple
 
 import click
@@ -17,6 +19,7 @@ from rich.table import Table
 
 from ._version import get_version
 from .config import ConfigManager
+from .explainer import Explainer
 from .extract_config import extract_terraform_config
 from .extract_state import extract_terraform_state
 from .formatters import HTMLFormatter, JSONFormatter, JUnitXMLFormatter, SARIFFormatter
@@ -69,7 +72,11 @@ def _display_table(results: List[ValidationResult]) -> None:
         sev = f"[{color}]{r.severity.value}[/{color}]"
         resource = f"{r.resource.get('resource_type', '')}.{r.resource.get('id', '')}"
 
-        table.add_row(status, sev, r.rule.id, resource, r.message)
+        msg = r.message
+        if r.explanation:
+            msg = f"{r.message}\n  [dim]\u24d8[/dim]  [dim]{r.explanation}[/dim]"
+
+        table.add_row(status, sev, r.rule.id, resource, msg)
 
     console.print(table)
 
@@ -90,6 +97,59 @@ def _print_summary(results: List[ValidationResult]) -> None:
         console.print("[bold green]All checks passed.[/bold green]")
     else:
         console.print(f"[bold red]{failed} check(s) failed.[/bold red]")
+
+
+# ---------------------------------------------------------------------------
+# AI explanation helpers
+# ---------------------------------------------------------------------------
+
+_AI_MISSING_WARNING = """\
+\u26a0  AI explanations require an Anthropic API key.
+   Set it with:
+       export ANTHROPIC_API_KEY=sk-ant-...
+   Get a key at: https://console.anthropic.com
+   Cost: ~$0.001 per explanation.
+   Scan results are shown below without explanations."""
+
+
+def _attach_explanations(results: List[ValidationResult], model: Optional[str] = None) -> None:
+    """Fetch AI explanations in parallel and attach them to failing results."""
+    explainer = Explainer(model=model)
+
+    if not explainer.is_available():
+        err_console.print(_AI_MISSING_WARNING)
+        return
+
+    failing = [r for r in results if not r.passed and not r.message.startswith("SKIPPED:")]
+    if not failing:
+        return
+
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        futures = {
+            executor.submit(
+                explainer.explain,
+                {
+                    "id": r.rule.id,
+                    "description": r.rule.description,
+                    "severity": r.rule.severity.value,
+                    "assert": r.rule.assert_conditions,
+                },
+                r.resource.get("id", ""),
+                r.resource.get("resource_type", ""),
+                r.resource,
+            ): r
+            for r in failing
+        }
+        for future in as_completed(futures):
+            result = futures[future]
+            try:
+                result.explanation = future.result()
+            except Exception:  # noqa: BLE001
+                pass
+
+    warning = explainer.get_scan_warning()
+    if warning:
+        err_console.print(warning)
 
 
 # ---------------------------------------------------------------------------
@@ -169,6 +229,13 @@ def main() -> None:
     is_flag=True,
     help="Enable debug logging.",
 )
+@click.option(
+    "--explain",
+    "-e",
+    is_flag=True,
+    default=False,
+    help="Attach AI-generated plain-English explanations to each violation (requires ANTHROPIC_API_KEY).",
+)
 def scan(
     rules_file: Optional[str],
     rule_packs: Tuple[str, ...],
@@ -179,6 +246,7 @@ def scan(
     include_rules: Tuple[str, ...],
     exclude_rules: Tuple[str, ...],
     debug: bool,
+    explain: bool,
 ) -> None:
     """Validate Terraform configuration against rules.
 
@@ -313,6 +381,11 @@ def scan(
 
     # -- Run validation -------------------------------------------------------
     results = validate_resources(all_rules, resources, Severity(config.min_severity))
+
+    # -- AI explanations (optional) -------------------------------------------
+    effective_explain = explain or config.ai_explain_on_fail
+    if effective_explain:
+        _attach_explanations(results, config.ai_model)
 
     # -- Emit output ----------------------------------------------------------
     fmt = config.output_format
@@ -549,6 +622,153 @@ def scan_state(
     failed = sum(1 for r in results if not r.passed and not r.message.startswith("SKIPPED:"))
     if failed:
         sys.exit(1)
+
+
+@main.command(name="explain")
+@click.argument("rule_id")
+@click.option(
+    "--resource",
+    "-r",
+    required=True,
+    metavar="TYPE.NAME",
+    help="Resource address to explain (e.g. aws_instance.web_server).",
+)
+@click.option(
+    "--terraform",
+    "-t",
+    "terraform_path",
+    required=True,
+    type=click.Path(exists=True),
+    help="Path to a Terraform .tf file or directory.",
+)
+@click.option(
+    "--rules",
+    "rules_file",
+    type=click.Path(exists=True),
+    help="Custom rules YAML file to search for the rule.",
+)
+@click.option(
+    "--rule-pack",
+    "-p",
+    "rule_packs",
+    multiple=True,
+    help="Built-in rule pack to search (can be repeated).",
+)
+def explain_cmd(
+    rule_id: str,
+    resource: str,
+    terraform_path: str,
+    rules_file: Optional[str],
+    rule_packs: Tuple[str, ...],
+) -> None:
+    """Explain a rule violation in plain English using AI.
+
+    \b
+    Examples:
+      riveter explain ec2-imdsv2-required \\
+          --resource aws_instance.web_server --terraform main.tf -p aws-security
+
+      riveter explain s3-block-public-access \\
+          --resource aws_s3_bucket.uploads --terraform main.tf -r rules.yml
+    """
+    # -- Validate that there is at least one rule source ---------------------
+    if not rules_file and not rule_packs:
+        err_console.print(
+            "[red]Error:[/red] Specify at least one rule source: "
+            "--rules <file> or --rule-pack <name>"
+        )
+        sys.exit(1)
+
+    # -- Load rules and find the target rule ---------------------------------
+    all_rules: List[Rule] = []
+
+    if rules_file:
+        try:
+            all_rules.extend(load_rules(rules_file))
+        except Exception as exc:
+            err_console.print(f"[red]Error loading rules file:[/red] {exc}")
+            sys.exit(1)
+
+    if rule_packs:
+        pack_mgr = RulePackManager()
+        for pack_name in rule_packs:
+            try:
+                pack = pack_mgr.load_rule_pack(pack_name)
+                all_rules.extend(pack.rules)
+            except FileNotFoundError:
+                err_console.print(
+                    f"[red]Error:[/red] Rule pack '{pack_name}' not found. "
+                    "Run 'riveter list-rule-packs' to see available packs."
+                )
+                sys.exit(1)
+            except Exception as exc:
+                err_console.print(f"[red]Error loading rule pack '{pack_name}':[/red] {exc}")
+                sys.exit(1)
+
+    target_rule = next((r for r in all_rules if r.id == rule_id), None)
+    if target_rule is None:
+        err_console.print(
+            f"[red]Error:[/red] Rule '{rule_id}' not found in the specified rule sources. "
+            "Check the rule ID spelling or add the correct --rule-pack / --rules option."
+        )
+        sys.exit(1)
+
+    # -- Parse Terraform and find the target resource ------------------------
+    try:
+        tf_config = extract_terraform_config(terraform_path)
+    except Exception as exc:
+        err_console.print(f"[red]Error parsing Terraform:[/red] {exc}")
+        sys.exit(1)
+
+    # Resource address may be "type.name" or just "name"
+    if "." in resource:
+        res_type, res_name = resource.split(".", 1)
+    else:
+        res_type, res_name = "", resource
+
+    target_resource = None
+    for res in tf_config.get("resources", []):
+        name_match = res.get("id") == res_name
+        type_match = not res_type or res.get("resource_type") == res_type
+        if name_match and type_match:
+            target_resource = res
+            break
+
+    if target_resource is None:
+        err_console.print(
+            f"[red]Error:[/red] Resource '{resource}' not found in '{terraform_path}'. "
+            "Check the resource name and type, or verify the Terraform path."
+        )
+        sys.exit(1)
+
+    # -- Check AI availability -----------------------------------------------
+    explainer = Explainer()
+    if not explainer.is_available():
+        err_console.print(_AI_MISSING_WARNING)
+        sys.exit(1)
+
+    # -- Fetch and print explanation -----------------------------------------
+    explanation = explainer.explain(
+        rule={
+            "id": target_rule.id,
+            "description": target_rule.description,
+            "severity": target_rule.severity.value,
+            "assert": target_rule.assert_conditions,
+        },
+        resource_name=target_resource.get("id", ""),
+        resource_type=target_resource.get("resource_type", ""),
+        resource_attrs=target_resource,
+    )
+
+    if explanation is None:
+        warning = explainer.get_scan_warning()
+        if warning:
+            err_console.print(warning)
+        else:
+            err_console.print("[red]Error:[/red] Failed to get explanation from Anthropic API.")
+        sys.exit(1)
+
+    console.print(explanation)
 
 
 @main.command(name="list-rule-packs")

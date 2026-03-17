@@ -65,6 +65,10 @@ class RiveterConfig:
     # Debugging
     debug: bool = False
 
+    # AI explanations (optional — requires anthropic package + ANTHROPIC_API_KEY)
+    ai_explain_on_fail: bool = False
+    ai_model: Optional[str] = None
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "rule_dirs": self.rule_dirs,
@@ -75,12 +79,23 @@ class RiveterConfig:
             "output_format": self.output_format,
             "output_file": self.output_file,
             "debug": self.debug,
+            "ai_explain_on_fail": self.ai_explain_on_fail,
+            "ai_model": self.ai_model,
         }
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "RiveterConfig":
+        # Flatten the optional ``ai:`` block before filtering by field names.
+        flat: Dict[str, Any] = dict(data)
+        ai_block = flat.pop("ai", None)
+        if isinstance(ai_block, dict):
+            if "explain_on_fail" in ai_block:
+                flat["ai_explain_on_fail"] = ai_block["explain_on_fail"]
+            if "model" in ai_block:
+                flat["ai_model"] = ai_block["model"]
+
         valid = {f for f in cls.__dataclass_fields__}
-        filtered = {k: v for k, v in data.items() if k in valid and v is not None}
+        filtered = {k: v for k, v in flat.items() if k in valid and v is not None}
         return cls(**filtered)
 
     def _merge_with_overrides(self, overrides: "RiveterConfig") -> "RiveterConfig":
@@ -115,6 +130,10 @@ class RiveterConfig:
         merged.exclude_rules = self.exclude_rules + [
             r for r in overrides.exclude_rules if r not in self.exclude_rules
         ]
+
+        # AI settings: override wins when it differs from default
+        merged.ai_explain_on_fail = overrides.ai_explain_on_fail or self.ai_explain_on_fail
+        merged.ai_model = overrides.ai_model or self.ai_model
 
         return merged
 

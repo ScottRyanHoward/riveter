@@ -1,7 +1,7 @@
 """Core validation engine: applies rules to Terraform resources."""
 
 import time
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from .rules import AssertionResult, Rule, Severity
 
@@ -17,6 +17,7 @@ class ValidationResult:
         severity:          Severity level inherited from the rule.
         assertion_results: Individual assertion outcomes.
         execution_time:    Wall-clock time taken to evaluate the rule (seconds).
+        explanation:       Optional AI-generated plain-English explanation (``--explain`` flag).
     """
 
     def __init__(
@@ -27,6 +28,7 @@ class ValidationResult:
         message: str,
         assertion_results: List[AssertionResult] | None = None,
         execution_time: float = 0.0,
+        explanation: Optional[str] = None,
     ) -> None:
         self.rule = rule
         self.resource = resource
@@ -35,6 +37,7 @@ class ValidationResult:
         self.severity = rule.severity
         self.assertion_results: List[AssertionResult] = assertion_results or []
         self.execution_time = execution_time
+        self.explanation: Optional[str] = explanation
 
     def to_dict(self) -> Dict[str, Any]:
         """Serialize to a JSON-compatible dictionary."""
@@ -45,6 +48,7 @@ class ValidationResult:
             "passed": self.passed,
             "severity": self.severity.value,
             "message": self.message,
+            "explanation": self.explanation,
             "execution_time": self.execution_time,
             "assertion_results": [
                 {
