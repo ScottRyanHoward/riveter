@@ -35,7 +35,7 @@ class Explainer:
         api_key = os.environ.get("ANTHROPIC_API_KEY", "")
         if api_key:
             try:
-                import anthropic  # type: ignore[import-untyped]  # noqa: PLC0415
+                import anthropic  # noqa: PLC0415
 
                 self._client = anthropic.Anthropic(api_key=api_key)
                 self._available = True

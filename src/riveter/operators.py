@@ -2,7 +2,7 @@
 
 import re
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Union
+from typing import Any, Callable, Dict, List, Union
 
 
 class ComparisonOperator(ABC):
@@ -33,7 +33,7 @@ class NumericOperator(ComparisonOperator):
             e = float(expected)
             if a is None:
                 return False
-            ops = {
+            ops: Dict[str, Callable[[float, float], bool]] = {
                 "gt": lambda x, y: x > y,
                 "lt": lambda x, y: x < y,
                 "gte": lambda x, y: x >= y,
@@ -41,7 +41,7 @@ class NumericOperator(ComparisonOperator):
                 "ne": lambda x, y: x != y,
                 "eq": lambda x, y: x == y,
             }
-            return bool(ops[self.operator](a, e))
+            return ops[self.operator](a, e)
         except (ValueError, TypeError):
             return False
 

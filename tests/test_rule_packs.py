@@ -134,7 +134,8 @@ class TestRulePackBuiltIns:
 
 class TestRulePackDuplicate:
     def test_duplicate_ids_raise(self, tmp_path):
-        rules_yaml = textwrap.dedent("""\
+        rules_yaml = textwrap.dedent(
+            """\
             - id: duplicate-id
               resource_type: aws_instance
               assert:
@@ -143,7 +144,8 @@ class TestRulePackDuplicate:
               resource_type: aws_instance
               assert:
                 x: z
-            """)
+            """
+        )
         f = _write_pack(tmp_path, "dup-pack", rules_yaml)
         mgr = RulePackManager()
         with pytest.raises(RulePackError, match="[Dd]uplicate"):
@@ -152,7 +154,8 @@ class TestRulePackDuplicate:
 
 class TestRulePackFilter:
     def test_filter_by_severity(self, tmp_path):
-        rules_yaml = textwrap.dedent("""\
+        rules_yaml = textwrap.dedent(
+            """\
             - id: error-rule
               resource_type: aws_instance
               severity: error
@@ -168,7 +171,8 @@ class TestRulePackFilter:
               severity: info
               assert:
                 x: y
-            """)
+            """
+        )
         f = _write_pack(tmp_path, "multi-sev", rules_yaml)
         mgr = RulePackManager()
         pack = mgr.load_rule_pack_from_file(str(f))
