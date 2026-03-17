@@ -35,7 +35,7 @@ ai = [
 dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
-    "black>=24.0",
+    "black==24.10.0",
     "isort>=5.13",
     "mypy>=1.13",
     "ruff>=0.8.0",
