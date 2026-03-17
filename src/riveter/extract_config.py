@@ -85,7 +85,7 @@ def _parse_file(tf_file: str) -> List[Dict[str, Any]]:
         if not content.strip():
             log.warning("Empty Terraform file: %s", tf_file)
             return []
-        tf_config = hcl2.loads(content)
+        tf_config = hcl2.loads(content)  # type: ignore[attr-defined]
     except UnicodeDecodeError as exc:
         raise TerraformParsingError(
             f"Encoding error in {tf_file}: {exc}",

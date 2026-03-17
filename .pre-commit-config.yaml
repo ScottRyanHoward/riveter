@@ -33,7 +33,7 @@ repos:
     hooks:
       - id: mypy
         additional_dependencies: ["types-PyYAML>=6.0"]
-        args: ["--ignore-missing-imports"]
+        args: ["--ignore-missing-imports", "--no-warn-unused-ignores"]
         files: ^src/
 
   - repo: https://github.com/PyCQA/bandit
