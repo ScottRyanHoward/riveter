@@ -231,10 +231,10 @@ Upload to GitHub Code Scanning for inline annotations.
 ### HTML
 
 ```bash
-riveter scan -p aws-security -t main.tf -f html -o report.html
+riveter scan -p aws-security -t main.tf -f html > report.html
 ```
 
-Generates a self-contained HTML report with no external dependencies. Open in any browser to explore results with interactive filtering by status, severity, and resource/rule name. Useful for sharing scan results with stakeholders and auditors who can't easily read JSON or SARIF.
+Generates a self-contained HTML report with no external dependencies. Open in any browser to explore results with interactive filtering by status, severity, and resource/rule name. Click any row to expand full assertion details. When `--explain` is used, AI-generated explanations appear in the expanded detail panel for each failure. Useful for sharing scan results with stakeholders and auditors who can't easily read JSON or SARIF.
 
 ---
 
@@ -268,10 +268,12 @@ riveter explain ec2-imdsv2-required \
 To always enable explanations, add this to `riveter.yml`:
 
 ```yaml
-# ai:
-#   explain_on_fail: true
-#   model: claude-sonnet-4-20250514   # optional model override
+ai:
+  explain_on_fail: true
+  model: claude-sonnet-4-20250514   # optional — overrides the default model
 ```
+
+> **Note:** `--explain` is available on `riveter scan` only, not `scan-state`.
 
 ---
 
@@ -284,6 +286,9 @@ rule_packs:
   - aws-security
   - cis-aws
 
+rule_dirs:
+  - ./my-custom-rules   # load rule packs from additional local directories
+
 min_severity: warning
 output_format: table
 
@@ -292,6 +297,10 @@ include_rules:
 
 exclude_rules:
   - "*test*"
+
+ai:
+  explain_on_fail: true
+  model: claude-sonnet-4-20250514   # optional
 ```
 
 CLI flags always override config file values.
