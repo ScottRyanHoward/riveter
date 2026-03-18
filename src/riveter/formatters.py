@@ -258,6 +258,7 @@ class HTMLFormatter(OutputFormatter):
                     "resource_type": r.rule.resource_type,
                     "resource_id": r.resource.get("id", ""),
                     "message": r.message,
+                    "explanation": r.explanation or "",
                     "assertions": [
                         {
                             "property": ar.property_path,
@@ -371,6 +372,10 @@ _HTML_TEMPLATE = """\
     .assert-pass td { background: #f0fdf4; }
     .assert-fail td { background: #fef2f2; }
     .no-assert { color: #9ca3af; font-size: 12px; font-style: italic; }
+    .explanation { margin-top: 14px; }
+    .explanation-text { font-size: 13px; color: #374151; line-height: 1.6;
+                        background: #eff6ff; border: 1px solid #bfdbfe;
+                        border-radius: 6px; padding: 10px 14px; white-space: pre-wrap; }
 
     /* ── Footer ── */
     footer { text-align: center; padding: 18px; color: #9ca3af; font-size: 12px;
@@ -495,6 +500,7 @@ _HTML_TEMPLATE = """\
         + '<dt>Resource type</dt><dd><code>' + esc(r.resource_type) + '</code></dd>'
         + '</dl>'
         + assertionDetail(r.assertions)
+        + (r.explanation ? '<div class="explanation"><p class="assert-title">AI Explanation</p><p class="explanation-text">' + esc(r.explanation) + '</p></div>' : '')
         + '</div>';
 
       return '<tr class="result-row" onclick="toggleDetail(' + i + ')">'
