@@ -2,6 +2,7 @@
 
 Commands:
     riveter scan             Validate Terraform files against rules.
+    riveter scan-state       Validate a Terraform state file (drift detection).
     riveter explain          AI-powered explanation of a single rule violation.
     riveter list-rule-packs  List all available built-in rule packs.
 """
@@ -163,7 +164,43 @@ def main() -> None:
     """Riveter — Infrastructure Rule Enforcement as Code.
 
     Validate Terraform configurations against custom rules and pre-built
-    compliance rule packs for AWS, Azure, GCP, and Kubernetes.
+    compliance rule packs for AWS, Azure, GCP, Kubernetes, and SOC2.
+
+    \b
+    Quick start:
+      riveter scan -p aws-security -t ./infra/
+      riveter scan-state -p aws-security -s terraform.tfstate
+      riveter list-rule-packs
+
+    \b
+    Built-in rule packs (15 total):
+      AWS:    aws-security, aws-well-architected, aws-hipaa, aws-pci-dss, cis-aws
+      Azure:  azure-security, azure-well-architected, azure-hipaa, cis-azure
+      GCP:    gcp-security, gcp-well-architected, cis-gcp
+      Other:  kubernetes-security, multi-cloud-security, soc2-security
+
+    \b
+    Output formats:
+      table (default)  Rich terminal table with color-coded results
+      json             Structured JSON for scripting and pipelines
+      junit            JUnit XML for CI/CD systems (GitHub Actions, Jenkins)
+      sarif            SARIF for GitHub Code Scanning
+      html             Self-contained HTML report with interactive filtering
+
+    \b
+    Config file (auto-detected in working directory):
+      riveter.yml / .riveter.yml / riveter.yaml / .riveter.yaml
+      riveter.json / .riveter.json
+      Override with: --config FILE
+
+    \b
+    Environment variables:
+      ANTHROPIC_API_KEY    Required to use --explain or the explain command
+
+    \b
+    Exit codes:
+      0    All checks passed
+      1    One or more checks failed
 
     Run 'riveter COMMAND --help' for details on a specific command.
     """
