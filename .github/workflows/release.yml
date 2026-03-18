@@ -145,7 +145,7 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -e ".[dev]"
+        run: pip install -e ".[dev,ai]"
 
       - name: Build binary
         run: python build_binary.py

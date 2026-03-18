@@ -18,40 +18,77 @@ from pathlib import Path
 ENTRY = Path("_riveter_entry.py")
 
 
+def _anthropic_installed() -> bool:
+    """Return True if the anthropic package is available in the current environment."""
+    try:
+        import importlib.util
+
+        return importlib.util.find_spec("anthropic") is not None
+    except Exception:
+        return False
+
+
 def main() -> None:
     # Write a minimal entry-point script that PyInstaller will bundle.
     ENTRY.write_text("from riveter.cli import main\nmain()\n")
 
-    try:
-        subprocess.run(
-            [
-                sys.executable,
-                "-m",
-                "PyInstaller",
-                "--onefile",
-                "--name",
-                "riveter",
-                "--clean",
-                "--noconfirm",
-                # Collect data files from hcl2 (bundles hcl2.lark grammar file)
-                "--collect-data",
-                "hcl2",
-                # Collect data files from lark (may have its own grammar files)
-                "--collect-data",
-                "lark",
-                # Hidden imports that PyInstaller may not auto-detect
-                "--hidden-import",
-                "hcl2",
-                "--hidden-import",
-                "yaml",
-                "--hidden-import",
-                "click",
-                "--hidden-import",
-                "rich",
-                str(ENTRY),
-            ],
-            check=True,
+    with_ai = _anthropic_installed()
+    if with_ai:
+        print("anthropic package found — AI explanation feature will be included in the binary.")
+    else:
+        print(
+            "anthropic package not found — binary will be built without AI explanation support.\n"
+            "To include it: pip install anthropic, then re-run this script."
         )
+
+    cmd = [
+        sys.executable,
+        "-m",
+        "PyInstaller",
+        "--onefile",
+        "--name",
+        "riveter",
+        "--clean",
+        "--noconfirm",
+        # Collect data files from hcl2 (bundles hcl2.lark grammar file)
+        "--collect-data",
+        "hcl2",
+        # Collect data files from lark (may have its own grammar files)
+        "--collect-data",
+        "lark",
+        # Hidden imports that PyInstaller may not auto-detect
+        "--hidden-import",
+        "hcl2",
+        "--hidden-import",
+        "yaml",
+        "--hidden-import",
+        "click",
+        "--hidden-import",
+        "rich",
+    ]
+
+    if with_ai:
+        # anthropic is lazily imported inside a try/except, so PyInstaller won't
+        # detect it via static analysis. --collect-all bundles the full package
+        # tree (code + data files); --hidden-import ensures the top-level module
+        # is included even though it's never imported at the module scope.
+        cmd += [
+            "--collect-all",
+            "anthropic",
+            "--hidden-import",
+            "anthropic",
+            # anthropic uses httpx as its HTTP client; collect it fully so
+            # certificate verification and connection adapters are available.
+            "--collect-all",
+            "httpx",
+            "--hidden-import",
+            "httpx",
+        ]
+
+    cmd.append(str(ENTRY))
+
+    try:
+        subprocess.run(cmd, check=True)
     finally:
         ENTRY.unlink(missing_ok=True)
 
