@@ -31,6 +31,7 @@ class Explainer:
         self._auth_error = False
         self._rate_limit_error = False
         self._timeout_error = False
+        self._connection_error = False
 
         api_key = os.environ.get("ANTHROPIC_API_KEY", "")
         if api_key:
@@ -103,6 +104,8 @@ class Explainer:
             return "✗ Anthropic rate limit hit. Explanations skipped for this scan."
         if self._timeout_error:
             return "✗ Could not reach Anthropic API. Scan results shown without explanations."
+        if self._connection_error:
+            return "✗ Anthropic API call failed. Run with --debug for details."
         return None
 
     # ------------------------------------------------------------------
@@ -117,6 +120,8 @@ class Explainer:
             self._rate_limit_error = True
         elif "Timeout" in name or "timeout" in name.lower():
             self._timeout_error = True
+        else:
+            self._connection_error = True
 
     def _build_prompt(
         self,

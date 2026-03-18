@@ -78,11 +78,18 @@ def main() -> None:
             "--hidden-import",
             "anthropic",
             # anthropic uses httpx as its HTTP client; collect it fully so
-            # certificate verification and connection adapters are available.
+            # connection adapters are available.
             "--collect-all",
             "httpx",
             "--hidden-import",
             "httpx",
+            # certifi provides the CA certificate bundle that httpx uses for
+            # TLS verification. Without it the Anthropic API call fails with
+            # an SSL error inside the frozen binary.
+            "--collect-all",
+            "certifi",
+            "--hidden-import",
+            "certifi",
         ]
 
     cmd.append(str(ENTRY))
