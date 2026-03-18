@@ -10,8 +10,8 @@ from riveter.explainer import Explainer
 # ---------------------------------------------------------------------------
 
 _RULE = {
-    "id": "ec2-imdsv2-required",
-    "description": "EC2 instances must require IMDSv2",
+    "id": "ec2_no_public_ip",
+    "description": "EC2 instances must not have public IPs",
     "severity": "error",
     "assert": {"metadata_options.http_tokens": "required"},
 }

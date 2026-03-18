@@ -665,10 +665,10 @@ def explain_cmd(
 
     \b
     Examples:
-      riveter explain ec2-imdsv2-required \\
+      riveter explain ec2_no_public_ip \\
           --resource aws_instance.web_server --terraform main.tf -p aws-security
 
-      riveter explain s3-block-public-access \\
+      riveter explain s3_bucket_public_access_block \\
           --resource aws_s3_bucket.uploads --terraform main.tf -r rules.yml
     """
     # -- Validate that there is at least one rule source ---------------------

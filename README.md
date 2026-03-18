@@ -261,7 +261,7 @@ riveter scan -p aws-security -t main.tf --explain
 Or drill into a specific violation after the fact:
 
 ```bash
-riveter explain ec2-imdsv2-required \
+riveter explain ec2_no_public_ip \
     --resource aws_instance.web_server --terraform main.tf -p aws-security
 ```
 
