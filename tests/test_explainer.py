@@ -107,7 +107,7 @@ def test_prompt_contains_rule_id():
     explainer, captured = _make_explainer_with_capture()
     explainer.explain(_RULE, "web_server", "aws_instance", _RESOURCE_ATTRS)
     assert captured, "No prompt was captured"
-    assert "ec2-imdsv2-required" in captured[0]
+    assert "ec2_no_public_ip" in captured[0]
 
 
 def test_prompt_contains_resource_name():
