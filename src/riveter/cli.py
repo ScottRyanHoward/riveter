@@ -69,8 +69,13 @@ def _display_table(results: List[ValidationResult]) -> None:
         else:
             status = "[bold red]FAIL[/bold red]"
 
-        color = sev_colors.get(r.severity.value, "white")
-        sev = f"[{color}]{r.severity.value}[/{color}]"
+        if r.message.startswith("SKIPPED:"):
+            sev = "[dim]info[/dim]"
+        elif r.passed:
+            sev = "[dim]info[/dim]"
+        else:
+            color = sev_colors.get(r.severity.value, "white")
+            sev = f"[{color}]{r.severity.value}[/{color}]"
         resource = f"{r.resource.get('resource_type', '')}.{r.resource.get('id', '')}"
 
         msg = r.message
