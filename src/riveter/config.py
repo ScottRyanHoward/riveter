@@ -164,6 +164,14 @@ class ConfigManager:
         if cli_overrides:
             cli_config = RiveterConfig.from_dict(cli_overrides)
             config = config._merge_with_overrides(cli_config)
+            # _merge_with_overrides only applies a scalar override when it differs
+            # from the built-in default.  That means `--min-severity info` (which
+            # equals the default) would silently lose to a config-file value.
+            # Fix: re-apply any scalar that the caller explicitly provided.
+            if "min_severity" in cli_overrides and cli_overrides["min_severity"] is not None:
+                config.min_severity = cli_overrides["min_severity"]
+            if "output_format" in cli_overrides and cli_overrides["output_format"] is not None:
+                config.output_format = cli_overrides["output_format"]
 
         return config
 

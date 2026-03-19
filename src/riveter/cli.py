@@ -70,9 +70,9 @@ def _display_table(results: List[ValidationResult]) -> None:
             status = "[bold red]FAIL[/bold red]"
 
         if r.message.startswith("SKIPPED:"):
-            sev = "[dim]info[/dim]"
+            sev = f"[dim]{r.severity.value}[/dim]"
         elif r.passed:
-            sev = "[dim]info[/dim]"
+            sev = f"[dim]{r.severity.value}[/dim]"
         else:
             color = sev_colors.get(r.severity.value, "white")
             sev = f"[{color}]{r.severity.value}[/{color}]"

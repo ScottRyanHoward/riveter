@@ -103,6 +103,15 @@ class TestConfigManager:
         cfg = mgr.load_config(config_file=str(cfg_file), cli_overrides={"min_severity": "error"})
         assert cfg.min_severity == "error"
 
+    def test_cli_override_to_default_beats_file(self, tmp_path):
+        # --min-severity info should override a file's non-default value even
+        # though "info" is also the built-in default.
+        cfg_file = tmp_path / "riveter.yml"
+        cfg_file.write_text("min_severity: error\n")
+        mgr = ConfigManager()
+        cfg = mgr.load_config(config_file=str(cfg_file), cli_overrides={"min_severity": "info"})
+        assert cfg.min_severity == "info"
+
     def test_missing_explicit_file_raises(self):
         mgr = ConfigManager()
         with pytest.raises(ConfigurationError, match="not found"):
