@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Scott Howard
+# SPDX-License-Identifier: MIT
+
 """Rule parsing and validation.
 
 Rules are defined in YAML and describe how to validate Terraform resources.

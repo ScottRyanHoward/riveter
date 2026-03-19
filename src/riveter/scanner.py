@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Scott Howard
+# SPDX-License-Identifier: MIT
+
 """Core validation engine: applies rules to Terraform resources."""
 
 import time

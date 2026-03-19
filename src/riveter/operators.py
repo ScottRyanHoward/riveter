@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Scott Howard
+# SPDX-License-Identifier: MIT
+
 """Comparison operators for rule assertion evaluation."""
 
 import re

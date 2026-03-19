@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Scott Howard
+# SPDX-License-Identifier: MIT
+
 """Rule pack management.
 
 Rule packs are YAML files that bundle related rules together under a metadata

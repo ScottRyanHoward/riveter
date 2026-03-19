@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Scott Howard
+# SPDX-License-Identifier: MIT
+
 """Extract deployed resource data from a Terraform state file.
 
 The output mirrors the format produced by ``extract_config.py`` so the

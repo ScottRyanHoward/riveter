@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Scott Howard
+# SPDX-License-Identifier: MIT
+
 """AI-powered violation explanations via the Anthropic API.
 
 Usage:

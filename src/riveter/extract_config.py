@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Scott Howard
+# SPDX-License-Identifier: MIT
+
 """Extract Terraform HCL configuration into Riveter's internal resource format.
 
 The output is a dict with a single ``resources`` key containing a list of

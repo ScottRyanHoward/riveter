@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Scott Howard
+# SPDX-License-Identifier: MIT
+
 """Configuration management for Riveter.
 
 Priority order (highest to lowest):
