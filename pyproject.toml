@@ -9,7 +9,7 @@ description = "Infrastructure Rule Enforcement as Code — validate Terraform ag
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.12"
-authors = [{ name = "Scott Howard", email = "scott@example.com" }]
+authors = [{ name = "Scott Howard", email = "ScottRyanHoward@users.noreply.github.com" }]
 keywords = ["terraform", "infrastructure", "security", "compliance", "iac"]
 classifiers = [
     "Development Status :: 4 - Beta",
