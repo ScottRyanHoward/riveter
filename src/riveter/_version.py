@@ -1,7 +1,4 @@
-# Copyright (c) 2026 Scott Howard
-# SPDX-License-Identifier: MIT
-
-__version__ = "0.2.12"
+__version__ = "0.2.13"
 
 
 def get_version() -> str:
