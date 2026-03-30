@@ -6,6 +6,10 @@ Riveter catches security misconfigurations and compliance violations during deve
 
 ---
 
+> **Note:** This project is not actively maintained. Issues and pull requests may not receive timely responses. Feel free to fork it and adapt it for your needs.
+
+---
+
 ## Installation
 
 ```bash
