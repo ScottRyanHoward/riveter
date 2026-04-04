@@ -1,10 +1,10 @@
 metadata:
   name: multi-cloud-security
-  version: 1.0.0
+  version: 1.1.0
   description: Multi-Cloud Security Best Practices Rule Pack - Common security patterns across AWS, Azure, and GCP
   author: Riveter Team
   created: 2024-10-27
-  updated: 2024-10-27
+  updated: 2026-04-04
   dependencies: []
   tags: [security, multi-cloud, aws, azure, gcp, best-practices]
   min_riveter_version: 0.1.0
@@ -76,7 +76,7 @@ rules:
       tags: [multi-cloud, encryption, storage, azure]
       providers: [azure]
       references:
-        - https://docs.microsoft.com/en-us/azure/storage/common/storage-require-secure-transfer
+        - https://learn.microsoft.com/en-us/azure/storage/common/storage-require-secure-transfer
 
   - id: multi_cloud_azure_sql_tde
     resource_type: azurerm_mssql_database
@@ -88,7 +88,7 @@ rules:
       tags: [multi-cloud, encryption, database, azure]
       providers: [azure]
       references:
-        - https://docs.microsoft.com/en-us/azure/azure-sql/database/transparent-data-encryption-tde-overview
+        - https://learn.microsoft.com/en-us/azure/azure-sql/database/transparent-data-encryption-tde-overview
 
   - id: multi_cloud_azure_disk_encryption
     resource_type: azurerm_managed_disk
@@ -100,7 +100,7 @@ rules:
       tags: [multi-cloud, encryption, compute, azure]
       providers: [azure]
       references:
-        - https://docs.microsoft.com/en-us/azure/virtual-machines/disk-encryption
+        - https://learn.microsoft.com/en-us/azure/virtual-machines/disk-encryption
 
   - id: multi_cloud_azure_tls_version
     resource_type: azurerm_storage_account
@@ -112,7 +112,7 @@ rules:
       tags: [multi-cloud, encryption, tls, azure]
       providers: [azure]
       references:
-        - https://docs.microsoft.com/en-us/azure/storage/common/transport-layer-security-configure-minimum-version
+        - https://learn.microsoft.com/en-us/azure/storage/common/transport-layer-security-configure-minimum-version
 
   # ============================================================================
   # GCP Encryption Rules
@@ -230,7 +230,7 @@ rules:
       tags: [multi-cloud, network-security, compute, azure]
       providers: [azure]
       references:
-        - https://docs.microsoft.com/en-us/azure/virtual-network/ip-services/public-ip-addresses
+        - https://learn.microsoft.com/en-us/azure/virtual-network/ip-services/public-ip-addresses
 
   - id: multi_cloud_azure_nsg_no_ssh_internet
     resource_type: azurerm_network_security_rule
@@ -248,7 +248,7 @@ rules:
       tags: [multi-cloud, network-security, firewall, azure]
       providers: [azure]
       references:
-        - https://docs.microsoft.com/en-us/azure/virtual-network/network-security-groups-overview
+        - https://learn.microsoft.com/en-us/azure/virtual-network/network-security-groups-overview
 
   - id: multi_cloud_azure_sql_private
     resource_type: azurerm_mssql_server
@@ -260,7 +260,7 @@ rules:
       tags: [multi-cloud, network-security, database, azure]
       providers: [azure]
       references:
-        - https://docs.microsoft.com/en-us/azure/azure-sql/database/connectivity-settings
+        - https://learn.microsoft.com/en-us/azure/azure-sql/database/connectivity-settings
 
   # ============================================================================
   # GCP Network Security Rules
@@ -357,7 +357,7 @@ rules:
       tags: [multi-cloud, iam, least-privilege, azure]
       providers: [azure]
       references:
-        - https://docs.microsoft.com/en-us/azure/role-based-access-control/overview
+        - https://learn.microsoft.com/en-us/azure/role-based-access-control/overview
 
   - id: multi_cloud_azure_managed_identity
     resource_type: azurerm_linux_virtual_machine
@@ -369,7 +369,7 @@ rules:
       tags: [multi-cloud, iam, managed-identity, azure]
       providers: [azure]
       references:
-        - https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview
+        - https://learn.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview
 
   # ============================================================================
   # GCP IAM Rules
@@ -459,7 +459,7 @@ rules:
       tags: [multi-cloud, logging, audit, azure]
       providers: [azure]
       references:
-        - https://docs.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings
+        - https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings
 
   - id: multi_cloud_azure_sql_auditing
     resource_type: azurerm_mssql_server
@@ -471,7 +471,7 @@ rules:
       tags: [multi-cloud, logging, audit, azure]
       providers: [azure]
       references:
-        - https://docs.microsoft.com/en-us/azure/azure-sql/database/auditing-overview
+        - https://learn.microsoft.com/en-us/azure/azure-sql/database/auditing-overview
 
   # ============================================================================
   # GCP Logging Rules
@@ -535,7 +535,7 @@ rules:
       tags: [multi-cloud, monitoring, alerts, azure]
       providers: [azure]
       references:
-        - https://docs.microsoft.com/en-us/azure/azure-monitor/alerts/alerts-overview
+        - https://learn.microsoft.com/en-us/azure/azure-monitor/alerts/alerts-overview
 
   # ============================================================================
   # GCP Monitoring Rules
@@ -585,7 +585,7 @@ rules:
       tags: [multi-cloud, governance, tagging, azure]
       providers: [azure]
       references:
-        - https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/tag-resources
+        - https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/tag-resources
 
   - id: multi_cloud_gcp_resource_labeling
     resource_type: google_compute_instance

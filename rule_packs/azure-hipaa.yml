@@ -1,10 +1,10 @@
 metadata:
   name: azure-hipaa
-  version: 1.0.0
+  version: 1.1.0
   description: Azure HIPAA Compliance Rule Pack - Healthcare data protection requirements
   author: Riveter Team
   created: 2025-10-27
-  updated: 2025-10-27
+  updated: 2026-04-04
   dependencies: []
   tags: [compliance, hipaa, healthcare, azure, phi]
   min_riveter_version: 0.1.0
@@ -102,7 +102,7 @@ rules:
         - https://docs.microsoft.com/en-us/azure/cosmos-db/database-encryption-at-rest
 
   - id: azure_hipaa_app_service_https_only
-    resource_type: azurerm_app_service
+    resource_type: azurerm_linux_web_app|azurerm_windows_web_app
     description: "HIPAA - App Services must enforce HTTPS only"
     severity: error
     assert:
@@ -112,10 +112,10 @@ rules:
       hipaa_control: "164.312(e)(1)"
       references:
         - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
-        - https://docs.microsoft.com/en-us/azure/app-service/configure-ssl-bindings
+        - https://learn.microsoft.com/en-us/azure/app-service/configure-ssl-bindings
 
   - id: azure_hipaa_function_app_https_only
-    resource_type: azurerm_function_app
+    resource_type: azurerm_linux_function_app|azurerm_windows_function_app
     description: "HIPAA - Function Apps must enforce HTTPS only"
     severity: error
     assert:
@@ -125,7 +125,7 @@ rules:
       hipaa_control: "164.312(e)(1)"
       references:
         - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
-        - https://docs.microsoft.com/en-us/azure/azure-functions/security-concepts
+        - https://learn.microsoft.com/en-us/azure/azure-functions/security-concepts
 
   # ============================================================================
   # Access Controls Rules (5-7 rules)
@@ -211,7 +211,7 @@ rules:
         - https://docs.microsoft.com/en-us/azure/cosmos-db/how-to-configure-private-endpoints
 
   - id: azure_hipaa_app_service_auth_enabled
-    resource_type: azurerm_app_service
+    resource_type: azurerm_linux_web_app|azurerm_windows_web_app
     description: "HIPAA - App Services must have authentication enabled"
     severity: error
     assert:
@@ -221,7 +221,7 @@ rules:
       hipaa_control: "164.308(a)(4)(ii)(B)"
       references:
         - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
-        - https://docs.microsoft.com/en-us/azure/app-service/overview-authentication-authorization
+        - https://learn.microsoft.com/en-us/azure/app-service/overview-authentication-authorization
 
   # ============================================================================
   # Audit Logging Rules (4-6 rules)
@@ -303,7 +303,7 @@ rules:
         - https://docs.microsoft.com/en-us/azure/network-watcher/network-watcher-nsg-flow-logging-overview
 
   - id: azure_hipaa_app_service_logging_enabled
-    resource_type: azurerm_app_service
+    resource_type: azurerm_linux_web_app|azurerm_windows_web_app
     description: "HIPAA - App Services must have application logging enabled"
     severity: error
     assert:
@@ -314,7 +314,7 @@ rules:
       hipaa_control: "164.312(b)"
       references:
         - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
-        - https://docs.microsoft.com/en-us/azure/app-service/troubleshoot-diagnostic-logs
+        - https://learn.microsoft.com/en-us/azure/app-service/troubleshoot-diagnostic-logs
 
   # ============================================================================
   # Network Security Rules (3-5 rules)
@@ -356,7 +356,7 @@ rules:
         - https://docs.microsoft.com/en-us/azure/virtual-network/ip-services/public-ip-addresses
 
   - id: azure_hipaa_app_service_vnet_integration
-    resource_type: azurerm_app_service
+    resource_type: azurerm_linux_web_app|azurerm_windows_web_app
     description: "HIPAA - App Services handling PHI should use VNet integration"
     severity: error
     filter:
@@ -368,7 +368,7 @@ rules:
       hipaa_control: "164.312(e)(1)"
       references:
         - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
-        - https://docs.microsoft.com/en-us/azure/app-service/web-sites-integrate-with-vnet
+        - https://learn.microsoft.com/en-us/azure/app-service/web-sites-integrate-with-vnet
 
   - id: azure_hipaa_sql_private_endpoint
     resource_type: azurerm_mssql_server

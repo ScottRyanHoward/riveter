@@ -1,10 +1,10 @@
 metadata:
   name: gcp-well-architected
-  version: 1.0.0
+  version: 1.1.0
   description: GCP Well-Architected Framework Rule Pack covering all 5 pillars
   author: Riveter Team
   created: 2025-10-27
-  updated: 2025-10-27
+  updated: 2026-04-04
   dependencies: []
   tags: [well-architected, gcp, best-practices, architecture]
   min_riveter_version: 0.1.0
@@ -303,11 +303,11 @@ rules:
 
   - id: gcp_wa_performance_sql_machine_type
     resource_type: google_sql_database_instance
-    description: "WAF Performance - SQL instances should use appropriate machine types"
+    description: "WAF Performance - SQL instances should use current generation machine types (not legacy micro/small)"
     severity: info
     assert:
       settings.tier:
-        regex: "^db-(n1|custom)-.*"
+        regex: "^db-(n1|n2|custom|perf)-.*"
     metadata:
       tags: [gcp, well-architected, performance, database]
       pillar: Performance
@@ -355,14 +355,14 @@ rules:
       references:
         - https://cloud.google.com/architecture/framework/cost-optimization
 
-  - id: gcp_wa_cost_preemptible_vms
+  - id: gcp_wa_cost_spot_vms
     resource_type: google_compute_instance
-    description: "WAF Cost Optimization - Non-production workloads should consider preemptible VMs"
+    description: "WAF Cost Optimization - Non-production workloads should use Spot VMs (successor to preemptible)"
     severity: info
     filter:
       labels.environment: development
     assert:
-      scheduling.preemptible: true
+      scheduling.provisioning_model: SPOT
     metadata:
       tags: [gcp, well-architected, cost-optimization, compute]
       pillar: Cost Optimization

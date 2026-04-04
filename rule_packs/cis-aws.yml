@@ -1,10 +1,10 @@
 metadata:
   name: cis-aws
-  version: 1.0.0
-  description: CIS AWS Foundations Benchmark v1.4.0 Rule Pack
+  version: 1.1.0
+  description: CIS AWS Foundations Benchmark v3.0.0 Rule Pack
   author: Riveter Team
   created: 2024-10-22
-  updated: 2024-10-22
+  updated: 2026-04-04
   dependencies: []
   tags: [compliance, cis, aws, benchmark]
   min_riveter_version: 0.1.0
@@ -59,15 +59,13 @@ rules:
         - https://www.cisecurity.org/benchmark/amazon_web_services
 
   - id: cis_1_12_root_access_key
-    resource_type: aws_iam_user
-    description: "CIS 1.12 - Ensure no root access keys exist"
+    resource_type: aws_iam_access_key
+    description: "CIS 1.12 - Ensure no root account access keys exist"
     severity: error
     filter:
-      user_name: root
+      user: root
     assert:
-      # Root user should not exist as IAM user
-      user_name:
-        ne: root
+      status: Inactive
     metadata:
       tags: [cis, iam, root-access]
       cis_control: "1.12"

@@ -1,10 +1,10 @@
 metadata:
   name: aws-well-architected
-  version: 1.0.0
+  version: 1.1.0
   description: AWS Well-Architected Framework Rule Pack covering all 6 pillars
   author: Riveter Team
   created: 2025-10-27
-  updated: 2025-10-27
+  updated: 2026-04-04
   dependencies: []
   tags: [well-architected, aws, best-practices, architecture]
   min_riveter_version: 0.1.0
@@ -77,11 +77,12 @@ rules:
         - https://docs.aws.amazon.com/wellarchitected/latest/operational-excellence-pillar/welcome.html
 
   - id: aws_wa_opex_sns_topic_subscriptions
-    resource_type: aws_sns_topic
-    description: "WAF Operational Excellence - SNS topics should have subscriptions for notifications"
+    resource_type: aws_sns_topic_subscription
+    description: "WAF Operational Excellence - SNS topics should have at least one active subscription for notifications"
     severity: info
     assert:
-      name: present
+      endpoint: present
+      protocol: present
     metadata:
       tags: [aws, well-architected, operational-excellence, notifications]
       pillar: Operational Excellence
@@ -426,12 +427,13 @@ rules:
       references:
         - https://docs.aws.amazon.com/wellarchitected/latest/sustainability-pillar/welcome.html
 
-  - id: aws_wa_sustainability_lambda_usage
+  - id: aws_wa_sustainability_lambda_architecture
     resource_type: aws_lambda_function
-    description: "WAF Sustainability - Serverless should be preferred for sustainability"
+    description: "WAF Sustainability - Lambda functions should use ARM/Graviton architecture for better energy efficiency"
     severity: info
     assert:
-      function_name: present
+      architectures:
+        contains: arm64
     metadata:
       tags: [aws, well-architected, sustainability, serverless]
       pillar: Sustainability

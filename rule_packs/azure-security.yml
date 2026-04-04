@@ -1,10 +1,10 @@
 metadata:
   name: azure-security
-  version: 1.0.0
+  version: 1.1.0
   description: Azure Security Best Practices Rule Pack
   author: Riveter Team
   created: 2024-10-27
-  updated: 2024-10-27
+  updated: 2026-04-04
   dependencies: []
   tags: [security, azure, best-practices]
   min_riveter_version: 0.1.0
@@ -23,7 +23,7 @@ rules:
     metadata:
       tags: [azure, vm, storage]
       references:
-        - https://docs.microsoft.com/en-us/azure/virtual-machines/managed-disks-overview
+        - https://learn.microsoft.com/en-us/azure/virtual-machines/managed-disks-overview
 
   - id: azure_vm_encryption_at_host
     resource_type: azurerm_linux_virtual_machine
@@ -34,7 +34,7 @@ rules:
     metadata:
       tags: [azure, vm, encryption]
       references:
-        - https://docs.microsoft.com/en-us/azure/virtual-machines/disk-encryption
+        - https://learn.microsoft.com/en-us/azure/virtual-machines/disk-encryption
 
   - id: azure_vm_boot_diagnostics
     resource_type: azurerm_linux_virtual_machine
@@ -45,7 +45,7 @@ rules:
     metadata:
       tags: [azure, vm, diagnostics]
       references:
-        - https://docs.microsoft.com/en-us/azure/virtual-machines/boot-diagnostics
+        - https://learn.microsoft.com/en-us/azure/virtual-machines/boot-diagnostics
 
   - id: azure_vm_required_tags
     resource_type: azurerm_linux_virtual_machine
@@ -58,7 +58,7 @@ rules:
     metadata:
       tags: [azure, vm, governance]
       references:
-        - https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/tag-resources
+        - https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/tag-resources
 
   - id: azure_vm_no_public_ip_prod
     resource_type: azurerm_network_interface
@@ -72,7 +72,7 @@ rules:
     metadata:
       tags: [azure, vm, network-security]
       references:
-        - https://docs.microsoft.com/en-us/azure/virtual-network/ip-services/public-ip-addresses
+        - https://learn.microsoft.com/en-us/azure/virtual-network/ip-services/public-ip-addresses
 
   - id: azure_vm_disk_encryption
     resource_type: azurerm_managed_disk
@@ -83,7 +83,7 @@ rules:
     metadata:
       tags: [azure, vm, disk-encryption]
       references:
-        - https://docs.microsoft.com/en-us/azure/virtual-machines/disk-encryption
+        - https://learn.microsoft.com/en-us/azure/virtual-machines/disk-encryption
 
   # ============================================================================
   # Storage Accounts Security Rules
@@ -98,7 +98,7 @@ rules:
     metadata:
       tags: [azure, storage, encryption-in-transit]
       references:
-        - https://docs.microsoft.com/en-us/azure/storage/common/storage-require-secure-transfer
+        - https://learn.microsoft.com/en-us/azure/storage/common/storage-require-secure-transfer
 
   - id: azure_storage_min_tls_version
     resource_type: azurerm_storage_account
@@ -109,7 +109,7 @@ rules:
     metadata:
       tags: [azure, storage, tls]
       references:
-        - https://docs.microsoft.com/en-us/azure/storage/common/transport-layer-security-configure-minimum-version
+        - https://learn.microsoft.com/en-us/azure/storage/common/transport-layer-security-configure-minimum-version
 
   - id: azure_storage_public_access_disabled
     resource_type: azurerm_storage_account
@@ -120,7 +120,7 @@ rules:
     metadata:
       tags: [azure, storage, public-access]
       references:
-        - https://docs.microsoft.com/en-us/azure/storage/blobs/anonymous-read-access-prevent
+        - https://learn.microsoft.com/en-us/azure/storage/blobs/anonymous-read-access-prevent
 
   - id: azure_storage_network_rules
     resource_type: azurerm_storage_account
@@ -131,7 +131,7 @@ rules:
     metadata:
       tags: [azure, storage, network-security]
       references:
-        - https://docs.microsoft.com/en-us/azure/storage/common/storage-network-security
+        - https://learn.microsoft.com/en-us/azure/storage/common/storage-network-security
 
   - id: azure_storage_encryption_cmk
     resource_type: azurerm_storage_account
@@ -142,7 +142,7 @@ rules:
     metadata:
       tags: [azure, storage, encryption, cmk]
       references:
-        - https://docs.microsoft.com/en-us/azure/storage/common/customer-managed-keys-overview
+        - https://learn.microsoft.com/en-us/azure/storage/common/customer-managed-keys-overview
 
   - id: azure_storage_blob_versioning
     resource_type: azurerm_storage_account
@@ -153,7 +153,7 @@ rules:
     metadata:
       tags: [azure, storage, versioning]
       references:
-        - https://docs.microsoft.com/en-us/azure/storage/blobs/versioning-overview
+        - https://learn.microsoft.com/en-us/azure/storage/blobs/versioning-overview
 
   # ============================================================================
   # SQL Databases Security Rules
@@ -168,7 +168,7 @@ rules:
     metadata:
       tags: [azure, sql, auditing]
       references:
-        - https://docs.microsoft.com/en-us/azure/azure-sql/database/auditing-overview
+        - https://learn.microsoft.com/en-us/azure/azure-sql/database/auditing-overview
 
   - id: azure_sql_threat_detection
     resource_type: azurerm_mssql_server_security_alert_policy
@@ -179,7 +179,7 @@ rules:
     metadata:
       tags: [azure, sql, threat-detection]
       references:
-        - https://docs.microsoft.com/en-us/azure/azure-sql/database/threat-detection-overview
+        - https://learn.microsoft.com/en-us/azure/azure-sql/database/threat-detection-overview
 
   - id: azure_sql_tde_enabled
     resource_type: azurerm_mssql_database
@@ -190,7 +190,7 @@ rules:
     metadata:
       tags: [azure, sql, encryption]
       references:
-        - https://docs.microsoft.com/en-us/azure/azure-sql/database/transparent-data-encryption-tde-overview
+        - https://learn.microsoft.com/en-us/azure/azure-sql/database/transparent-data-encryption-tde-overview
 
   - id: azure_sql_min_tls_version
     resource_type: azurerm_mssql_server
@@ -201,7 +201,7 @@ rules:
     metadata:
       tags: [azure, sql, tls]
       references:
-        - https://docs.microsoft.com/en-us/azure/azure-sql/database/connectivity-settings
+        - https://learn.microsoft.com/en-us/azure/azure-sql/database/connectivity-settings
 
   - id: azure_sql_public_network_access
     resource_type: azurerm_mssql_server
@@ -212,7 +212,7 @@ rules:
     metadata:
       tags: [azure, sql, network-security]
       references:
-        - https://docs.microsoft.com/en-us/azure/azure-sql/database/connectivity-settings
+        - https://learn.microsoft.com/en-us/azure/azure-sql/database/connectivity-settings
 
   # ============================================================================
   # Network Security Groups Rules
@@ -233,7 +233,7 @@ rules:
     metadata:
       tags: [azure, nsg, rdp]
       references:
-        - https://docs.microsoft.com/en-us/azure/virtual-network/network-security-groups-overview
+        - https://learn.microsoft.com/en-us/azure/virtual-network/network-security-groups-overview
 
   - id: azure_nsg_no_ssh_from_internet
     resource_type: azurerm_network_security_rule
@@ -250,7 +250,7 @@ rules:
     metadata:
       tags: [azure, nsg, ssh]
       references:
-        - https://docs.microsoft.com/en-us/azure/virtual-network/network-security-groups-overview
+        - https://learn.microsoft.com/en-us/azure/virtual-network/network-security-groups-overview
 
   - id: azure_nsg_flow_logs_enabled
     resource_type: azurerm_network_watcher_flow_log
@@ -261,7 +261,7 @@ rules:
     metadata:
       tags: [azure, nsg, flow-logs]
       references:
-        - https://docs.microsoft.com/en-us/azure/network-watcher/network-watcher-nsg-flow-logging-overview
+        - https://learn.microsoft.com/en-us/azure/network-watcher/network-watcher-nsg-flow-logging-overview
 
   - id: azure_nsg_deny_all_inbound
     resource_type: azurerm_network_security_group
@@ -278,7 +278,7 @@ rules:
     metadata:
       tags: [azure, nsg, default-deny]
       references:
-        - https://docs.microsoft.com/en-us/azure/virtual-network/network-security-groups-overview
+        - https://learn.microsoft.com/en-us/azure/virtual-network/network-security-groups-overview
 
   # ============================================================================
   # Key Vault Security Rules
@@ -293,7 +293,7 @@ rules:
     metadata:
       tags: [azure, keyvault, data-protection]
       references:
-        - https://docs.microsoft.com/en-us/azure/key-vault/general/soft-delete-overview
+        - https://learn.microsoft.com/en-us/azure/key-vault/general/soft-delete-overview
 
   - id: azure_keyvault_soft_delete
     resource_type: azurerm_key_vault
@@ -305,7 +305,7 @@ rules:
     metadata:
       tags: [azure, keyvault, soft-delete]
       references:
-        - https://docs.microsoft.com/en-us/azure/key-vault/general/soft-delete-overview
+        - https://learn.microsoft.com/en-us/azure/key-vault/general/soft-delete-overview
 
   - id: azure_keyvault_network_acls
     resource_type: azurerm_key_vault
@@ -316,7 +316,7 @@ rules:
     metadata:
       tags: [azure, keyvault, network-security]
       references:
-        - https://docs.microsoft.com/en-us/azure/key-vault/general/network-security
+        - https://learn.microsoft.com/en-us/azure/key-vault/general/network-security
 
   - id: azure_keyvault_rbac_authorization
     resource_type: azurerm_key_vault
@@ -327,7 +327,7 @@ rules:
     metadata:
       tags: [azure, keyvault, rbac]
       references:
-        - https://docs.microsoft.com/en-us/azure/key-vault/general/rbac-guide
+        - https://learn.microsoft.com/en-us/azure/key-vault/general/rbac-guide
 
   # ============================================================================
   # Azure AD/IAM Security Rules
@@ -343,7 +343,7 @@ rules:
     metadata:
       tags: [azure, iam, rbac]
       references:
-        - https://docs.microsoft.com/en-us/azure/role-based-access-control/overview
+        - https://learn.microsoft.com/en-us/azure/role-based-access-control/overview
 
   - id: azure_custom_role_least_privilege
     resource_type: azurerm_role_definition
@@ -355,7 +355,7 @@ rules:
     metadata:
       tags: [azure, iam, custom-roles, least-privilege]
       references:
-        - https://docs.microsoft.com/en-us/azure/role-based-access-control/custom-roles
+        - https://learn.microsoft.com/en-us/azure/role-based-access-control/custom-roles
 
   - id: azure_managed_identity_preferred
     resource_type: azurerm_linux_virtual_machine
@@ -366,4 +366,4 @@ rules:
     metadata:
       tags: [azure, iam, managed-identity]
       references:
-        - https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview
+        - https://learn.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview

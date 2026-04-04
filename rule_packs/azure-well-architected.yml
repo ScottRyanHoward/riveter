@@ -1,10 +1,10 @@
 metadata:
   name: azure-well-architected
-  version: 1.0.0
+  version: 1.1.0
   description: Azure Well-Architected Framework Rule Pack covering all 5 pillars
   author: Riveter Team
   created: 2025-10-27
-  updated: 2025-10-27
+  updated: 2026-04-04
   dependencies: []
   tags: [well-architected, azure, best-practices, architecture]
   min_riveter_version: 0.1.0
@@ -276,11 +276,11 @@ rules:
         - https://learn.microsoft.com/azure/well-architected/performance-efficiency/
 
   - id: azure_wa_performance_front_door
-    resource_type: azurerm_frontdoor
-    description: "WAF Performance - Front Door should be used for global applications"
+    resource_type: azurerm_cdn_frontdoor_profile
+    description: "WAF Performance - Azure Front Door should be used for global application delivery"
     severity: info
     assert:
-      enabled: true
+      sku_name: present
     metadata:
       tags: [azure, well-architected, performance, global-distribution]
       pillar: Performance Efficiency
@@ -316,13 +316,13 @@ rules:
         - https://learn.microsoft.com/azure/well-architected/reliability/
 
   - id: azure_wa_reliability_sql_geo_replication
-    resource_type: azurerm_mssql_database
-    description: "WAF Reliability - Production SQL databases should have geo-replication"
+    resource_type: azurerm_mssql_failover_group
+    description: "WAF Reliability - Production SQL databases should have geo-replication via failover group"
     severity: warning
-    filter:
-      tags.Environment: production
     assert:
-      tags.GeoReplication: present
+      partner_server:
+        length:
+          gte: 1
     metadata:
       tags: [azure, well-architected, reliability, database]
       pillar: Reliability
@@ -442,10 +442,10 @@ rules:
 
   - id: azure_wa_security_sql_tde
     resource_type: azurerm_mssql_database
-    description: "WAF Security - SQL databases should have TDE enabled"
+    description: "WAF Security - SQL databases should have Transparent Data Encryption enabled"
     severity: error
     assert:
-      tags.TDE: enabled
+      transparent_data_encryption_enabled: true
     metadata:
       tags: [azure, well-architected, security, encryption]
       pillar: Security

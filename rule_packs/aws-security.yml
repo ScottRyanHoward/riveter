@@ -1,10 +1,10 @@
 metadata:
   name: aws-security
-  version: 1.0.0
+  version: 1.1.0
   description: AWS Security Best Practices Rule Pack
   author: Riveter Team
   created: 2024-10-22
-  updated: 2024-10-22
+  updated: 2026-04-04
   dependencies: []
   tags: [security, aws, best-practices]
   min_riveter_version: 0.1.0
@@ -158,12 +158,11 @@ rules:
 
   # VPC Security Rules
   - id: vpc_flow_logs
-    resource_type: aws_vpc
+    resource_type: aws_flow_log
     description: VPCs should have flow logs enabled
     severity: warning
     assert:
-      enable_dns_hostnames: true
-      enable_dns_support: true
+      traffic_type: ALL
     metadata:
       tags: [vpc, monitoring]
       references:

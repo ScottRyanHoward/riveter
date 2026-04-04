@@ -1,10 +1,10 @@
 metadata:
   name: cis-azure
-  version: 1.0.0
-  description: CIS Microsoft Azure Foundations Benchmark v1.3.0 Rule Pack
+  version: 1.1.0
+  description: CIS Microsoft Azure Foundations Benchmark v2.0.0 Rule Pack
   author: Riveter Team
   created: 2024-10-22
-  updated: 2024-10-22
+  updated: 2026-04-04
   dependencies: []
   tags: [compliance, cis, azure, benchmark]
   min_riveter_version: 0.1.0
@@ -86,55 +86,55 @@ rules:
       references:
         - https://www.cisecurity.org/benchmark/microsoft_azure
 
-  # CIS 2 - Security Center
-  - id: cis_azure_2_1_security_center_standard_tier
+  # CIS 2 - Microsoft Defender for Cloud (formerly Security Center)
+  - id: cis_azure_2_1_defender_standard_tier
     resource_type: azurerm_security_center_subscription_pricing
-    description: "CIS 2.1 - Ensure Security Center standard tier is selected"
+    description: "CIS 2.1 - Ensure Microsoft Defender for Cloud is set to Standard tier"
     severity: error
     assert:
       tier: Standard
     metadata:
-      tags: [cis, azure, security-center, pricing]
+      tags: [cis, azure, defender-for-cloud, pricing]
       cis_control: "2.1"
       references:
         - https://www.cisecurity.org/benchmark/microsoft_azure
 
   - id: cis_azure_2_2_auto_provisioning_monitoring_agent
     resource_type: azurerm_security_center_auto_provisioning
-    description: "CIS 2.2 - Ensure auto provisioning of monitoring agent is set to On"
+    description: "CIS 2.2 - Ensure auto provisioning of the Log Analytics agent is set to On"
     severity: error
     assert:
       auto_provision: "On"
     metadata:
-      tags: [cis, azure, security-center, monitoring]
+      tags: [cis, azure, defender-for-cloud, monitoring]
       cis_control: "2.2"
       references:
         - https://www.cisecurity.org/benchmark/microsoft_azure
 
   - id: cis_azure_2_3_system_updates_monitored
     resource_type: azurerm_security_center_setting
-    description: "CIS 2.3 - Ensure system updates are monitored"
+    description: "CIS 2.3 - Ensure Microsoft Cloud App Security integration with Defender for Cloud is enabled"
     severity: error
     filter:
       setting_name: "MCAS"
     assert:
       enabled: true
     metadata:
-      tags: [cis, azure, security-center, system-updates]
+      tags: [cis, azure, defender-for-cloud, system-updates]
       cis_control: "2.3"
       references:
         - https://www.cisecurity.org/benchmark/microsoft_azure
 
   - id: cis_azure_2_4_security_configurations_monitored
     resource_type: azurerm_security_center_setting
-    description: "CIS 2.4 - Ensure security configurations are monitored"
+    description: "CIS 2.4 - Ensure Microsoft Defender for Endpoint integration is enabled"
     severity: error
     filter:
       setting_name: "WDATP"
     assert:
       enabled: true
     metadata:
-      tags: [cis, azure, security-center, configurations]
+      tags: [cis, azure, defender-for-cloud, configurations]
       cis_control: "2.4"
       references:
         - https://www.cisecurity.org/benchmark/microsoft_azure

@@ -1,10 +1,10 @@
 metadata:
   name: aws-hipaa
-  version: 1.0.0
+  version: 1.1.0
   description: AWS HIPAA Compliance Rule Pack - Healthcare data protection requirements
   author: Riveter Team
   created: 2025-10-27
-  updated: 2025-10-27
+  updated: 2026-04-04
   dependencies: []
   tags: [compliance, hipaa, healthcare, aws, phi]
   min_riveter_version: 0.1.0
@@ -149,11 +149,11 @@ rules:
 
   # Access Controls Rules (6-8 rules)
   - id: hipaa_iam_mfa_required
-    resource_type: aws_iam_user
-    description: "HIPAA - IAM users must have MFA enabled"
+    resource_type: aws_iam_virtual_mfa_device
+    description: "HIPAA - IAM users must have an MFA device configured"
     severity: error
     assert:
-      force_destroy: false
+      user_name: present
     metadata:
       tags: [hipaa, iam, access-control, mfa]
       hipaa_control: "164.312(a)(2)(i)"
@@ -411,11 +411,13 @@ rules:
 
   - id: hipaa_rds_ssl_required
     resource_type: aws_db_instance
-    description: "HIPAA - RDS instances must require SSL/TLS connections"
+    description: "HIPAA - RDS instances must use a custom parameter group to enforce SSL/TLS connections"
     severity: error
     assert:
-      # This would typically be enforced via parameter groups
-      parameter_group_name: present
+      # SSL enforcement requires a custom parameter group (e.g., rds.force_ssl=1 for PostgreSQL/SQL Server)
+      # The default parameter group cannot be modified, so any custom group name indicates SSL can be enforced
+      parameter_group_name:
+        regex: "^(?!default\\.).*$"
     metadata:
       tags: [hipaa, rds, network-security, encryption-in-transit]
       hipaa_control: "164.312(e)(1)"
@@ -423,18 +425,18 @@ rules:
         - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
         - https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.SSL.html
 
-  - id: hipaa_elasticsearch_vpc_required
-    resource_type: aws_elasticsearch_domain
-    description: "HIPAA - Elasticsearch domains must be deployed within VPC"
+  - id: hipaa_opensearch_vpc_required
+    resource_type: aws_opensearch_domain
+    description: "HIPAA - OpenSearch (formerly Elasticsearch) domains must be deployed within VPC"
     severity: error
     assert:
       vpc_options: present
     metadata:
-      tags: [hipaa, elasticsearch, network-security]
+      tags: [hipaa, opensearch, network-security]
       hipaa_control: "164.312(e)(1)"
       references:
         - https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html
-        - https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-vpc.html
+        - https://docs.aws.amazon.com/opensearch-service/latest/developerguide/vpc.html
 
   - id: hipaa_lambda_vpc_config_phi
     resource_type: aws_lambda_function

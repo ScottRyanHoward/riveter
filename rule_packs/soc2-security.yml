@@ -1,10 +1,10 @@
 metadata:
   name: soc2-security
-  version: 1.0.0
+  version: 1.1.0
   description: SOC 2 Security Trust Service Criteria Rule Pack
   author: Riveter Team
   created: 2024-10-22
-  updated: 2024-10-22
+  updated: 2026-04-04
   dependencies: []
   tags: [compliance, soc2, security, trust-services]
   min_riveter_version: 0.1.0
@@ -352,11 +352,13 @@ rules:
 
   - id: soc2_azure_cc6_8_storage_encryption
     resource_type: azurerm_storage_account
-    description: "SOC 2 CC6.8 - Azure storage encryption is enabled"
+    description: "SOC 2 CC6.8 - Azure storage must enforce HTTPS-only traffic (Azure SSE is always on by default)"
     severity: error
     assert:
-      # This would need to check encryption settings
-      tags.EncryptionEnabled: present
+      # Azure SSE (encryption at rest) is always enabled and cannot be disabled.
+      # Enforce HTTPS-only to ensure data in transit is encrypted as the complementary control.
+      enable_https_traffic_only: true
+      min_tls_version: TLS1_2
     metadata:
       tags: [soc2, azure, storage, encryption-at-rest]
       soc2_criteria: "CC6.8"

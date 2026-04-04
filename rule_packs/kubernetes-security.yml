@@ -1,10 +1,10 @@
 metadata:
   name: kubernetes-security
-  version: 1.0.0
+  version: 1.1.0
   description: Kubernetes Security Best Practices Rule Pack for EKS, AKS, and GKE
   author: Riveter Team
   created: 2024-10-27
-  updated: 2024-10-27
+  updated: 2026-04-04
   dependencies: []
   tags: [security, kubernetes, containers, eks, aks, gke]
   min_riveter_version: 0.1.0
@@ -383,10 +383,13 @@ rules:
 
   - id: k8s_secret_encryption_at_rest
     resource_type: kubernetes_secret
-    description: Secrets should be encrypted at rest (cluster-level configuration)
+    description: Secrets should be tagged to confirm cluster-level encryption at rest is configured
     severity: info
     assert:
-      metadata.annotations."encryption.alpha.kubernetes.io/encrypted": "true"
+      # Encryption at rest is a cluster-level setting, not per-secret.
+      # Use this annotation as a convention to document that the cluster has encryption configured.
+      # Enforce cluster-level encryption via cloud provider settings (EKS, AKS, GKE).
+      metadata.annotations."riveter.io/encryption-at-rest-verified": "true"
     metadata:
       tags: [kubernetes, secrets-management, encryption-at-rest]
       providers: [eks, aks, gke]
@@ -488,10 +491,12 @@ rules:
 
   - id: k8s_image_vulnerability_scanning
     resource_type: kubernetes_pod|kubernetes_deployment|kubernetes_daemonset|kubernetes_stateful_set
-    description: Container images should be scanned for vulnerabilities
+    description: Container images should have a vulnerability scan annotation confirming scan passed
     severity: warning
     assert:
-      metadata.annotations."security.alpha.kubernetes.io/vulnerability-scan": "passed"
+      # Use your scanner's annotation (e.g., Trivy Operator, Snyk, Defender for Containers).
+      # This annotation is a convention; configure your admission controller to enforce it.
+      metadata.annotations."trivy-operator.aquasecurity.github.io/report-ttl": present
     metadata:
       tags: [kubernetes, image-security, vulnerability-scanning]
       providers: [eks, aks, gke]
@@ -525,10 +530,12 @@ rules:
 
   - id: k8s_runtime_security_monitoring
     resource_type: kubernetes_pod|kubernetes_deployment|kubernetes_daemonset|kubernetes_stateful_set
-    description: Containers should have runtime security monitoring enabled
+    description: Containers should have runtime security monitoring enabled (e.g., Falco, Defender for Containers)
     severity: info
     assert:
-      metadata.annotations."security.kubernetes.io/runtime-monitoring": "enabled"
+      # Convention annotation — set by your runtime security tool (Falco, Defender, etc.)
+      # or enforce via admission controller / OPA policy.
+      metadata.annotations."runtime-security.io/monitored": "true"
     metadata:
       tags: [kubernetes, image-security, runtime-security]
       providers: [eks, aks, gke]

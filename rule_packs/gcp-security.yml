@@ -1,10 +1,10 @@
 metadata:
   name: gcp-security
-  version: 1.0.0
+  version: 1.1.0
   description: GCP Security Best Practices Rule Pack
   author: Riveter Team
   created: 2024-10-27
-  updated: 2024-10-27
+  updated: 2026-04-04
   dependencies: []
   tags: [security, gcp, best-practices]
   min_riveter_version: 0.1.0
@@ -280,13 +280,13 @@ rules:
         - https://cloud.google.com/vpc/docs/firewall-rules-logging
 
   # IAM Security Rules
-  - id: gcp_service_account_key_rotation
+  - id: gcp_service_account_no_user_managed_keys
     resource_type: google_service_account_key
-    description: Service account keys should be rotated regularly
+    description: Service accounts should avoid user-managed keys; prefer GCP-managed keys or Workload Identity
     severity: warning
     assert:
-      # This would need custom logic to check key age
-      valid_after: present
+      key_type:
+        ne: USER_MANAGED
     metadata:
       tags: [gcp, iam, key-rotation]
       references:
