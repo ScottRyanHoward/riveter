@@ -435,7 +435,6 @@ _HTML_TEMPLATE = """\
     <thead>
       <tr>
         <th>Status</th>
-        <th>Severity</th>
         <th>Rule ID</th>
         <th>Resource</th>
         <th>Message</th>
@@ -492,7 +491,7 @@ _HTML_TEMPLATE = """\
     var tbody = document.getElementById('results');
     var count = document.getElementById('resultCount');
     if (!data.length) {
-      tbody.innerHTML = '<tr><td colspan="5" class="no-results">No matching results.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="4" class="no-results">No matching results.</td></tr>';
       count.textContent = '0 results';
       return;
     }
@@ -508,13 +507,12 @@ _HTML_TEMPLATE = """\
 
       return '<tr class="result-row" onclick="toggleDetail(' + i + ')">'
         + '<td>' + statusBadge(r.status) + '</td>'
-        + '<td>' + severityBadge(r.severity) + '</td>'
         + '<td class="mono">' + esc(r.rule_id) + '</td>'
         + '<td class="mono">' + (r.resource_id ? esc(r.resource_id) : '<em style="color:#9ca3af">—</em>') + '</td>'
         + '<td class="msg" title="' + esc(r.message) + '">' + esc(r.message) + '</td>'
         + '</tr>'
         + '<tr id="detail-' + i + '" class="detail-row" style="display:none">'
-        + '<td colspan="5">' + detailHtml + '</td>'
+        + '<td colspan="4">' + detailHtml + '</td>'
         + '</tr>';
     }).join('');
     var n = data.length;

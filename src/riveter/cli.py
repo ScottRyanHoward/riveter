@@ -57,12 +57,9 @@ def _display_table(results: List[ValidationResult]) -> None:
     """Render results as a Rich table."""
     table = Table(box=box.ROUNDED, show_header=True, header_style="bold", expand=False)
     table.add_column("Status", width=6, justify="center")
-    table.add_column("Severity", width=9)
     table.add_column("Rule ID", min_width=24)
     table.add_column("Resource", min_width=24)
     table.add_column("Message")
-
-    sev_colors = {"error": "red", "warning": "yellow", "info": "blue"}
 
     for r in results:
         if r.message.startswith("SKIPPED:"):
@@ -72,20 +69,13 @@ def _display_table(results: List[ValidationResult]) -> None:
         else:
             status = "[bold red]FAIL[/bold red]"
 
-        if r.message.startswith("SKIPPED:"):
-            sev = f"[dim]{r.severity.value}[/dim]"
-        elif r.passed:
-            sev = f"[dim]{r.severity.value}[/dim]"
-        else:
-            color = sev_colors.get(r.severity.value, "white")
-            sev = f"[{color}]{r.severity.value}[/{color}]"
         resource = f"{r.resource.get('resource_type', '')}.{r.resource.get('id', '')}"
 
         msg = r.message
         if r.explanation:
             msg = f"{r.message}\n  [dim]\u24d8[/dim]  [dim]{r.explanation}[/dim]"
 
-        table.add_row(status, sev, r.rule.id, resource, msg)
+        table.add_row(status, r.rule.id, resource, msg)
 
     console.print(table)
 
