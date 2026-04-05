@@ -59,7 +59,7 @@ riveter/
 │   ├── formatters.py     # Output formatters (JSON, JUnit, SARIF)
 │   ├── operators.py      # Comparison operators
 │   ├── rule_packs.py     # Rule pack loading and management
-│   ├── rules.py          # Rule class, Severity enum, load_rules()
+│   ├── rules.py          # Rule class, load_rules()
 │   └── scanner.py        # Core validation engine
 ├── rule_packs/           # Built-in YAML rule packs
 ├── tests/                # Pytest test suite
@@ -91,7 +91,6 @@ rules:
   - id: my-unique-rule-id
     resource_type: aws_instance
     description: What this rule checks
-    severity: error           # error | warning | info
     filter:                   # optional — restricts which resources the rule applies to
       tags.Environment: production
     assert:

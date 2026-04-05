@@ -9,7 +9,6 @@ rules:
   - id: ec2-must-be-encrypted
     resource_type: aws_instance
     description: All EC2 root EBS volumes must be encrypted
-    severity: error
     assert:
       root_block_device.encrypted: true
     metadata:
@@ -20,7 +19,6 @@ rules:
   - id: ec2-no-public-ip-production
     resource_type: aws_instance
     description: Production EC2 instances must not have a public IP
-    severity: error
     filter:
       tags.Environment: production    # Only applies to production resources
     assert:
@@ -31,7 +29,6 @@ rules:
   - id: ec2-approved-instance-types
     resource_type: aws_instance
     description: EC2 instances must use cost-approved instance types
-    severity: warning
     assert:
       instance_type:
         regex: "^(t3|t4g|m5|m6i|c5|c6i|r5|r6i)\\.(micro|small|medium|large|xlarge|2xlarge)$"
@@ -41,7 +38,6 @@ rules:
   - id: ec2-required-tags
     resource_type: aws_instance
     description: EC2 instances must have Environment, Owner, and Project tags
-    severity: error
     assert:
       tags.Environment: present
       tags.Owner: present
@@ -52,7 +48,6 @@ rules:
   - id: ec2-minimum-volume-size
     resource_type: aws_instance
     description: EC2 root volume must be at least 20 GB
-    severity: info
     assert:
       root_block_device.volume_size:
         gte: 20
@@ -64,7 +59,6 @@ rules:
   - id: s3-bucket-tagged
     resource_type: aws_s3_bucket
     description: S3 buckets must have required tags
-    severity: warning
     assert:
       tags.Environment: present
       tags.Owner: present
@@ -78,7 +72,6 @@ rules:
   - id: sg-no-ssh-from-internet
     resource_type: aws_security_group
     description: Security groups must not allow SSH (port 22) from 0.0.0.0/0
-    severity: error
     assert:
       ingress:
         length:

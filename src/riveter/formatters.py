@@ -83,7 +83,6 @@ class JUnitXMLFormatter(OutputFormatter):
             props = ET.SubElement(tc, "properties")
             for name, value in [
                 ("resource_id", result.resource.get("id", "")),
-                ("severity", result.severity.value),
                 ("description", result.rule.description),
             ]:
                 p = ET.SubElement(props, "property")
@@ -114,8 +113,6 @@ class JUnitXMLFormatter(OutputFormatter):
 
 class SARIFFormatter(OutputFormatter):
     """SARIF 2.1.0 output for GitHub Code Scanning and other security tools."""
-
-    _LEVEL_MAP = {"error": "error", "warning": "warning", "info": "note"}
 
     def format(self, results: List[ValidationResult]) -> str:
         active = [r for r in results if not r.message.startswith("SKIPPED:")]
@@ -162,9 +159,7 @@ class SARIFFormatter(OutputFormatter):
                 {
                     "id": r.rule.id,
                     "shortDescription": {"text": r.rule.description},
-                    "defaultConfiguration": {
-                        "level": self._LEVEL_MAP.get(r.severity.value, "warning")
-                    },
+                    "defaultConfiguration": {"level": "warning"},
                     "properties": {"resource_type": r.rule.resource_type},
                 }
             )
@@ -180,7 +175,7 @@ class SARIFFormatter(OutputFormatter):
                 message_text = f"{r.message}  {r.explanation}"
             entry: Dict[str, Any] = {
                 "ruleId": r.rule.id,
-                "level": self._LEVEL_MAP.get(r.severity.value, "warning"),
+                "level": "warning",
                 "message": {"text": message_text},
                 "locations": [
                     {

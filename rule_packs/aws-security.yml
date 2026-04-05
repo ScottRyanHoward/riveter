@@ -14,7 +14,6 @@ rules:
   - id: ec2_no_public_ip
     resource_type: aws_instance
     description: EC2 instances should not have public IP addresses in production
-    severity: error
     filter:
       tags.Environment: production
     assert:
@@ -27,7 +26,6 @@ rules:
   - id: ec2_encrypted_ebs_volumes
     resource_type: aws_instance
     description: EC2 instances should use encrypted EBS volumes
-    severity: error
     assert:
       root_block_device.encrypted: true
     metadata:
@@ -38,7 +36,6 @@ rules:
   - id: ec2_approved_instance_types
     resource_type: aws_instance
     description: EC2 instances should use approved instance types
-    severity: warning
     assert:
       instance_type:
         regex: "^(t3|t4g|m5|m6i|c5|c6i|r5|r6i)\\.(large|xlarge|2xlarge)$"
@@ -50,7 +47,6 @@ rules:
   - id: ec2_required_tags
     resource_type: aws_instance
     description: EC2 instances must have required tags
-    severity: error
     assert:
       tags.Environment: present
       tags.Owner: present
@@ -64,7 +60,6 @@ rules:
   - id: s3_bucket_encryption
     resource_type: aws_s3_bucket
     description: S3 buckets must have server-side encryption enabled
-    severity: error
     assert:
       server_side_encryption_configuration: present
     metadata:
@@ -75,7 +70,6 @@ rules:
   - id: s3_bucket_public_access_block
     resource_type: aws_s3_bucket_public_access_block
     description: S3 buckets should block all public access
-    severity: error
     assert:
       block_public_acls: true
       block_public_policy: true
@@ -89,7 +83,6 @@ rules:
   - id: s3_bucket_versioning
     resource_type: aws_s3_bucket_versioning
     description: S3 buckets should have versioning enabled
-    severity: warning
     assert:
       versioning_configuration.status: Enabled
     metadata:
@@ -100,7 +93,6 @@ rules:
   - id: s3_bucket_logging
     resource_type: aws_s3_bucket_logging
     description: S3 buckets should have access logging enabled
-    severity: warning
     assert:
       target_bucket: present
     metadata:
@@ -112,7 +104,6 @@ rules:
   - id: rds_encrypted_storage
     resource_type: aws_db_instance
     description: RDS instances must have encrypted storage
-    severity: error
     assert:
       storage_encrypted: true
     metadata:
@@ -123,7 +114,6 @@ rules:
   - id: rds_backup_retention
     resource_type: aws_db_instance
     description: RDS instances should have adequate backup retention
-    severity: warning
     assert:
       backup_retention_period:
         gte: 7
@@ -135,7 +125,6 @@ rules:
   - id: rds_multi_az
     resource_type: aws_db_instance
     description: Production RDS instances should use Multi-AZ deployment
-    severity: error
     filter:
       tags.Environment: production
     assert:
@@ -148,7 +137,6 @@ rules:
   - id: rds_no_public_access
     resource_type: aws_db_instance
     description: RDS instances should not be publicly accessible
-    severity: error
     assert:
       publicly_accessible: false
     metadata:
@@ -160,7 +148,6 @@ rules:
   - id: vpc_flow_logs
     resource_type: aws_flow_log
     description: VPCs should have flow logs enabled
-    severity: warning
     assert:
       traffic_type: ALL
     metadata:
@@ -171,7 +158,6 @@ rules:
   - id: security_group_no_wide_open_ingress
     resource_type: aws_security_group
     description: Security groups should not allow ingress from 0.0.0.0/0 on sensitive ports
-    severity: error
     assert:
       ingress:
         subset:
@@ -191,7 +177,6 @@ rules:
   - id: security_group_description_required
     resource_type: aws_security_group
     description: Security groups must have meaningful descriptions
-    severity: warning
     assert:
       description:
         regex: "^(?!Managed by Terraform).{10,}"
@@ -204,7 +189,6 @@ rules:
   - id: iam_user_no_inline_policies
     resource_type: aws_iam_user
     description: IAM users should not have inline policies
-    severity: error
     assert:
       inline_policy:
         length:
@@ -217,7 +201,6 @@ rules:
   - id: iam_role_assume_role_policy_required
     resource_type: aws_iam_role
     description: IAM roles must have assume role policy
-    severity: error
     assert:
       assume_role_policy: present
     metadata:
@@ -228,7 +211,6 @@ rules:
   - id: iam_policy_no_wildcard_actions
     resource_type: aws_iam_policy
     description: IAM policies should not use wildcard actions
-    severity: warning
     assert:
       policy:
         regex: "^(?!.*\"Action\":\\s*\"\\*\").*$"
@@ -241,7 +223,6 @@ rules:
   - id: cloudtrail_enabled
     resource_type: aws_cloudtrail
     description: CloudTrail should be enabled for audit logging
-    severity: error
     assert:
       enable_logging: true
       include_global_service_events: true
@@ -254,7 +235,6 @@ rules:
   - id: cloudtrail_log_file_validation
     resource_type: aws_cloudtrail
     description: CloudTrail should have log file validation enabled
-    severity: error
     assert:
       enable_log_file_validation: true
     metadata:
@@ -266,7 +246,6 @@ rules:
   - id: kms_key_rotation
     resource_type: aws_kms_key
     description: KMS keys should have automatic rotation enabled
-    severity: warning
     assert:
       enable_key_rotation: true
     metadata:
@@ -277,7 +256,6 @@ rules:
   - id: kms_key_description_required
     resource_type: aws_kms_key
     description: KMS keys must have meaningful descriptions
-    severity: warning
     assert:
       description:
         regex: "^.{10,}$"
@@ -290,7 +268,6 @@ rules:
   - id: lambda_function_dead_letter_queue
     resource_type: aws_lambda_function
     description: Lambda functions should have dead letter queues configured
-    severity: warning
     assert:
       dead_letter_config: present
     metadata:
@@ -301,7 +278,6 @@ rules:
   - id: lambda_function_vpc_config
     resource_type: aws_lambda_function
     description: Lambda functions accessing VPC resources should have VPC configuration
-    severity: info
     filter:
       environment.variables.VPC_ENABLED: "true"
     assert:
@@ -315,7 +291,6 @@ rules:
   - id: alb_access_logs_enabled
     resource_type: aws_lb
     description: Application Load Balancers should have access logs enabled
-    severity: warning
     filter:
       load_balancer_type: application
     assert:
@@ -328,7 +303,6 @@ rules:
   - id: alb_deletion_protection
     resource_type: aws_lb
     description: Production ALBs should have deletion protection enabled
-    severity: error
     filter:
       tags.Environment: production
     assert:

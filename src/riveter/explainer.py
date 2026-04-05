@@ -64,7 +64,7 @@ class Explainer:
         """Return a plain-English explanation of a rule violation.
 
         Args:
-            rule:           Rule dict with keys ``id``, ``description``, ``severity``,
+            rule:           Rule dict with keys ``id``, ``description``,
                             and ``assert`` (or ``assert_conditions``).
             resource_name:  Terraform resource name (e.g. ``web_server``).
             resource_type:  Terraform resource type (e.g. ``aws_instance``).
@@ -135,7 +135,6 @@ class Explainer:
     ) -> str:
         rule_id = rule.get("id", "unknown")
         description = rule.get("description", "No description provided")
-        severity = rule.get("severity", "error")
         # Support both Rule objects serialised via rule_dict and raw dicts
         assert_conditions = rule.get("assert_conditions", rule.get("assert", {}))
 
@@ -151,7 +150,6 @@ class Explainer:
             "A Terraform infrastructure security rule has been violated.\n\n"
             f"Rule ID: {rule_id}\n"
             f"Description: {description}\n"
-            f"Severity: {severity}\n"
             f"Failed assertion(s): {assert_conditions}\n\n"
             f"Resource type: {resource_type}\n"
             f"Resource name: {resource_name}\n"

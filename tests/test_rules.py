@@ -5,20 +5,7 @@ import textwrap
 import pytest
 
 from riveter.exceptions import FileSystemError, RuleValidationError
-from riveter.rules import Rule, Severity, load_rules
-
-
-class TestSeverity:
-    def test_ordering(self):
-        assert Severity.ERROR > Severity.WARNING
-        assert Severity.WARNING > Severity.INFO
-        assert Severity.ERROR >= Severity.ERROR
-        assert Severity.INFO < Severity.WARNING
-
-    def test_values(self):
-        assert Severity.ERROR.value == "error"
-        assert Severity.WARNING.value == "warning"
-        assert Severity.INFO.value == "info"
+from riveter.rules import Rule, load_rules
 
 
 class TestRuleValidation:
@@ -38,17 +25,6 @@ class TestRuleValidation:
         with pytest.raises(RuleValidationError):
             Rule({"id": "r1", "resource_type": "aws_instance", "assert": {}})
 
-    def test_invalid_severity_raises(self):
-        with pytest.raises(RuleValidationError, match="Invalid severity"):
-            Rule(
-                {
-                    "id": "r1",
-                    "resource_type": "aws_instance",
-                    "assert": {"x": "y"},
-                    "severity": "critical",
-                }
-            )
-
     def test_invalid_regex_raises(self):
         with pytest.raises(RuleValidationError, match="regex"):
             Rule(
@@ -61,21 +37,6 @@ class TestRuleValidation:
 
 
 class TestRuleAttributes:
-    def test_default_severity_is_error(self):
-        rule = Rule({"id": "r1", "resource_type": "aws_instance", "assert": {"x": "y"}})
-        assert rule.severity == Severity.ERROR
-
-    def test_severity_warning(self):
-        rule = Rule(
-            {
-                "id": "r1",
-                "resource_type": "aws_instance",
-                "severity": "warning",
-                "assert": {"x": "y"},
-            }
-        )
-        assert rule.severity == Severity.WARNING
-
     def test_wildcard_resource_type(self):
         rule = Rule({"id": "r1", "resource_type": "*", "assert": {"x": "y"}})
         assert rule.resource_type == "*"
@@ -228,7 +189,6 @@ class TestLoadRules:
                   - id: test-rule
                     resource_type: aws_instance
                     description: Test
-                    severity: error
                     assert:
                       instance_type: t3.large
                 """

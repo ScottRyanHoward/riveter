@@ -14,7 +14,6 @@ rules:
   - id: cis_1_3_unused_credentials
     resource_type: aws_iam_user
     description: "CIS 1.3 - Ensure credentials unused for 90 days or greater are disabled"
-    severity: error
     assert:
       # This would need custom logic to check last used date
       tags.LastUsed: present
@@ -27,7 +26,6 @@ rules:
   - id: cis_1_4_access_keys_rotated
     resource_type: aws_iam_access_key
     description: "CIS 1.4 - Ensure access keys are rotated every 90 days"
-    severity: error
     assert:
       # This would need custom logic to check creation date
       tags.CreatedDate: present
@@ -40,7 +38,6 @@ rules:
   - id: cis_1_5_iam_password_policy
     resource_type: aws_iam_account_password_policy
     description: "CIS 1.5-1.11 - Ensure IAM password policy meets requirements"
-    severity: error
     assert:
       minimum_password_length:
         gte: 14
@@ -61,7 +58,6 @@ rules:
   - id: cis_1_12_root_access_key
     resource_type: aws_iam_access_key
     description: "CIS 1.12 - Ensure no root account access keys exist"
-    severity: error
     filter:
       user: root
     assert:
@@ -75,7 +71,6 @@ rules:
   - id: cis_1_13_mfa_root_account
     resource_type: aws_iam_virtual_mfa_device
     description: "CIS 1.13 - Ensure MFA is enabled for root account"
-    severity: error
     filter:
       user_name: root
     assert:
@@ -89,7 +84,6 @@ rules:
   - id: cis_1_14_hardware_mfa_root
     resource_type: aws_iam_virtual_mfa_device
     description: "CIS 1.14 - Ensure hardware MFA is enabled for root account"
-    severity: warning
     filter:
       user_name: root
     assert:
@@ -104,7 +98,6 @@ rules:
   - id: cis_1_16_iam_policies_attached_users
     resource_type: aws_iam_user_policy_attachment
     description: "CIS 1.16 - Ensure IAM policies are attached only to groups or roles"
-    severity: error
     assert:
       # Users should not have policies directly attached
       policy_arn:
@@ -119,7 +112,6 @@ rules:
   - id: cis_2_1_1_s3_bucket_public_access
     resource_type: aws_s3_bucket_public_access_block
     description: "CIS 2.1.1 - Ensure S3 bucket access is restricted"
-    severity: error
     assert:
       block_public_acls: true
       block_public_policy: true
@@ -134,7 +126,6 @@ rules:
   - id: cis_2_1_2_s3_bucket_public_read
     resource_type: aws_s3_bucket_acl
     description: "CIS 2.1.2 - Ensure S3 bucket is not publicly readable"
-    severity: error
     assert:
       acl:
         regex: "^(?!public-read|public-read-write).*$"
@@ -147,7 +138,6 @@ rules:
   - id: cis_2_1_3_s3_bucket_public_write
     resource_type: aws_s3_bucket_acl
     description: "CIS 2.1.3 - Ensure S3 bucket is not publicly writable"
-    severity: error
     assert:
       acl:
         ne: public-read-write
@@ -160,7 +150,6 @@ rules:
   - id: cis_2_1_5_s3_bucket_ssl_requests_only
     resource_type: aws_s3_bucket_policy
     description: "CIS 2.1.5 - Ensure S3 bucket has SSL requests only policy"
-    severity: error
     assert:
       policy:
         regex: ".*aws:SecureTransport.*false.*Deny.*"
@@ -174,7 +163,6 @@ rules:
   - id: cis_2_2_1_cloudtrail_enabled
     resource_type: aws_cloudtrail
     description: "CIS 2.2.1 - Ensure CloudTrail is enabled in all regions"
-    severity: error
     assert:
       enable_logging: true
       is_multi_region_trail: true
@@ -188,7 +176,6 @@ rules:
   - id: cis_2_2_2_cloudtrail_log_file_validation
     resource_type: aws_cloudtrail
     description: "CIS 2.2.2 - Ensure CloudTrail log file validation is enabled"
-    severity: error
     assert:
       enable_log_file_validation: true
     metadata:
@@ -200,7 +187,6 @@ rules:
   - id: cis_2_2_3_cloudtrail_s3_bucket_not_public
     resource_type: aws_s3_bucket_public_access_block
     description: "CIS 2.2.3 - Ensure CloudTrail S3 bucket is not publicly accessible"
-    severity: error
     filter:
       # This would need to identify CloudTrail buckets
       tags.Purpose: cloudtrail
@@ -218,7 +204,6 @@ rules:
   - id: cis_2_2_4_cloudtrail_cloudwatch_integration
     resource_type: aws_cloudtrail
     description: "CIS 2.2.4 - Ensure CloudTrail is integrated with CloudWatch Logs"
-    severity: error
     assert:
       cloud_watch_logs_group_arn: present
       cloud_watch_logs_role_arn: present
@@ -231,7 +216,6 @@ rules:
   - id: cis_2_2_5_config_enabled
     resource_type: aws_config_configuration_recorder
     description: "CIS 2.2.5 - Ensure AWS Config is enabled in all regions"
-    severity: error
     assert:
       recording_group.all_supported: true
       recording_group.include_global_resource_types: true
@@ -244,7 +228,6 @@ rules:
   - id: cis_2_2_6_s3_bucket_access_logging
     resource_type: aws_s3_bucket_logging
     description: "CIS 2.2.6 - Ensure S3 bucket access logging is enabled"
-    severity: error
     assert:
       target_bucket: present
       target_prefix: present
@@ -258,7 +241,6 @@ rules:
   - id: cis_2_3_1_cloudwatch_log_group_retention
     resource_type: aws_cloudwatch_log_group
     description: "CIS 2.3.1 - Ensure CloudWatch log group retention is set"
-    severity: warning
     assert:
       retention_in_days:
         gte: 90
@@ -272,7 +254,6 @@ rules:
   - id: cis_4_1_security_group_ingress_22
     resource_type: aws_security_group
     description: "CIS 4.1 - Ensure no security groups allow ingress from 0.0.0.0/0 to port 22"
-    severity: error
     assert:
       ingress:
         subset:
@@ -289,7 +270,6 @@ rules:
   - id: cis_4_2_security_group_ingress_3389
     resource_type: aws_security_group
     description: "CIS 4.2 - Ensure no security groups allow ingress from 0.0.0.0/0 to port 3389"
-    severity: error
     assert:
       ingress:
         subset:
@@ -306,7 +286,6 @@ rules:
   - id: cis_4_3_vpc_flow_logs
     resource_type: aws_flow_log
     description: "CIS 4.3 - Ensure VPC flow logging is enabled in all VPCs"
-    severity: error
     assert:
       resource_type: VPC
       traffic_type: ALL
@@ -319,7 +298,6 @@ rules:
   - id: cis_4_4_default_security_group
     resource_type: aws_default_security_group
     description: "CIS 4.4 - Ensure default security group restricts all traffic"
-    severity: error
     assert:
       ingress:
         length:

@@ -13,7 +13,6 @@ def simple_rule() -> Rule:
             "id": "test-instance-type",
             "resource_type": "aws_instance",
             "description": "Instance type must be t3.large",
-            "severity": "error",
             "assert": {"instance_type": "t3.large"},
         }
     )

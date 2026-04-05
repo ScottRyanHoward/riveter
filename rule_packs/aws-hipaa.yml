@@ -14,7 +14,6 @@ rules:
   - id: hipaa_s3_encryption_phi
     resource_type: aws_s3_bucket
     description: "HIPAA - S3 buckets storing PHI must have encryption enabled"
-    severity: error
     filter:
       tags.DataClassification: PHI
     assert:
@@ -29,7 +28,6 @@ rules:
   - id: hipaa_rds_encryption_phi
     resource_type: aws_db_instance
     description: "HIPAA - RDS instances storing PHI must have encryption at rest"
-    severity: error
     filter:
       tags.DataClassification: PHI
     assert:
@@ -44,7 +42,6 @@ rules:
   - id: hipaa_ebs_encryption
     resource_type: aws_ebs_volume
     description: "HIPAA - EBS volumes must be encrypted"
-    severity: error
     assert:
       encrypted: true
     metadata:
@@ -57,7 +54,6 @@ rules:
   - id: hipaa_ec2_encrypted_volumes
     resource_type: aws_instance
     description: "HIPAA - EC2 instances must use encrypted EBS volumes"
-    severity: error
     assert:
       root_block_device.encrypted: true
     metadata:
@@ -70,7 +66,6 @@ rules:
   - id: hipaa_kms_key_rotation
     resource_type: aws_kms_key
     description: "HIPAA - KMS keys must have automatic rotation enabled"
-    severity: error
     assert:
       enable_key_rotation: true
     metadata:
@@ -83,7 +78,6 @@ rules:
   - id: hipaa_cloudfront_https_only
     resource_type: aws_cloudfront_distribution
     description: "HIPAA - CloudFront distributions must enforce HTTPS"
-    severity: error
     assert:
       viewer_certificate.minimum_protocol_version:
         regex: "^TLSv1\\.2"
@@ -97,7 +91,6 @@ rules:
   - id: hipaa_alb_https_listener
     resource_type: aws_lb_listener
     description: "HIPAA - Load balancer listeners must use HTTPS"
-    severity: error
     assert:
       protocol:
         regex: "^HTTPS$"
@@ -111,7 +104,6 @@ rules:
   - id: hipaa_elasticache_encryption_at_rest
     resource_type: aws_elasticache_replication_group
     description: "HIPAA - ElastiCache replication groups must have encryption at rest"
-    severity: error
     assert:
       at_rest_encryption_enabled: true
     metadata:
@@ -124,7 +116,6 @@ rules:
   - id: hipaa_elasticache_encryption_in_transit
     resource_type: aws_elasticache_replication_group
     description: "HIPAA - ElastiCache replication groups must have encryption in transit"
-    severity: error
     assert:
       transit_encryption_enabled: true
     metadata:
@@ -137,7 +128,6 @@ rules:
   - id: hipaa_redshift_encryption
     resource_type: aws_redshift_cluster
     description: "HIPAA - Redshift clusters must have encryption enabled"
-    severity: error
     assert:
       encrypted: true
     metadata:
@@ -151,7 +141,6 @@ rules:
   - id: hipaa_iam_mfa_required
     resource_type: aws_iam_virtual_mfa_device
     description: "HIPAA - IAM users must have an MFA device configured"
-    severity: error
     assert:
       user_name: present
     metadata:
@@ -164,7 +153,6 @@ rules:
   - id: hipaa_iam_no_wildcard_actions
     resource_type: aws_iam_policy
     description: "HIPAA - IAM policies must follow least privilege principle"
-    severity: error
     assert:
       policy:
         regex: "^(?!.*\"Action\":\\s*\"\\*\").*$"
@@ -178,7 +166,6 @@ rules:
   - id: hipaa_s3_block_public_access
     resource_type: aws_s3_bucket_public_access_block
     description: "HIPAA - S3 buckets must block all public access"
-    severity: error
     assert:
       block_public_acls: true
       block_public_policy: true
@@ -194,7 +181,6 @@ rules:
   - id: hipaa_rds_no_public_access
     resource_type: aws_db_instance
     description: "HIPAA - RDS instances must not be publicly accessible"
-    severity: error
     assert:
       publicly_accessible: false
     metadata:
@@ -207,7 +193,6 @@ rules:
   - id: hipaa_ec2_no_public_ip_phi
     resource_type: aws_instance
     description: "HIPAA - EC2 instances handling PHI must not have public IPs"
-    severity: error
     filter:
       tags.DataClassification: PHI
     assert:
@@ -222,7 +207,6 @@ rules:
   - id: hipaa_iam_password_policy
     resource_type: aws_iam_account_password_policy
     description: "HIPAA - IAM password policy must meet complexity requirements"
-    severity: error
     assert:
       minimum_password_length:
         gte: 14
@@ -240,7 +224,6 @@ rules:
   - id: hipaa_iam_user_no_inline_policies
     resource_type: aws_iam_user
     description: "HIPAA - IAM users should not have inline policies for better access management"
-    severity: error
     assert:
       inline_policy:
         length:
@@ -255,7 +238,6 @@ rules:
   - id: hipaa_redshift_no_public_access
     resource_type: aws_redshift_cluster
     description: "HIPAA - Redshift clusters must not be publicly accessible"
-    severity: error
     assert:
       publicly_accessible: false
     metadata:
@@ -269,7 +251,6 @@ rules:
   - id: hipaa_cloudtrail_enabled
     resource_type: aws_cloudtrail
     description: "HIPAA - CloudTrail must be enabled for audit logging"
-    severity: error
     assert:
       enable_logging: true
       include_global_service_events: true
@@ -284,7 +265,6 @@ rules:
   - id: hipaa_cloudtrail_log_validation
     resource_type: aws_cloudtrail
     description: "HIPAA - CloudTrail must have log file validation for audit integrity"
-    severity: error
     assert:
       enable_log_file_validation: true
     metadata:
@@ -297,7 +277,6 @@ rules:
   - id: hipaa_s3_access_logging
     resource_type: aws_s3_bucket_logging
     description: "HIPAA - S3 buckets must have access logging enabled"
-    severity: error
     assert:
       target_bucket: present
     metadata:
@@ -310,7 +289,6 @@ rules:
   - id: hipaa_rds_audit_logging
     resource_type: aws_db_instance
     description: "HIPAA - RDS instances must have audit logging enabled"
-    severity: error
     assert:
       enabled_cloudwatch_logs_exports:
         length:
@@ -325,7 +303,6 @@ rules:
   - id: hipaa_alb_access_logs
     resource_type: aws_lb
     description: "HIPAA - Application Load Balancers must have access logs enabled"
-    severity: error
     filter:
       load_balancer_type: application
     assert:
@@ -340,7 +317,6 @@ rules:
   - id: hipaa_cloudwatch_log_retention
     resource_type: aws_cloudwatch_log_group
     description: "HIPAA - CloudWatch log groups must have adequate retention period"
-    severity: error
     assert:
       retention_in_days:
         gte: 365
@@ -354,7 +330,6 @@ rules:
   - id: hipaa_redshift_audit_logging
     resource_type: aws_redshift_cluster
     description: "HIPAA - Redshift clusters must have audit logging enabled"
-    severity: error
     assert:
       logging.enable: true
     metadata:
@@ -368,7 +343,6 @@ rules:
   - id: hipaa_vpc_flow_logs
     resource_type: aws_flow_log
     description: "HIPAA - VPC Flow Logs must be enabled for network monitoring"
-    severity: error
     assert:
       traffic_type: ALL
     metadata:
@@ -381,7 +355,6 @@ rules:
   - id: hipaa_security_group_no_wide_open
     resource_type: aws_security_group
     description: "HIPAA - Security groups must not allow unrestricted access"
-    severity: error
     assert:
       ingress:
         subset:
@@ -397,7 +370,6 @@ rules:
   - id: hipaa_nacl_ingress_restrictions
     resource_type: aws_network_acl
     description: "HIPAA - Network ACLs must have ingress restrictions"
-    severity: warning
     assert:
       ingress:
         length:
@@ -412,7 +384,6 @@ rules:
   - id: hipaa_rds_ssl_required
     resource_type: aws_db_instance
     description: "HIPAA - RDS instances must use a custom parameter group to enforce SSL/TLS connections"
-    severity: error
     assert:
       # SSL enforcement requires a custom parameter group (e.g., rds.force_ssl=1 for PostgreSQL/SQL Server)
       # The default parameter group cannot be modified, so any custom group name indicates SSL can be enforced
@@ -428,7 +399,6 @@ rules:
   - id: hipaa_opensearch_vpc_required
     resource_type: aws_opensearch_domain
     description: "HIPAA - OpenSearch (formerly Elasticsearch) domains must be deployed within VPC"
-    severity: error
     assert:
       vpc_options: present
     metadata:
@@ -441,7 +411,6 @@ rules:
   - id: hipaa_lambda_vpc_config_phi
     resource_type: aws_lambda_function
     description: "HIPAA - Lambda functions accessing PHI must be in VPC"
-    severity: error
     filter:
       tags.DataClassification: PHI
     assert:
@@ -457,7 +426,6 @@ rules:
   - id: hipaa_rds_backup_retention
     resource_type: aws_db_instance
     description: "HIPAA - RDS instances must have adequate backup retention"
-    severity: error
     assert:
       backup_retention_period:
         gte: 7
@@ -471,7 +439,6 @@ rules:
   - id: hipaa_s3_versioning_phi
     resource_type: aws_s3_bucket_versioning
     description: "HIPAA - S3 buckets storing PHI must have versioning enabled"
-    severity: error
     filter:
       # Note: filter applies to bucket, not versioning resource
       tags.DataClassification: PHI
@@ -487,7 +454,6 @@ rules:
   - id: hipaa_dynamodb_point_in_time_recovery
     resource_type: aws_dynamodb_table
     description: "HIPAA - DynamoDB tables must have point-in-time recovery enabled"
-    severity: error
     assert:
       point_in_time_recovery.enabled: true
     metadata:
@@ -500,7 +466,6 @@ rules:
   - id: hipaa_ebs_snapshot_encryption
     resource_type: aws_ebs_snapshot
     description: "HIPAA - EBS snapshots must be encrypted"
-    severity: error
     assert:
       encrypted: true
     metadata:

@@ -61,7 +61,6 @@ Validates Terraform against rules and exits non-zero if any checks fail.
 | `--rules FILE` | `-r` | Custom rules YAML file |
 | `--output-format FMT` | `-f` | `table` (default), `json`, `junit`, `sarif`, `html` |
 | `--output FILE` | `-o` | Write output to a file; table summary still shown in terminal |
-| `--min-severity LEVEL` | | `info` (default), `warning`, `error` |
 | `--include-rules PATTERN` | | Only run rules matching glob pattern (repeatable) |
 | `--exclude-rules PATTERN` | | Skip rules matching glob pattern (repeatable) |
 | `--config FILE` | `-c` | Config file path (auto-detected if omitted) |
@@ -79,7 +78,6 @@ Validates a Terraform **state file** against rules for drift detection.
 | `--rules FILE` | `-r` | Custom rules YAML file |
 | `--output-format FMT` | `-f` | `table` (default), `json`, `junit`, `sarif`, `html` |
 | `--output FILE` | `-o` | Write output to a file; table summary still shown in terminal |
-| `--min-severity LEVEL` | | `info` (default), `warning`, `error` |
 | `--include-rules PATTERN` | | Only run rules matching glob pattern (repeatable) |
 | `--exclude-rules PATTERN` | | Skip rules matching glob pattern (repeatable) |
 | `--config FILE` | `-c` | Config file path (auto-detected if omitted) |
@@ -136,14 +134,12 @@ rules:
   - id: ec2-must-be-encrypted
     resource_type: aws_instance
     description: All EC2 root volumes must be encrypted
-    severity: error
     assert:
       root_block_device.encrypted: true
 
   - id: ec2-prod-approved-types
     resource_type: aws_instance
     description: Production EC2s must use approved instance types
-    severity: warning
     filter:
       tags.Environment: production
     assert:
@@ -153,7 +149,6 @@ rules:
   - id: s3-versioning-enabled
     resource_type: aws_s3_bucket
     description: S3 buckets must have versioning enabled
-    severity: error
     assert:
       versioning.enabled: true
       tags.Owner: present
@@ -167,7 +162,6 @@ rules:
 | `resource_type` | Yes | Terraform resource type, or `"*"` for all |
 | `assert` | Yes | Assertions that must all be true |
 | `description` | No | Human-readable summary |
-| `severity` | No | `error` (default), `warning`, `info` |
 | `filter` | No | Conditions a resource must match for the rule to apply |
 | `metadata` | No | Extra metadata (tags, references, etc.) |
 
@@ -259,7 +253,7 @@ riveter scan -p aws-security -t main.tf -f html -o report.html
 riveter scan -p aws-security -t main.tf -f html > report.html
 ```
 
-Generates a self-contained HTML report with no external dependencies. Open in any browser to explore results with interactive filtering by status, severity, and resource/rule name. Click any row to expand full assertion details. When `--explain` is used, AI-generated explanations appear in the expanded detail panel for each failure. Useful for sharing scan results with stakeholders and auditors who can't easily read JSON or SARIF.
+Generates a self-contained HTML report with no external dependencies. Open in any browser to explore results with interactive filtering by status and resource/rule name. Click any row to expand full assertion details. When `--explain` is used, AI-generated explanations appear in the expanded detail panel for each failure. Useful for sharing scan results with stakeholders and auditors who can't easily read JSON or SARIF.
 
 > **Tip:** Use `-o report.html` instead of `> report.html` to write the HTML to a file while keeping the table summary visible in your terminal.
 
@@ -335,7 +329,6 @@ rule_packs:
 rule_dirs:
   - ./my-custom-rules   # load rule packs from additional local directories
 
-min_severity: warning
 output_format: table
 
 include_rules:

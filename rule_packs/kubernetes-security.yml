@@ -14,7 +14,6 @@ rules:
   - id: k8s_no_privileged_containers
     resource_type: kubernetes_pod|kubernetes_deployment|kubernetes_daemonset|kubernetes_stateful_set
     description: Containers should not run in privileged mode
-    severity: error
     assert:
       spec.containers.security_context.privileged: false
     metadata:
@@ -26,7 +25,6 @@ rules:
   - id: k8s_no_root_user
     resource_type: kubernetes_pod|kubernetes_deployment|kubernetes_daemonset|kubernetes_stateful_set
     description: Containers should not run as root user
-    severity: error
     assert:
       spec.containers.security_context.run_as_user:
         ne: 0
@@ -40,7 +38,6 @@ rules:
   - id: k8s_readonly_root_filesystem
     resource_type: kubernetes_pod|kubernetes_deployment|kubernetes_daemonset|kubernetes_stateful_set
     description: Containers should use read-only root filesystem
-    severity: warning
     assert:
       spec.containers.security_context.read_only_root_filesystem: true
     metadata:
@@ -52,7 +49,6 @@ rules:
   - id: k8s_no_privilege_escalation
     resource_type: kubernetes_pod|kubernetes_deployment|kubernetes_daemonset|kubernetes_stateful_set
     description: Containers should not allow privilege escalation
-    severity: error
     assert:
       spec.containers.security_context.allow_privilege_escalation: false
     metadata:
@@ -64,7 +60,6 @@ rules:
   - id: k8s_drop_capabilities
     resource_type: kubernetes_pod|kubernetes_deployment|kubernetes_daemonset|kubernetes_stateful_set
     description: Containers should drop all capabilities and only add required ones
-    severity: warning
     assert:
       spec.containers.security_context.capabilities.drop:
         contains: ALL
@@ -77,7 +72,6 @@ rules:
   - id: k8s_resource_limits
     resource_type: kubernetes_pod|kubernetes_deployment|kubernetes_daemonset|kubernetes_stateful_set
     description: Containers should have resource limits defined
-    severity: warning
     assert:
       spec.containers.resources.limits.memory: present
       spec.containers.resources.limits.cpu: present
@@ -90,7 +84,6 @@ rules:
   - id: k8s_resource_requests
     resource_type: kubernetes_pod|kubernetes_deployment|kubernetes_daemonset|kubernetes_stateful_set
     description: Containers should have resource requests defined
-    severity: warning
     assert:
       spec.containers.resources.requests.memory: present
       spec.containers.resources.requests.cpu: present
@@ -103,7 +96,6 @@ rules:
   - id: k8s_no_host_network
     resource_type: kubernetes_pod|kubernetes_deployment|kubernetes_daemonset|kubernetes_stateful_set
     description: Pods should not use host network
-    severity: error
     assert:
       spec.host_network: false
     metadata:
@@ -115,7 +107,6 @@ rules:
   - id: k8s_no_host_pid
     resource_type: kubernetes_pod|kubernetes_deployment|kubernetes_daemonset|kubernetes_stateful_set
     description: Pods should not use host PID namespace
-    severity: error
     assert:
       spec.host_pid: false
     metadata:
@@ -127,7 +118,6 @@ rules:
   - id: k8s_no_host_ipc
     resource_type: kubernetes_pod|kubernetes_deployment|kubernetes_daemonset|kubernetes_stateful_set
     description: Pods should not use host IPC namespace
-    severity: error
     assert:
       spec.host_ipc: false
     metadata:
@@ -140,7 +130,6 @@ rules:
   - id: k8s_rbac_no_wildcard_verbs
     resource_type: kubernetes_role|kubernetes_cluster_role
     description: RBAC roles should not use wildcard verbs
-    severity: error
     assert:
       rule.verbs:
         not_contains: "*"
@@ -153,7 +142,6 @@ rules:
   - id: k8s_rbac_no_wildcard_resources
     resource_type: kubernetes_role|kubernetes_cluster_role
     description: RBAC roles should not use wildcard resources
-    severity: error
     assert:
       rule.resources:
         not_contains: "*"
@@ -166,7 +154,6 @@ rules:
   - id: k8s_rbac_no_cluster_admin
     resource_type: kubernetes_cluster_role_binding
     description: Avoid binding to cluster-admin role except for break-glass scenarios
-    severity: warning
     assert:
       role_ref.name:
         ne: cluster-admin
@@ -179,7 +166,6 @@ rules:
   - id: k8s_service_account_automount_token
     resource_type: kubernetes_service_account
     description: Service accounts should explicitly configure token automounting
-    severity: warning
     assert:
       automount_service_account_token: present
     metadata:
@@ -191,7 +177,6 @@ rules:
   - id: k8s_rbac_binding_subjects_defined
     resource_type: kubernetes_role_binding|kubernetes_cluster_role_binding
     description: RBAC bindings should have subjects explicitly defined
-    severity: error
     assert:
       subject:
         length:
@@ -205,7 +190,6 @@ rules:
   - id: k8s_rbac_no_system_masters
     resource_type: kubernetes_cluster_role_binding
     description: Avoid binding users to system:masters group
-    severity: error
     assert:
       subject.name:
         ne: system:masters
@@ -218,7 +202,6 @@ rules:
   - id: k8s_rbac_namespace_scoped_preferred
     resource_type: kubernetes_role_binding
     description: Use namespace-scoped roles when possible instead of cluster roles
-    severity: info
     assert:
       role_ref.kind: Role
     metadata:
@@ -230,7 +213,6 @@ rules:
   - id: k8s_rbac_service_account_namespace
     resource_type: kubernetes_service_account
     description: Service accounts should be created in appropriate namespaces
-    severity: warning
     assert:
       metadata.namespace:
         ne: default
@@ -244,7 +226,6 @@ rules:
   - id: k8s_network_policy_default_deny_ingress
     resource_type: kubernetes_network_policy
     description: Namespaces should have default deny ingress network policies
-    severity: warning
     assert:
       spec.policy_types:
         contains: Ingress
@@ -260,7 +241,6 @@ rules:
   - id: k8s_network_policy_default_deny_egress
     resource_type: kubernetes_network_policy
     description: Namespaces should have default deny egress network policies
-    severity: warning
     assert:
       spec.policy_types:
         contains: Egress
@@ -276,7 +256,6 @@ rules:
   - id: k8s_network_policy_pod_selector
     resource_type: kubernetes_network_policy
     description: Network policies should have specific pod selectors
-    severity: warning
     assert:
       spec.pod_selector: present
     metadata:
@@ -288,7 +267,6 @@ rules:
   - id: k8s_network_policy_ingress_rules
     resource_type: kubernetes_network_policy
     description: Network policies with ingress should define specific rules
-    severity: info
     filter:
       spec.policy_types:
         contains: Ingress
@@ -303,7 +281,6 @@ rules:
   - id: k8s_network_policy_egress_rules
     resource_type: kubernetes_network_policy
     description: Network policies with egress should define specific rules
-    severity: info
     filter:
       spec.policy_types:
         contains: Egress
@@ -318,7 +295,6 @@ rules:
   - id: k8s_network_policy_namespace_isolation
     resource_type: kubernetes_network_policy
     description: Network policies should implement namespace isolation
-    severity: info
     assert:
       spec.ingress.from.namespace_selector: present
     metadata:
@@ -330,7 +306,6 @@ rules:
   - id: k8s_service_no_node_port
     resource_type: kubernetes_service
     description: Services should not use NodePort type in production
-    severity: warning
     filter:
       metadata.labels.environment: production
     assert:
@@ -345,7 +320,6 @@ rules:
   - id: k8s_ingress_tls_required
     resource_type: kubernetes_ingress
     description: Ingress resources should use TLS
-    severity: error
     assert:
       spec.tls: present
     metadata:
@@ -358,7 +332,6 @@ rules:
   - id: k8s_secret_not_in_env_vars
     resource_type: kubernetes_pod|kubernetes_deployment|kubernetes_daemonset|kubernetes_stateful_set
     description: Secrets should not be exposed as environment variables
-    severity: warning
     assert:
       spec.containers.env.value_from.secret_key_ref: absent
     metadata:
@@ -370,7 +343,6 @@ rules:
   - id: k8s_secret_volume_mount_preferred
     resource_type: kubernetes_pod|kubernetes_deployment|kubernetes_daemonset|kubernetes_stateful_set
     description: Secrets should be mounted as volumes instead of environment variables
-    severity: info
     filter:
       spec.volumes.secret: present
     assert:
@@ -384,7 +356,6 @@ rules:
   - id: k8s_secret_encryption_at_rest
     resource_type: kubernetes_secret
     description: Secrets should be tagged to confirm cluster-level encryption at rest is configured
-    severity: info
     assert:
       # Encryption at rest is a cluster-level setting, not per-secret.
       # Use this annotation as a convention to document that the cluster has encryption configured.
@@ -399,7 +370,6 @@ rules:
   - id: k8s_no_hardcoded_secrets
     resource_type: kubernetes_pod|kubernetes_deployment|kubernetes_daemonset|kubernetes_stateful_set
     description: Containers should not have hardcoded secrets in environment variables
-    severity: error
     assert:
       spec.containers.env.value:
         regex: "^(?!.*(?:password|secret|key|token|credential)=.+).*$"
@@ -412,7 +382,6 @@ rules:
   - id: k8s_secret_immutable
     resource_type: kubernetes_secret
     description: Secrets should be marked as immutable when possible
-    severity: info
     assert:
       immutable: true
     metadata:
@@ -424,7 +393,6 @@ rules:
   - id: k8s_external_secrets_preferred
     resource_type: kubernetes_secret
     description: Consider using external secret management systems
-    severity: info
     assert:
       metadata.annotations."external-secrets.io/managed-by": present
     metadata:
@@ -436,7 +404,6 @@ rules:
   - id: k8s_secret_rotation_annotation
     resource_type: kubernetes_secret
     description: Secrets should have rotation metadata
-    severity: info
     assert:
       metadata.annotations."secret.kubernetes.io/rotation-time": present
     metadata:
@@ -449,7 +416,6 @@ rules:
   - id: k8s_image_pull_policy_always
     resource_type: kubernetes_pod|kubernetes_deployment|kubernetes_daemonset|kubernetes_stateful_set
     description: Containers should use 'Always' image pull policy for latest tags
-    severity: warning
     filter:
       spec.containers.image:
         regex: ".*:latest$"
@@ -464,7 +430,6 @@ rules:
   - id: k8s_no_latest_image_tag
     resource_type: kubernetes_pod|kubernetes_deployment|kubernetes_daemonset|kubernetes_stateful_set
     description: Containers should not use 'latest' image tag in production
-    severity: error
     filter:
       metadata.labels.environment: production
     assert:
@@ -479,7 +444,6 @@ rules:
   - id: k8s_trusted_registry_only
     resource_type: kubernetes_pod|kubernetes_deployment|kubernetes_daemonset|kubernetes_stateful_set
     description: Containers should use images from trusted registries only
-    severity: error
     assert:
       spec.containers.image:
         regex: "^(gcr\\.io|[a-zA-Z0-9-]+\\.azurecr\\.io|[0-9]+\\.dkr\\.ecr\\.[a-z0-9-]+\\.amazonaws\\.com|quay\\.io|registry\\.k8s\\.io)/"
@@ -492,7 +456,6 @@ rules:
   - id: k8s_image_vulnerability_scanning
     resource_type: kubernetes_pod|kubernetes_deployment|kubernetes_daemonset|kubernetes_stateful_set
     description: Container images should have a vulnerability scan annotation confirming scan passed
-    severity: warning
     assert:
       # Use your scanner's annotation (e.g., Trivy Operator, Snyk, Defender for Containers).
       # This annotation is a convention; configure your admission controller to enforce it.
@@ -506,7 +469,6 @@ rules:
   - id: k8s_image_signature_verification
     resource_type: kubernetes_pod|kubernetes_deployment|kubernetes_daemonset|kubernetes_stateful_set
     description: Container images should be signed and verified
-    severity: info
     assert:
       metadata.annotations."cosign.sigstore.dev/signature": present
     metadata:
@@ -518,7 +480,6 @@ rules:
   - id: k8s_admission_controller_image_policy
     resource_type: kubernetes_validating_admission_webhook|kubernetes_mutating_admission_webhook
     description: Admission controllers should enforce image policies
-    severity: info
     assert:
       webhook.admission_review_versions:
         contains: v1
@@ -531,7 +492,6 @@ rules:
   - id: k8s_runtime_security_monitoring
     resource_type: kubernetes_pod|kubernetes_deployment|kubernetes_daemonset|kubernetes_stateful_set
     description: Containers should have runtime security monitoring enabled (e.g., Falco, Defender for Containers)
-    severity: info
     assert:
       # Convention annotation — set by your runtime security tool (Falco, Defender, etc.)
       # or enforce via admission controller / OPA policy.

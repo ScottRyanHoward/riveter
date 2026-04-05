@@ -7,7 +7,6 @@ import pytest
 
 from riveter.exceptions import RulePackError
 from riveter.rule_packs import RulePackManager
-from riveter.rules import Severity
 
 
 def _write_pack(directory: Path, name: str, rules_yaml: str = "") -> Path:
@@ -17,7 +16,6 @@ def _write_pack(directory: Path, name: str, rules_yaml: str = "") -> Path:
             "- id: test-rule\n"
             "  resource_type: aws_instance\n"
             "  description: A test rule\n"
-            "  severity: error\n"
             "  assert:\n"
             "    instance_type: t3.large\n"
         )
@@ -124,14 +122,6 @@ class TestRulePackBuiltIns:
         rule_ids = {r.id for r in pack.rules}
         assert "ec2_encrypted_ebs_volumes" in rule_ids
 
-    def test_rule_severities_valid(self):
-        mgr = RulePackManager()
-        for pack_name in self.PACKS_TO_TEST:
-            pack = mgr.load_rule_pack(pack_name)
-            for rule in pack.rules:
-                assert isinstance(rule.severity, Severity)
-
-
 class TestRulePackDuplicate:
     def test_duplicate_ids_raise(self, tmp_path):
         rules_yaml = textwrap.dedent(
@@ -152,34 +142,3 @@ class TestRulePackDuplicate:
             mgr.load_rule_pack_from_file(str(f))
 
 
-class TestRulePackFilter:
-    def test_filter_by_severity(self, tmp_path):
-        rules_yaml = textwrap.dedent(
-            """\
-            - id: error-rule
-              resource_type: aws_instance
-              severity: error
-              assert:
-                x: y
-            - id: warning-rule
-              resource_type: aws_instance
-              severity: warning
-              assert:
-                x: y
-            - id: info-rule
-              resource_type: aws_instance
-              severity: info
-              assert:
-                x: y
-            """
-        )
-        f = _write_pack(tmp_path, "multi-sev", rules_yaml)
-        mgr = RulePackManager()
-        pack = mgr.load_rule_pack_from_file(str(f))
-
-        errors_only = pack.filter_by_severity(Severity.ERROR)
-        assert len(errors_only.rules) == 1
-        assert errors_only.rules[0].id == "error-rule"
-
-        warnings_up = pack.filter_by_severity(Severity.WARNING)
-        assert len(warnings_up.rules) == 2

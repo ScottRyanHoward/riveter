@@ -10,7 +10,6 @@ Rule format:
       - id: unique-rule-id
         resource_type: aws_instance          # Terraform resource type, or "*" for all
         description: Human-readable summary
-        severity: error | warning | info      # defaults to error
         filter:                               # optional — conditions a resource must match
           tags.Environment: production
         assert:                               # one or more assertions that must be true
@@ -30,7 +29,6 @@ Supported operators in assert:
 import logging
 import re
 from dataclasses import dataclass
-from enum import Enum
 from typing import Any, Dict, List, Optional
 
 import yaml
@@ -54,30 +52,6 @@ _VALID_OPERATORS = {
 }
 
 
-class Severity(Enum):
-    """Rule severity levels. ERROR > WARNING > INFO."""
-
-    ERROR = "error"
-    WARNING = "warning"
-    INFO = "info"
-
-    @property
-    def level(self) -> int:
-        return {"info": 0, "warning": 1, "error": 2}[self.value]
-
-    def __ge__(self, other: "Severity") -> bool:
-        return self.level >= other.level
-
-    def __gt__(self, other: "Severity") -> bool:
-        return self.level > other.level
-
-    def __le__(self, other: "Severity") -> bool:
-        return self.level <= other.level
-
-    def __lt__(self, other: "Severity") -> bool:
-        return self.level < other.level
-
-
 @dataclass
 class AssertionResult:
     """Result of evaluating a single assertion within a rule."""
@@ -99,7 +73,6 @@ class Rule:
         description:      Human-readable summary of what the rule checks.
         filter:           Key/value conditions a resource must match for the rule to apply.
         assert_conditions: Assertions that must all be true for the rule to pass.
-        severity:         Severity level of a violation.
         metadata:         Arbitrary extra metadata (tags, references, etc.).
     """
 
@@ -112,7 +85,6 @@ class Rule:
         self.description: str = rule_dict.get("description", "No description provided")
         self.filter: Dict[str, Any] = rule_dict.get("filter", {})
         self.assert_conditions: Dict[str, Any] = rule_dict["assert"]
-        self.severity: Severity = self._parse_severity(rule_dict.get("severity", "error"))
         self.metadata: Dict[str, Any] = rule_dict.get("metadata", {})
         self._resolver = NestedAttributeResolver()
 
@@ -143,15 +115,6 @@ class Rule:
                 "Rule 'assert' must be a non-empty dictionary",
                 rule_id=rule_dict.get("id", "unknown"),
             )
-
-    def _parse_severity(self, value: str) -> Severity:
-        try:
-            return Severity(str(value).lower())
-        except ValueError as exc:
-            raise RuleValidationError(
-                f"Invalid severity {value!r}. Must be one of: error, warning, info",
-                rule_id=self.id,
-            ) from exc
 
     def _is_operator_config(self, d: Dict[str, Any]) -> bool:
         """Returns True if d is a dict whose keys are all valid operator names."""

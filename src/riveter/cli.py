@@ -31,7 +31,7 @@ from .extract_state import extract_terraform_state
 from .formatters import HTMLFormatter, JSONFormatter, JUnitXMLFormatter, SARIFFormatter
 from .generator import RuleGenerator
 from .rule_packs import RulePackManager
-from .rules import Rule, Severity, load_rules
+from .rules import Rule, load_rules
 from .scanner import ValidationResult, validate_resources
 
 console = Console()
@@ -133,7 +133,6 @@ def _attach_explanations(results: List[ValidationResult], model: Optional[str] =
                 {
                     "id": r.rule.id,
                     "description": r.rule.description,
-                    "severity": r.rule.severity.value,
                     "assert": r.rule.assert_conditions,
                 },
                 r.resource.get("id", ""),
@@ -245,12 +244,6 @@ def main() -> None:
     help="Path to a Riveter config file (YAML or JSON). Auto-detected if not specified.",
 )
 @click.option(
-    "--min-severity",
-    type=click.Choice(["info", "warning", "error"], case_sensitive=False),
-    default=None,
-    help="Minimum severity to report. Checks below this level are skipped.",
-)
-@click.option(
     "--include-rules",
     multiple=True,
     metavar="PATTERN",
@@ -289,7 +282,6 @@ def scan(
     output_format: Optional[str],
     output_file: Optional[str],
     config_file: Optional[str],
-    min_severity: Optional[str],
     include_rules: Tuple[str, ...],
     exclude_rules: Tuple[str, ...],
     debug: bool,
@@ -317,9 +309,6 @@ def scan(
       # JUnit XML for CI/CD
       riveter scan -p aws-security -t main.tf -f junit > results.xml
 
-      # Only surface errors (skip warnings and info)
-      riveter scan -p aws-security -t main.tf --min-severity error
-
       # Include/exclude rules by ID glob pattern
       riveter scan -p aws-security -t main.tf --include-rules "*s3*"
     """
@@ -329,8 +318,6 @@ def scan(
     cli_overrides: Dict[str, Any] = {}
     if output_format:
         cli_overrides["output_format"] = output_format
-    if min_severity:
-        cli_overrides["min_severity"] = min_severity
     if include_rules:
         cli_overrides["include_rules"] = list(include_rules)
     if exclude_rules:
@@ -427,7 +414,7 @@ def scan(
     )
 
     # -- Run validation -------------------------------------------------------
-    results = validate_resources(all_rules, resources, Severity(config.min_severity))
+    results = validate_resources(all_rules, resources)
 
     # -- AI explanations (optional) -------------------------------------------
     effective_explain = explain or config.ai_explain_on_fail
@@ -501,12 +488,6 @@ def scan(
     help="Path to a Riveter config file (YAML or JSON). Auto-detected if not specified.",
 )
 @click.option(
-    "--min-severity",
-    type=click.Choice(["info", "warning", "error"], case_sensitive=False),
-    default=None,
-    help="Minimum severity to report. Checks below this level are skipped.",
-)
-@click.option(
     "--include-rules",
     multiple=True,
     metavar="PATTERN",
@@ -538,7 +519,6 @@ def scan_state(
     output_format: Optional[str],
     output_file: Optional[str],
     config_file: Optional[str],
-    min_severity: Optional[str],
     include_rules: Tuple[str, ...],
     exclude_rules: Tuple[str, ...],
     debug: bool,
@@ -569,8 +549,6 @@ def scan_state(
     cli_overrides: Dict[str, Any] = {}
     if output_format:
         cli_overrides["output_format"] = output_format
-    if min_severity:
-        cli_overrides["min_severity"] = min_severity
     if include_rules:
         cli_overrides["include_rules"] = list(include_rules)
     if exclude_rules:
@@ -668,7 +646,7 @@ def scan_state(
     )
 
     # -- Run validation -------------------------------------------------------
-    results = validate_resources(all_rules, resources, Severity(config.min_severity))
+    results = validate_resources(all_rules, resources)
 
     # -- Emit output ----------------------------------------------------------
     fmt = config.output_format
@@ -826,7 +804,6 @@ def explain_cmd(
         rule={
             "id": target_rule.id,
             "description": target_rule.description,
-            "severity": target_rule.severity.value,
             "assert": target_rule.assert_conditions,
         },
         resource_name=target_resource.get("id", ""),

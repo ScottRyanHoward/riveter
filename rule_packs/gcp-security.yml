@@ -14,7 +14,6 @@ rules:
   - id: gcp_compute_os_login
     resource_type: google_compute_project_metadata
     description: OS Login should be enabled for SSH access management
-    severity: error
     assert:
       metadata.enable-oslogin: "TRUE"
     metadata:
@@ -25,7 +24,6 @@ rules:
   - id: gcp_compute_no_external_ip_prod
     resource_type: google_compute_instance
     description: Production compute instances should not have external IP addresses
-    severity: error
     filter:
       labels.environment: production
     assert:
@@ -40,7 +38,6 @@ rules:
   - id: gcp_compute_shielded_vm
     resource_type: google_compute_instance
     description: Compute instances should use Shielded VM features
-    severity: warning
     assert:
       shielded_instance_config.enable_secure_boot: true
       shielded_instance_config.enable_vtpm: true
@@ -53,7 +50,6 @@ rules:
   - id: gcp_compute_disk_encryption
     resource_type: google_compute_disk
     description: Compute disks should use customer-managed encryption keys
-    severity: warning
     assert:
       disk_encryption_key: present
     metadata:
@@ -64,7 +60,6 @@ rules:
   - id: gcp_compute_required_labels
     resource_type: google_compute_instance
     description: Compute instances must have required labels
-    severity: error
     assert:
       labels.environment: present
       labels.owner: present
@@ -77,7 +72,6 @@ rules:
   - id: gcp_compute_confidential_computing
     resource_type: google_compute_instance
     description: Sensitive workloads should use Confidential Computing
-    severity: info
     filter:
       labels.data_classification: sensitive
     assert:
@@ -91,7 +85,6 @@ rules:
   - id: gcp_storage_uniform_access
     resource_type: google_storage_bucket
     description: Storage buckets should use uniform bucket-level access
-    severity: error
     assert:
       uniform_bucket_level_access.enabled: true
     metadata:
@@ -102,7 +95,6 @@ rules:
   - id: gcp_storage_encryption
     resource_type: google_storage_bucket
     description: Storage buckets should use customer-managed encryption keys
-    severity: warning
     assert:
       encryption.default_kms_key_name: present
     metadata:
@@ -113,7 +105,6 @@ rules:
   - id: gcp_storage_public_access_prevention
     resource_type: google_storage_bucket
     description: Storage buckets should prevent public access
-    severity: error
     assert:
       public_access_prevention: enforced
     metadata:
@@ -124,7 +115,6 @@ rules:
   - id: gcp_storage_versioning
     resource_type: google_storage_bucket
     description: Storage buckets should have versioning enabled
-    severity: warning
     assert:
       versioning.enabled: true
     metadata:
@@ -135,7 +125,6 @@ rules:
   - id: gcp_storage_access_logging
     resource_type: google_storage_bucket
     description: Storage buckets should have access logging enabled
-    severity: warning
     assert:
       logging.log_bucket: present
     metadata:
@@ -146,7 +135,6 @@ rules:
   - id: gcp_storage_lifecycle_policy
     resource_type: google_storage_bucket
     description: Storage buckets should have lifecycle management policies
-    severity: info
     assert:
       lifecycle_rule:
         length:
@@ -160,7 +148,6 @@ rules:
   - id: gcp_sql_ssl_required
     resource_type: google_sql_database_instance
     description: Cloud SQL instances must require SSL/TLS connections
-    severity: error
     assert:
       settings.ip_configuration.require_ssl: true
     metadata:
@@ -171,7 +158,6 @@ rules:
   - id: gcp_sql_automated_backups
     resource_type: google_sql_database_instance
     description: Cloud SQL instances should have automated backups enabled
-    severity: error
     assert:
       settings.backup_configuration.enabled: true
       settings.backup_configuration.point_in_time_recovery_enabled: true
@@ -183,7 +169,6 @@ rules:
   - id: gcp_sql_no_public_ip
     resource_type: google_sql_database_instance
     description: Cloud SQL instances should not have public IP addresses
-    severity: error
     assert:
       settings.ip_configuration.ipv4_enabled: false
     metadata:
@@ -194,7 +179,6 @@ rules:
   - id: gcp_sql_encryption
     resource_type: google_sql_database_instance
     description: Cloud SQL instances should use customer-managed encryption keys
-    severity: warning
     assert:
       encryption_key_name: present
     metadata:
@@ -205,7 +189,6 @@ rules:
   - id: gcp_sql_high_availability
     resource_type: google_sql_database_instance
     description: Production Cloud SQL instances should have high availability enabled
-    severity: error
     filter:
       settings.user_labels.environment: production
     assert:
@@ -219,7 +202,6 @@ rules:
   - id: gcp_vpc_flow_logs
     resource_type: google_compute_subnetwork
     description: VPC subnets should have flow logs enabled
-    severity: warning
     assert:
       log_config.enable: true
     metadata:
@@ -230,7 +212,6 @@ rules:
   - id: gcp_firewall_no_wide_open_ingress
     resource_type: google_compute_firewall
     description: Firewall rules should not allow ingress from 0.0.0.0/0 on sensitive ports
-    severity: error
     filter:
       direction: INGRESS
     assert:
@@ -248,7 +229,6 @@ rules:
   - id: gcp_vpc_private_google_access
     resource_type: google_compute_subnetwork
     description: VPC subnets should enable Private Google Access
-    severity: warning
     assert:
       private_ip_google_access: true
     metadata:
@@ -259,7 +239,6 @@ rules:
   - id: gcp_cloud_nat_for_egress
     resource_type: google_compute_router_nat
     description: Cloud NAT should be configured for egress traffic
-    severity: info
     assert:
       nat_ip_allocate_option: AUTO_ONLY
       source_subnetwork_ip_ranges_to_nat: ALL_SUBNETWORKS_ALL_IP_RANGES
@@ -271,7 +250,6 @@ rules:
   - id: gcp_firewall_logging
     resource_type: google_compute_firewall
     description: Firewall rules should have logging enabled
-    severity: warning
     assert:
       log_config.enable: true
     metadata:
@@ -283,7 +261,6 @@ rules:
   - id: gcp_service_account_no_user_managed_keys
     resource_type: google_service_account_key
     description: Service accounts should avoid user-managed keys; prefer GCP-managed keys or Workload Identity
-    severity: warning
     assert:
       key_type:
         ne: USER_MANAGED
@@ -295,7 +272,6 @@ rules:
   - id: gcp_iam_no_primitive_roles
     resource_type: google_project_iam_binding
     description: IAM bindings should not use primitive roles (Owner, Editor, Viewer)
-    severity: error
     assert:
       role:
         regex: "^(?!roles/owner|roles/editor|roles/viewer).*$"
@@ -307,7 +283,6 @@ rules:
   - id: gcp_gke_workload_identity
     resource_type: google_container_cluster
     description: GKE clusters should use Workload Identity for pod authentication
-    severity: error
     assert:
       workload_identity_config.workload_pool: present
     metadata:
@@ -318,7 +293,6 @@ rules:
   - id: gcp_service_account_display_name
     resource_type: google_service_account
     description: Service accounts should have meaningful display names
-    severity: warning
     assert:
       display_name:
         regex: "^.{5,}$"
@@ -331,7 +305,6 @@ rules:
   - id: gcp_kms_key_rotation
     resource_type: google_kms_crypto_key
     description: KMS keys should have automatic rotation enabled
-    severity: warning
     assert:
       rotation_period: present
     metadata:
@@ -342,7 +315,6 @@ rules:
   - id: gcp_kms_key_purpose
     resource_type: google_kms_crypto_key
     description: KMS keys must have a defined purpose
-    severity: error
     assert:
       purpose:
         regex: "^(ENCRYPT_DECRYPT|ASYMMETRIC_SIGN|ASYMMETRIC_DECRYPT|MAC)$"
@@ -354,7 +326,6 @@ rules:
   - id: gcp_kms_prevent_destroy
     resource_type: google_kms_crypto_key
     description: KMS keys should have destroy protection enabled
-    severity: error
     assert:
       lifecycle.prevent_destroy: true
     metadata:

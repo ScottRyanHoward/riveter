@@ -11,7 +11,6 @@ from riveter.exceptions import ConfigurationError
 class TestRiveterConfig:
     def test_defaults(self):
         cfg = RiveterConfig()
-        assert cfg.min_severity == "info"
         assert cfg.output_format == "table"
         assert cfg.rule_dirs == []
         assert cfg.rule_packs == []
@@ -19,32 +18,31 @@ class TestRiveterConfig:
         assert cfg.output_file is None
 
     def test_to_dict_roundtrip(self):
-        cfg = RiveterConfig(min_severity="warning", debug=True, rule_packs=["aws-security"])
+        cfg = RiveterConfig(debug=True, rule_packs=["aws-security"])
         d = cfg.to_dict()
-        assert d["min_severity"] == "warning"
         assert d["debug"] is True
         assert d["rule_packs"] == ["aws-security"]
 
     def test_from_dict_ignores_unknown_keys(self):
-        cfg = RiveterConfig.from_dict({"min_severity": "error", "unknown_key": "ignored"})
-        assert cfg.min_severity == "error"
+        cfg = RiveterConfig.from_dict({"output_format": "json", "unknown_key": "ignored"})
+        assert cfg.output_format == "json"
 
     def test_from_dict_skips_none(self):
-        cfg = RiveterConfig.from_dict({"min_severity": None, "debug": True})
-        assert cfg.min_severity == "info"  # default preserved
+        cfg = RiveterConfig.from_dict({"output_format": None, "debug": True})
+        assert cfg.output_format == "table"  # default preserved
         assert cfg.debug is True
 
     def test_merge_scalar_override_wins(self):
-        base = RiveterConfig(min_severity="info")
-        override = RiveterConfig(min_severity="error")
+        base = RiveterConfig(output_format="table")
+        override = RiveterConfig(output_format="json")
         merged = base._merge_with_overrides(override)
-        assert merged.min_severity == "error"
+        assert merged.output_format == "json"
 
     def test_merge_scalar_default_unchanged(self):
-        base = RiveterConfig(min_severity="warning")
-        override = RiveterConfig()  # override has default "info"
+        base = RiveterConfig(output_format="json")
+        override = RiveterConfig()  # override has default "table"
         merged = base._merge_with_overrides(override)
-        assert merged.min_severity == "warning"
+        assert merged.output_format == "json"
 
     def test_merge_lists_combined_no_dupes(self):
         base = RiveterConfig(rule_packs=["aws-security"])
@@ -70,47 +68,36 @@ class TestConfigManager:
         monkeypatch.chdir(tmp_path)
         mgr = ConfigManager()
         cfg = mgr.load_config()
-        assert cfg.min_severity == "info"
         assert cfg.output_format == "table"
 
     def test_loads_yaml_file(self, tmp_path):
         cfg_file = tmp_path / "riveter.yml"
-        cfg_file.write_text("min_severity: warning\noutput_format: json\n")
+        cfg_file.write_text("output_format: json\n")
         mgr = ConfigManager()
         cfg = mgr.load_config(config_file=str(cfg_file))
-        assert cfg.min_severity == "warning"
         assert cfg.output_format == "json"
 
     def test_loads_json_file(self, tmp_path):
         cfg_file = tmp_path / "riveter.json"
-        cfg_file.write_text(json.dumps({"min_severity": "error", "debug": True}))
+        cfg_file.write_text(json.dumps({"output_format": "sarif", "debug": True}))
         mgr = ConfigManager()
         cfg = mgr.load_config(config_file=str(cfg_file))
-        assert cfg.min_severity == "error"
+        assert cfg.output_format == "sarif"
         assert cfg.debug is True
 
     def test_auto_discovery(self, tmp_path, monkeypatch):
-        (tmp_path / "riveter.yml").write_text("min_severity: error\n")
+        (tmp_path / "riveter.yml").write_text("output_format: json\n")
         monkeypatch.chdir(tmp_path)
         mgr = ConfigManager()
         cfg = mgr.load_config()
-        assert cfg.min_severity == "error"
+        assert cfg.output_format == "json"
 
     def test_cli_overrides_file(self, tmp_path):
         cfg_file = tmp_path / "riveter.yml"
-        cfg_file.write_text("min_severity: warning\n")
+        cfg_file.write_text("output_format: json\n")
         mgr = ConfigManager()
-        cfg = mgr.load_config(config_file=str(cfg_file), cli_overrides={"min_severity": "error"})
-        assert cfg.min_severity == "error"
-
-    def test_cli_override_to_default_beats_file(self, tmp_path):
-        # --min-severity info should override a file's non-default value even
-        # though "info" is also the built-in default.
-        cfg_file = tmp_path / "riveter.yml"
-        cfg_file.write_text("min_severity: error\n")
-        mgr = ConfigManager()
-        cfg = mgr.load_config(config_file=str(cfg_file), cli_overrides={"min_severity": "info"})
-        assert cfg.min_severity == "info"
+        cfg = mgr.load_config(config_file=str(cfg_file), cli_overrides={"output_format": "sarif"})
+        assert cfg.output_format == "sarif"
 
     def test_missing_explicit_file_raises(self):
         mgr = ConfigManager()
@@ -133,13 +120,8 @@ class TestConfigManager:
 
     def test_validate_valid(self):
         mgr = ConfigManager()
-        errors = mgr.validate(RiveterConfig(min_severity="warning", output_format="json"))
+        errors = mgr.validate(RiveterConfig(output_format="json"))
         assert errors == []
-
-    def test_validate_invalid_severity(self):
-        mgr = ConfigManager()
-        errors = mgr.validate(RiveterConfig(min_severity="critical"))
-        assert any("min_severity" in e for e in errors)
 
     def test_validate_invalid_format(self):
         mgr = ConfigManager()

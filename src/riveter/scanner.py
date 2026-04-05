@@ -6,7 +6,7 @@
 import time
 from typing import Any, Dict, List, Optional
 
-from .rules import AssertionResult, Rule, Severity
+from .rules import AssertionResult, Rule
 
 
 class ValidationResult:
@@ -17,7 +17,6 @@ class ValidationResult:
         resource:          The Terraform resource that was checked.
         passed:            Whether all assertions in the rule passed.
         message:           Human-readable summary of the result.
-        severity:          Severity level inherited from the rule.
         assertion_results: Individual assertion outcomes.
         execution_time:    Wall-clock time taken to evaluate the rule (seconds).
         explanation:       Optional AI-generated plain-English explanation (``--explain`` flag).
@@ -37,7 +36,6 @@ class ValidationResult:
         self.resource = resource
         self.passed = passed
         self.message = message
-        self.severity = rule.severity
         self.assertion_results: List[AssertionResult] = assertion_results or []
         self.execution_time = execution_time
         self.explanation: Optional[str] = explanation
@@ -49,7 +47,6 @@ class ValidationResult:
             "resource_type": self.resource.get("resource_type"),
             "resource_id": self.resource.get("id"),
             "passed": self.passed,
-            "severity": self.severity.value,
             "message": self.message,
             "explanation": self.explanation,
             "execution_time": self.execution_time,
@@ -70,7 +67,6 @@ class ValidationResult:
 def validate_resources(
     rules: List[Rule],
     resources: List[Dict[str, Any]],
-    min_severity: Severity = Severity.INFO,
 ) -> List[ValidationResult]:
     """Apply rules to resources and return validation results.
 
@@ -79,15 +75,14 @@ def validate_resources(
     Rules that match no resources are reported as SKIPPED.
 
     Args:
-        rules:        Rules to apply.
-        resources:    Terraform resources extracted from HCL.
-        min_severity: Only evaluate rules at or above this severity level.
+        rules:     Rules to apply.
+        resources: Terraform resources extracted from HCL.
 
     Returns:
         List of :class:`ValidationResult` objects.
     """
     results: List[ValidationResult] = []
-    active_rules = [r for r in rules if r.severity >= min_severity]
+    active_rules = rules
     applied: set[str] = set()
 
     for resource in resources:

@@ -1,15 +1,14 @@
 """Tests for the core validation engine."""
 
-from riveter.rules import Rule, Severity
+from riveter.rules import Rule
 from riveter.scanner import ValidationResult, validate_resources
 
 
-def _make_rule(rule_id, resource_type, assert_dict, severity="error", filter_dict=None):
+def _make_rule(rule_id, resource_type, assert_dict, filter_dict=None):
     d = {
         "id": rule_id,
         "resource_type": resource_type,
         "assert": assert_dict,
-        "severity": severity,
     }
     if filter_dict:
         d["filter"] = filter_dict
@@ -27,17 +26,7 @@ class TestValidationResult:
         d = result.to_dict()
         assert d["rule_id"] == simple_rule.id
         assert d["passed"] is True
-        assert d["severity"] == "error"
         assert d["resource_type"] == "aws_instance"
-
-    def test_severity_inherited_from_rule(self, simple_rule, ec2_resource):
-        result = ValidationResult(
-            rule=simple_rule,
-            resource=ec2_resource,
-            passed=False,
-            message="failed",
-        )
-        assert result.severity == Severity.ERROR
 
 
 class TestValidateResources:
@@ -64,18 +53,6 @@ class TestValidateResources:
         # Should match
         non_skipped = [r for r in results if not r.message.startswith("SKIPPED:")]
         assert len(non_skipped) >= 1
-
-    def test_min_severity_filters_rules(self, ec2_resource):
-        info_rule = _make_rule(
-            "info-rule", "aws_instance", {"instance_type": "t3.large"}, severity="info"
-        )
-        error_rule = _make_rule(
-            "error-rule", "aws_instance", {"instance_type": "m5.large"}, severity="error"
-        )
-
-        results = validate_resources([info_rule, error_rule], [ec2_resource], Severity.WARNING)
-        rule_ids = {r.rule.id for r in results}
-        assert "info-rule" not in rule_ids
 
     def test_filter_applies(self, ec2_resource):
         rule = _make_rule(

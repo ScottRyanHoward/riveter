@@ -7,7 +7,7 @@
 #   riveter scan -p aws-security -t examples/complex.tf
 #   riveter scan -p aws-security -p cis-aws -t examples/complex.tf
 #   riveter scan -p aws-security -t examples/complex.tf -f html > report.html
-#   riveter scan -p aws-security -t examples/complex.tf --min-severity error
+#   riveter scan -p aws-security -t examples/complex.tf --include-rules "*s3*"
 
 terraform {
   required_providers {

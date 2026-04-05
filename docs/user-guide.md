@@ -127,7 +127,6 @@ rules:
   - id: require-encryption           # unique ID
     resource_type: aws_instance      # Terraform resource type, or "*" for all
     description: EBS volumes must be encrypted
-    severity: error                  # error | warning | info (default: error)
     filter:                          # optional — only apply rule when these match
       tags.Environment: production
     assert:                          # assertions that must ALL be true
@@ -219,7 +218,6 @@ rule_dirs:
   - ./custom-packs
 
 # Filtering
-min_severity: warning
 include_rules:
   - "*encryption*"
   - "*public*"
@@ -301,8 +299,8 @@ riveter scan -p aws-security -t main.tf -f html > report.html
 Produces a fully self-contained HTML report — CSS and JavaScript are embedded inline, so the file can be emailed or opened on any machine without an internet connection.
 
 **Report features:**
-- Summary cards showing total, passed, failed, and skipped counts (with error/warning/info breakdown for failures)
-- Filter by status (All / Pass / Fail / Skip), severity (All / Error / Warning / Info), or free-text search across resource and rule IDs
+- Summary cards showing total, passed, failed, and skipped counts
+- Filter by status (All / Pass / Fail / Skip), or free-text search across resource and rule IDs
 - Click any row to expand assertion details showing the property path, expected value, actual value, and operator for each check
 - Riveter version and report timestamp embedded in the header
 
@@ -323,20 +321,6 @@ riveter scan -p aws-security -t main.tf -f json | jq .
 ---
 
 ## Filtering
-
-### By severity
-
-Only report warnings and errors (skip info-level):
-
-```bash
-riveter scan -p aws-security -t main.tf --min-severity warning
-```
-
-Only report errors:
-
-```bash
-riveter scan -p aws-security -t main.tf --min-severity error
-```
 
 ### By rule ID pattern (glob)
 
@@ -421,7 +405,6 @@ riveter scan-state -p aws-security -s terraform.tfstate -f html -o state-report.
 | `--rules FILE` | `-r` | Custom rules YAML file |
 | `--output-format FMT` | `-f` | `table`, `json`, `junit`, `sarif`, `html` |
 | `--output FILE` | `-o` | Write output to a file; table summary still shown in terminal |
-| `--min-severity LEVEL` | | `info`, `warning`, `error` |
 | `--include-rules PATTERN` | | Only run matching rules (repeatable) |
 | `--exclude-rules PATTERN` | | Skip matching rules (repeatable) |
 | `--config FILE` | `-c` | Config file (auto-detected if omitted) |

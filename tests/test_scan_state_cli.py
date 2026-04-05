@@ -60,7 +60,6 @@ rules:
   - id: check-instance-type
     resource_type: aws_instance
     description: Instance type must be t3.large
-    severity: error
     assert:
       instance_type: t3.large
 """
@@ -70,7 +69,6 @@ rules:
   - id: check-instance-type
     resource_type: aws_instance
     description: Instance type must be t3.large
-    severity: error
     assert:
       instance_type: t3.large
 """
@@ -312,50 +310,17 @@ class TestErrorHandling:
 
 
 class TestFilteringOptions:
-    def test_min_severity_error_skips_warnings(self, tmp_path: Path) -> None:
-        rules_yaml = """\
-rules:
-  - id: warn-rule
-    resource_type: aws_instance
-    description: Warning check
-    severity: warning
-    assert:
-      instance_type: t3.large
-"""
-        rules_file = _write_rules(tmp_path, rules_yaml)
-        state_file = _write_state(
-            tmp_path,
-            _minimal_state(_managed("aws_instance", "web", {"instance_type": "t3.micro"})),
-        )
-        runner = CliRunner()
-        result = runner.invoke(
-            main,
-            [
-                "scan-state",
-                "-r",
-                str(rules_file),
-                "-s",
-                str(state_file),
-                "--min-severity",
-                "error",
-            ],
-        )
-        # Warning rule below min-severity → treated as skipped, no failure
-        assert result.exit_code == 0
-
     def test_include_rules_pattern(self, tmp_path: Path) -> None:
         rules_yaml = """\
 rules:
   - id: check-instance-type
     resource_type: aws_instance
     description: Instance type check
-    severity: error
     assert:
       instance_type: t3.large
   - id: check-public-ip
     resource_type: aws_instance
     description: No public IP
-    severity: error
     assert:
       associate_public_ip_address: false
 """

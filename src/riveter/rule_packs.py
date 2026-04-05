@@ -31,7 +31,7 @@ from typing import Any, Dict, List, Optional, Union
 import yaml
 
 from .exceptions import RulePackError
-from .rules import Rule, Severity
+from .rules import Rule
 
 log = logging.getLogger(__name__)
 
@@ -84,13 +84,6 @@ class RulePack:
                 f"Duplicate rule IDs in pack '{self.metadata.name}': {', '.join(duplicates)}",
                 pack_name=self.metadata.name,
             )
-
-    def filter_by_severity(self, min_severity: Severity) -> "RulePack":
-        """Return a new RulePack containing only rules at or above min_severity."""
-        return RulePack(
-            metadata=self.metadata,
-            rules=[r for r in self.rules if r.severity >= min_severity],
-        )
 
     def to_dict(self) -> Dict[str, Any]:
         return {

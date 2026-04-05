@@ -24,14 +24,12 @@ rules:
   - id: ec2-must-be-encrypted
     resource_type: aws_instance
     description: EC2 root volumes must be encrypted
-    severity: error
     assert:
       root_block_device.encrypted: true
 
   - id: ec2-required-tags
     resource_type: aws_instance
     description: EC2 instances must have required tags
-    severity: error
     assert:
       tags.Environment: present
       tags.Owner: present
@@ -42,7 +40,6 @@ rules:
   - id: ec2-valid-rule
     resource_type: aws_instance
     description: A valid rule
-    severity: error
     assert:
       root_block_device.encrypted: true
 

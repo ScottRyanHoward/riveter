@@ -28,7 +28,6 @@ Each rule must have this YAML structure:
   - id: unique-kebab-case-id          # required: lowercase letters, digits, hyphens
     resource_type: aws_instance       # required: Terraform resource type (e.g. aws_instance)
     description: Human-readable text  # optional but recommended
-    severity: error | warning | info  # optional, defaults to error
     filter:                           # optional: only apply rule when these attrs match
       tags.Environment: production
     assert:                           # required: one or more assertions (all must pass)
@@ -64,7 +63,6 @@ rules:
   - id: ec2-must-be-encrypted
     resource_type: aws_instance
     description: All EC2 root EBS volumes must be encrypted
-    severity: error
     assert:
       root_block_device.encrypted: true
     metadata:
@@ -73,7 +71,6 @@ rules:
   - id: ec2-approved-instance-types
     resource_type: aws_instance
     description: EC2 instances must use approved instance types
-    severity: warning
     assert:
       instance_type:
         regex: "^(t3|t4g|m5|m6i)\\\\.(micro|small|medium|large|xlarge|2xlarge)$"
@@ -81,7 +78,6 @@ rules:
   - id: ec2-required-tags
     resource_type: aws_instance
     description: EC2 instances must have required governance tags
-    severity: error
     assert:
       tags.Environment: present
       tags.Owner: present"""

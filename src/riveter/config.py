@@ -15,7 +15,6 @@ Config file format (YAML example):
     rule_packs:
       - aws-security
       - cis-aws
-    min_severity: warning
     output_format: table
     include_rules:
       - "*encryption*"
@@ -44,7 +43,6 @@ _DEFAULT_CONFIG_FILES = [
     ".riveter.json",
 ]
 
-_VALID_SEVERITIES = ("info", "warning", "error")
 _VALID_FORMATS = ("table", "json", "junit", "sarif", "html")
 
 
@@ -59,7 +57,6 @@ class RiveterConfig:
     # Filtering
     include_rules: List[str] = field(default_factory=list)
     exclude_rules: List[str] = field(default_factory=list)
-    min_severity: str = "info"
 
     # Output
     output_format: str = "table"
@@ -81,7 +78,6 @@ class RiveterConfig:
             "rule_packs": self.rule_packs,
             "include_rules": self.include_rules,
             "exclude_rules": self.exclude_rules,
-            "min_severity": self.min_severity,
             "output_format": self.output_format,
             "output_file": self.output_file,
             "debug": self.debug,
@@ -113,11 +109,6 @@ class RiveterConfig:
 
         # Scalars: override wins only if it differs from default
         defaults = RiveterConfig()
-        merged.min_severity = (
-            overrides.min_severity
-            if overrides.min_severity != defaults.min_severity
-            else self.min_severity
-        )
         merged.output_format = (
             overrides.output_format
             if overrides.output_format != defaults.output_format
@@ -175,11 +166,8 @@ class ConfigManager:
             cli_config = RiveterConfig.from_dict(cli_overrides)
             config = config._merge_with_overrides(cli_config)
             # _merge_with_overrides only applies a scalar override when it differs
-            # from the built-in default.  That means `--min-severity info` (which
-            # equals the default) would silently lose to a config-file value.
-            # Fix: re-apply any scalar that the caller explicitly provided.
-            if "min_severity" in cli_overrides and cli_overrides["min_severity"] is not None:
-                config.min_severity = cli_overrides["min_severity"]
+            # from the built-in default.  Fix: re-apply any scalar the caller
+            # explicitly provided.
             if "output_format" in cli_overrides and cli_overrides["output_format"] is not None:
                 config.output_format = cli_overrides["output_format"]
 
@@ -188,10 +176,6 @@ class ConfigManager:
     def validate(self, config: RiveterConfig) -> List[str]:
         """Return a list of validation error messages (empty = valid)."""
         errors: List[str] = []
-        if config.min_severity not in _VALID_SEVERITIES:
-            errors.append(
-                f"Invalid min_severity {config.min_severity!r}. Must be one of: {_VALID_SEVERITIES}"
-            )
         if config.output_format not in _VALID_FORMATS:
             errors.append(
                 f"Invalid output_format {config.output_format!r}. Must be one of: {_VALID_FORMATS}"

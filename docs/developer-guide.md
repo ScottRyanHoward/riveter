@@ -15,7 +15,7 @@ User runs: riveter scan -p aws-security -t main.tf
             ├── config.py          (Load riveter.yml + CLI overrides)
             │
             ├── rule_packs.py      (Find & load rule pack YAML files)
-            │       └── rules.py   (Parse individual rules, Severity enum)
+            │       └── rules.py   (Parse individual rules)
             │               └── operators.py  (Comparison operators)
             │
             ├── extract_config.py  (Parse HCL → resource dicts via hcl2)     ← scan
@@ -75,14 +75,13 @@ Stateless comparison operators implementing `ComparisonOperator(ABC)`:
 
 ### `rules.py`
 
-- `Severity` — enum with `ERROR > WARNING > INFO` ordering.
 - `AssertionResult` — dataclass holding the outcome of a single assertion.
 - `Rule` — parses a rule dict, validates its structure and regex patterns, exposes `matches_resource()` and `validate_assertions()`.
 - `load_rules(path)` — loads a YAML rules file into a `List[Rule]`.
 
 ### `scanner.py`
 
-`validate_resources(rules, resources, min_severity)` — the core loop. Returns `List[ValidationResult]`. Rules that match no resources produce a `SKIPPED:` result.
+`validate_resources(rules, resources)` — the core loop. Returns `List[ValidationResult]`. Rules that match no resources produce a `SKIPPED:` result.
 
 `ValidationResult.to_dict()` produces a JSON-serializable dict for the JSON and SARIF formatters.
 
@@ -116,7 +115,7 @@ Extra dirs can be added via the `extra_dirs` constructor arg or `config.rule_dir
 
 Four formatter classes extending `OutputFormatter(ABC)`: `JSONFormatter`, `JUnitXMLFormatter`, `SARIFFormatter`, `HTMLFormatter`. The table format is rendered directly in `cli.py` using Rich.
 
-`HTMLFormatter` produces a fully self-contained HTML report with embedded CSS and JavaScript. It serialises all result data as a JSON constant inside a `<script>` tag, which the page's JS reads to power client-side filtering (status, severity, free-text search) and expandable assertion-detail rows. Python templating uses `__PLACEHOLDER__` string replacement rather than `str.format()` to avoid escaping every CSS/JS `{` and `}` brace.
+`HTMLFormatter` produces a fully self-contained HTML report with embedded CSS and JavaScript. It serialises all result data as a JSON constant inside a `<script>` tag, which the page's JS reads to power client-side filtering (status, free-text search) and expandable assertion-detail rows. Python templating uses `__PLACEHOLDER__` string replacement rather than `str.format()` to avoid escaping every CSS/JS `{` and `}` brace.
 
 #### Adding a new output formatter
 

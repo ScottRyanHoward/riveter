@@ -8,13 +8,12 @@ from riveter.rules import Rule
 from riveter.scanner import ValidationResult
 
 
-def _make_result(passed, rule_id="test-rule", resource_type="aws_instance", severity="error"):
+def _make_result(passed, rule_id="test-rule", resource_type="aws_instance"):
     rule = Rule(
         {
             "id": rule_id,
             "resource_type": resource_type,
             "description": "Test rule",
-            "severity": severity,
             "assert": {"x": "y"},
         }
     )
@@ -116,16 +115,6 @@ class TestSARIFFormatter:
         assert len(sarif_results) == 1
         assert sarif_results[0]["ruleId"] == "fail-rule"
 
-    def test_severity_mapping(self):
-        error_result = _make_result(False, rule_id="err", severity="error")
-        warning_result = _make_result(False, rule_id="warn", severity="warning")
-        info_result = _make_result(False, rule_id="info", severity="info")
-        data = json.loads(SARIFFormatter().format([error_result, warning_result, info_result]))
-        sarif_results = {r["ruleId"]: r["level"] for r in data["runs"][0]["results"]}
-        assert sarif_results["err"] == "error"
-        assert sarif_results["warn"] == "warning"
-        assert sarif_results["info"] == "note"
-
     def test_skipped_excluded(self):
         results = [_make_skipped()]
         data = json.loads(SARIFFormatter().format(results))
@@ -164,9 +153,9 @@ class TestHTMLFormatter:
 
     def test_rule_ids_present(self):
         results = [
-            _make_result(False, rule_id="e", severity="error"),
-            _make_result(False, rule_id="w", severity="warning"),
-            _make_result(False, rule_id="i", severity="info"),
+            _make_result(False, rule_id="e"),
+            _make_result(False, rule_id="w"),
+            _make_result(False, rule_id="i"),
         ]
         output = HTMLFormatter().format(results)
         assert '"e"' in output
