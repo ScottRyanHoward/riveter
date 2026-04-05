@@ -8,11 +8,6 @@
 ## [0.2.18] - 2026-04-05
 
 ### Added
-- Release v0.2.18
-
-## [Unreleased]
-
-### Added
 - **`--output / -o` flag** on `riveter scan` and `riveter scan-state`: writes formatted output (HTML, JSON, SARIF, JUnit) directly to a file while still showing the table summary in the terminal. Removes the need to choose between a file and terminal feedback.
 
 ### Changed
@@ -37,6 +32,8 @@
 ### Fixed
 - Pre-commit hooks (`black`, `isort`, `ruff`, `mypy`, `bandit`, `pytest`) are now installed and active, catching formatting and lint issues locally before they reach CI.
 - `.gitignore` now excludes `.claude/worktrees/` to prevent Claude Code worktrees from being accidentally staged.
+
+---
 
 ## [0.2.17] - 2026-04-05
 
@@ -108,17 +105,6 @@
 ### Added
 - Release v0.2.4
 
-All notable changes to Riveter are documented here.
-
-## [Unreleased]
-
-### Added
-- **`riveter scan-state` command**: validates a `terraform.tfstate` file against the same YAML rule packs used by `riveter scan`, enabling drift detection. Supports all output formats (`table`, `json`, `junit`, `sarif`, `html`), all filtering flags, and reading state from stdin (`-s -`) for use with any remote Terraform backend via `terraform state pull`.
-- New `extract_state.py` module: parses Terraform state format v4+ JSON into the same resource dict shape as `extract_config.py`, so the scanner and all formatters work without modification. Handles `count`/`for_each` multi-instance resources, module-prefixed addresses, data source exclusion, and a 50 MB size guard.
-
-Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
-Versions follow [Semantic Versioning](https://semver.org/).
-
 ---
 
 ## [0.2.3] - 2026-03-16
@@ -175,3 +161,8 @@ Versions follow [Semantic Versioning](https://semver.org/).
 - Directory scanning (recursively finds all `.tf` files)
 - Homebrew distribution via `ScottRyanHoward/riveter/riveter`
 - GitHub Actions CI/CD pipeline with automated binary releases and Homebrew formula updates
+
+---
+
+Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+Versions follow [Semantic Versioning](https://semver.org/).

@@ -43,7 +43,7 @@ User runs: riveter scan -p aws-security -t main.tf
 Single source of truth for the package version. Updated automatically by the release workflow.
 
 ```python
-__version__ = "0.2.3"
+__version__ = "0.2.18"
 def get_version() -> str: ...
 ```
 
@@ -128,7 +128,7 @@ Four formatter classes extending `OutputFormatter(ABC)`: `JSONFormatter`, `JUnit
 
 ### `cli.py`
 
-Click group with three commands: `scan`, `scan-state`, and `list-rule-packs`. Orchestrates all the other modules. Exits with code 1 on any check failure.
+Click group with five commands: `scan`, `scan-state`, `explain`, `generate-rules`, and `list-rule-packs`. Orchestrates all the other modules. Exits with code 1 on any check failure.
 
 `scan` and `scan-state` share the same pipeline — config loading, rule loading, filtering, validation, and output — differing only in the parsing step (`extract_config.py` vs `extract_state.py`). All helper functions (`_display_table`, `_print_summary`, `_filter_by_pattern`) are shared.
 
