@@ -26,10 +26,10 @@ from rich.table import Table
 from ._version import get_version
 from .config import ConfigManager
 from .explainer import Explainer
-from .generator import RuleGenerator
 from .extract_config import extract_terraform_config
 from .extract_state import extract_terraform_state
 from .formatters import HTMLFormatter, JSONFormatter, JUnitXMLFormatter, SARIFFormatter
+from .generator import RuleGenerator
 from .rule_packs import RulePackManager
 from .rules import Rule, Severity, load_rules
 from .scanner import ValidationResult, validate_resources
@@ -1006,4 +1006,3 @@ def generate_rules(
     else:
         console.print()
         click.echo(output)
-    console.print(f"\n[dim]Found {len(packs)} rule pack(s)[/dim]")
