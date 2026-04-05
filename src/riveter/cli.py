@@ -967,9 +967,7 @@ def generate_rules(
                 rules = future.result()
                 if rules:
                     all_rules.extend(rules)
-                    console.print(
-                        f"  [green]\u2713[/green] {rt}: {len(rules)} rule(s) generated"
-                    )
+                    console.print(f"  [green]\u2713[/green] {rt}: {len(rules)} rule(s) generated")
                 else:
                     console.print(f"  [yellow]\u2013[/yellow] {rt}: no valid rules returned")
             except Exception:  # noqa: BLE001
@@ -981,8 +979,7 @@ def generate_rules(
 
     if not all_rules:
         err_console.print(
-            "\n[red]No rules were generated.[/red] "
-            "Try running with --debug for more details."
+            "\n[red]No rules were generated.[/red] " "Try running with --debug for more details."
         )
         sys.exit(1)
 

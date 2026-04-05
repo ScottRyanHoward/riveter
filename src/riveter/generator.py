@@ -228,9 +228,7 @@ class RuleGenerator:
             "No explanation, no markdown fences, no preamble."
         )
 
-    def _parse_and_validate(
-        self, raw: str, resource_type: str
-    ) -> List[Dict[str, Any]]:
+    def _parse_and_validate(self, raw: str, resource_type: str) -> List[Dict[str, Any]]:
         """Parse LLM YAML output and validate each rule. Silently drops invalid ones."""
         # Strip accidental markdown code fences
         text = raw.strip()
