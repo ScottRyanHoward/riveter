@@ -263,6 +263,14 @@ def main() -> None:
     help="Skip rules whose ID matches this glob pattern (can be repeated).",
 )
 @click.option(
+    "--output",
+    "-o",
+    "output_file",
+    type=click.Path(),
+    default=None,
+    help="Write output to this file (e.g. report.html). The table summary is still shown in the terminal.",
+)
+@click.option(
     "--debug",
     is_flag=True,
     help="Enable debug logging.",
@@ -279,6 +287,7 @@ def scan(
     rule_packs: Tuple[str, ...],
     terraform_path: str,
     output_format: Optional[str],
+    output_file: Optional[str],
     config_file: Optional[str],
     min_severity: Optional[str],
     include_rules: Tuple[str, ...],
@@ -427,14 +436,22 @@ def scan(
 
     # -- Emit output ----------------------------------------------------------
     fmt = config.output_format
-    if fmt == "json":
-        click.echo(JSONFormatter().format(results))
-    elif fmt == "junit":
-        click.echo(JUnitXMLFormatter().format(results))
-    elif fmt == "sarif":
-        click.echo(SARIFFormatter().format(results))
-    elif fmt == "html":
-        click.echo(HTMLFormatter().format(results))
+    formatter_map = {
+        "json": JSONFormatter(),
+        "junit": JUnitXMLFormatter(),
+        "sarif": SARIFFormatter(),
+        "html": HTMLFormatter(),
+    }
+    if fmt in formatter_map:
+        rendered = formatter_map[fmt].format(results)
+        if output_file:
+            with open(output_file, "w", encoding="utf-8") as fh:
+                fh.write(rendered)
+            err_console.print(f"[green]Report saved to[/green] {output_file}")
+            _display_table(results)
+            _print_summary(results)
+        else:
+            click.echo(rendered)
     else:
         _display_table(results)
         _print_summary(results)
@@ -502,6 +519,14 @@ def scan(
     help="Skip rules whose ID matches this glob pattern (can be repeated).",
 )
 @click.option(
+    "--output",
+    "-o",
+    "output_file",
+    type=click.Path(),
+    default=None,
+    help="Write output to this file (e.g. report.html). The table summary is still shown in the terminal.",
+)
+@click.option(
     "--debug",
     is_flag=True,
     help="Enable debug logging.",
@@ -511,6 +536,7 @@ def scan_state(
     rules_file: Optional[str],
     rule_packs: Tuple[str, ...],
     output_format: Optional[str],
+    output_file: Optional[str],
     config_file: Optional[str],
     min_severity: Optional[str],
     include_rules: Tuple[str, ...],
@@ -531,7 +557,7 @@ def scan_state(
       terraform state pull | riveter scan-state -p aws-security -s -
 
       # Generate an HTML report
-      riveter scan-state -p aws-security -s terraform.tfstate -f html > report.html
+      riveter scan-state -p aws-security -s terraform.tfstate -f html -o report.html
 
       # Side-by-side drift detection
       riveter scan       -p aws-security -t main.tf           -f json > hcl.json
@@ -646,14 +672,22 @@ def scan_state(
 
     # -- Emit output ----------------------------------------------------------
     fmt = config.output_format
-    if fmt == "json":
-        click.echo(JSONFormatter().format(results))
-    elif fmt == "junit":
-        click.echo(JUnitXMLFormatter().format(results))
-    elif fmt == "sarif":
-        click.echo(SARIFFormatter().format(results))
-    elif fmt == "html":
-        click.echo(HTMLFormatter().format(results))
+    formatter_map = {
+        "json": JSONFormatter(),
+        "junit": JUnitXMLFormatter(),
+        "sarif": SARIFFormatter(),
+        "html": HTMLFormatter(),
+    }
+    if fmt in formatter_map:
+        rendered = formatter_map[fmt].format(results)
+        if output_file:
+            with open(output_file, "w", encoding="utf-8") as fh:
+                fh.write(rendered)
+            err_console.print(f"[green]Report saved to[/green] {output_file}")
+            _display_table(results)
+            _print_summary(results)
+        else:
+            click.echo(rendered)
     else:
         _display_table(results)
         _print_summary(results)
