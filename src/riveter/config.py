@@ -72,6 +72,9 @@ class RiveterConfig:
     ai_explain_on_fail: bool = False
     ai_model: Optional[str] = None
 
+    # AI rule generation (optional — requires anthropic package + ANTHROPIC_API_KEY)
+    ai_generate_model: Optional[str] = None
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "rule_dirs": self.rule_dirs,
@@ -84,6 +87,7 @@ class RiveterConfig:
             "debug": self.debug,
             "ai_explain_on_fail": self.ai_explain_on_fail,
             "ai_model": self.ai_model,
+            "ai_generate_model": self.ai_generate_model,
         }
 
     @classmethod
@@ -96,6 +100,8 @@ class RiveterConfig:
                 flat["ai_explain_on_fail"] = ai_block["explain_on_fail"]
             if "model" in ai_block:
                 flat["ai_model"] = ai_block["model"]
+            if "generate_model" in ai_block:
+                flat["ai_generate_model"] = ai_block["generate_model"]
 
         valid = {f for f in cls.__dataclass_fields__}
         filtered = {k: v for k, v in flat.items() if k in valid and v is not None}
@@ -137,6 +143,7 @@ class RiveterConfig:
         # AI settings: override wins when it differs from default
         merged.ai_explain_on_fail = overrides.ai_explain_on_fail or self.ai_explain_on_fail
         merged.ai_model = overrides.ai_model or self.ai_model
+        merged.ai_generate_model = overrides.ai_generate_model or self.ai_generate_model
 
         return merged
 
