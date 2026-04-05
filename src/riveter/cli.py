@@ -7,6 +7,7 @@ Commands:
     riveter scan             Validate Terraform files against rules.
     riveter scan-state       Validate a Terraform state file (drift detection).
     riveter explain          AI-powered explanation of a single rule violation.
+    riveter generate-rules   AI-powered rule generation from Terraform files.
     riveter list-rule-packs  List all available built-in rule packs.
 """
 
@@ -17,6 +18,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Dict, List, Optional, Tuple
 
 import click
+import yaml
 from rich import box
 from rich.console import Console
 from rich.table import Table
@@ -24,6 +26,7 @@ from rich.table import Table
 from ._version import get_version
 from .config import ConfigManager
 from .explainer import Explainer
+from .generator import RuleGenerator
 from .extract_config import extract_terraform_config
 from .extract_state import extract_terraform_state
 from .formatters import HTMLFormatter, JSONFormatter, JUnitXMLFormatter, SARIFFormatter
@@ -842,4 +845,168 @@ def list_rule_packs() -> None:
         )
 
     console.print(table)
+
+
+@main.command(name="generate-rules")
+@click.option(
+    "--terraform",
+    "-t",
+    "terraform_path",
+    required=True,
+    type=click.Path(exists=True),
+    help="Path to a Terraform .tf file or directory of .tf files.",
+)
+@click.option(
+    "--output",
+    "-o",
+    "output_file",
+    type=click.Path(),
+    default=None,
+    help="Write generated rules to this file instead of stdout.",
+)
+@click.option(
+    "--focus",
+    default=None,
+    metavar="TEXT",
+    help=(
+        "Optional guidance for the AI, e.g. 'PCI-DSS compliance', "
+        "'cost optimization', or 'security hardening'."
+    ),
+)
+@click.option(
+    "--model",
+    default=None,
+    metavar="MODEL",
+    help="Override the Claude model used for generation.",
+)
+@click.option(
+    "--debug",
+    is_flag=True,
+    help="Enable debug logging.",
+)
+def generate_rules(
+    terraform_path: str,
+    output_file: Optional[str],
+    focus: Optional[str],
+    model: Optional[str],
+    debug: bool,
+) -> None:
+    """Generate Riveter rules for your Terraform resources using AI.
+
+    Parses Terraform files, groups resources by type, and asks Claude to
+    suggest 3–5 enforceable rules per resource type.  The resulting YAML
+    can be passed directly to 'riveter scan -r <file>'.
+
+    Requires ANTHROPIC_API_KEY to be set in the environment.
+
+    \b
+    Examples:
+      # Print generated rules to stdout
+      riveter generate-rules -t main.tf
+
+      # Save to a file and scan immediately
+      riveter generate-rules -t ./infra/ -o my-rules.yml
+      riveter scan -r my-rules.yml -t ./infra/
+
+      # Focus on a specific compliance framework
+      riveter generate-rules -t main.tf --focus "PCI-DSS compliance" -o pci-rules.yml
+    """
+    _setup_logging(debug)
+
+    # -- Parse Terraform -------------------------------------------------------
+    try:
+        tf_config = extract_terraform_config(terraform_path)
+    except Exception as exc:
+        err_console.print(f"[red]Error parsing Terraform:[/red] {exc}")
+        sys.exit(1)
+
+    resources = tf_config.get("resources", [])
+    if not resources:
+        console.print("[yellow]Warning:[/yellow] No resources found in the Terraform path.")
+        sys.exit(0)
+
+    # -- Check AI availability -------------------------------------------------
+    generator = RuleGenerator(model=model)
+    if not generator.is_available():
+        err_console.print(
+            "\u26a0  AI rule generation requires an Anthropic API key.\n"
+            "   Set it with:\n"
+            "       export ANTHROPIC_API_KEY=sk-ant-...\n"
+            "   Get a key at: https://console.anthropic.com"
+        )
+        sys.exit(1)
+
+    # -- Group resources by type -----------------------------------------------
+    by_type: Dict[str, List[Dict[str, Any]]] = {}
+    for res in resources:
+        rt = res.get("resource_type", "unknown")
+        by_type.setdefault(rt, []).append(res)
+
+    resource_types = list(by_type.keys())
+    console.print(
+        f"\nGenerating rules for [bold]{len(resource_types)}[/bold] resource type(s) "
+        f"across [bold]{len(resources)}[/bold] resource(s)...\n"
+    )
+
+    # -- Generate rules concurrently per resource type -------------------------
+    all_rules: List[Dict[str, Any]] = []
+
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        futures = {
+            executor.submit(
+                generator.generate_for_resource_type,
+                rt,
+                by_type[rt][0],  # use first instance as representative sample
+                focus,
+            ): rt
+            for rt in resource_types
+        }
+        for future in as_completed(futures):
+            rt = futures[future]
+            try:
+                rules = future.result()
+                if rules:
+                    all_rules.extend(rules)
+                    console.print(
+                        f"  [green]\u2713[/green] {rt}: {len(rules)} rule(s) generated"
+                    )
+                else:
+                    console.print(f"  [yellow]\u2013[/yellow] {rt}: no valid rules returned")
+            except Exception:  # noqa: BLE001
+                console.print(f"  [red]\u2717[/red] {rt}: generation failed")
+
+    warning = generator.get_warning()
+    if warning:
+        err_console.print(warning)
+
+    if not all_rules:
+        err_console.print(
+            "\n[red]No rules were generated.[/red] "
+            "Try running with --debug for more details."
+        )
+        sys.exit(1)
+
+    # -- Serialise to YAML -----------------------------------------------------
+    header = (
+        "# Generated by riveter generate-rules\n"
+        "# Review and customize before use:\n"
+        "#   riveter scan -r <this-file> -t <terraform-path>\n\n"
+    )
+    rules_yaml = yaml.dump({"rules": all_rules}, default_flow_style=False, sort_keys=False)
+    output = header + rules_yaml
+
+    if output_file:
+        try:
+            with open(output_file, "w") as fh:
+                fh.write(output)
+            console.print(
+                f"\n[bold green]Generated {len(all_rules)} rule(s)[/bold green] "
+                f"written to [bold]{output_file}[/bold]"
+            )
+        except OSError as exc:
+            err_console.print(f"[red]Error writing output file:[/red] {exc}")
+            sys.exit(1)
+    else:
+        console.print()
+        click.echo(output)
     console.print(f"\n[dim]Found {len(packs)} rule pack(s)[/dim]")
