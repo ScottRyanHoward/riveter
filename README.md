@@ -39,6 +39,10 @@ riveter scan-state -p aws-security -s terraform.tfstate
 # Pipe remote state from any Terraform backend
 terraform state pull | riveter scan-state -p aws-security -s -
 
+# Generate rules for your Terraform files using AI (requires ANTHROPIC_API_KEY)
+riveter generate-rules -t ./infra/ -o my-rules.yml
+riveter scan -r my-rules.yml -t ./infra/
+
 # See available rule packs
 riveter list-rule-packs
 ```
@@ -81,6 +85,18 @@ Validates a Terraform **state file** against rules for drift detection.
 | `--debug` | | Enable debug logging |
 
 > **State format:** Requires Terraform state format v4 (Terraform 0.13+). Data sources are automatically excluded — only managed resources are validated.
+
+### `riveter generate-rules`
+
+Uses Claude to suggest 3–5 enforceable Riveter rules per resource type found in your Terraform files. Output is a valid rules YAML file you can review, customize, and pass to `riveter scan -r`. Requires `ANTHROPIC_API_KEY`.
+
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--terraform PATH` | `-t` | **Required.** Path to a `.tf` file or directory |
+| `--output FILE` | `-o` | Write generated rules to a file (default: stdout) |
+| `--focus TEXT` | | Guide the AI, e.g. `"PCI-DSS compliance"` or `"cost optimization"` |
+| `--model MODEL` | | Override the Claude model |
+| `--debug` | | Enable debug logging |
 
 ### `riveter list-rule-packs`
 
@@ -242,21 +258,39 @@ Generates a self-contained HTML report with no external dependencies. Open in an
 
 ---
 
-## AI-Powered Explanations (Optional)
+## AI Features (Optional)
 
-Riveter can explain violations in plain English — why a rule matters, what the risk is, and
-exactly how to fix it in your Terraform config.
-
-This feature requires an Anthropic API key (pay-as-you-go, ~$0.001 per explanation).
-Get one at https://console.anthropic.com.
-
-Once you have a key:
+Both AI features require an Anthropic API key (pay-as-you-go).
+Get one at https://console.anthropic.com, then export it:
 
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...
 ```
 
-Then add `--explain` to any scan:
+### Rule Generation
+
+Don't know where to start with rules? Let Claude write a first draft based on your actual Terraform:
+
+```bash
+# Generate rules and print to stdout
+riveter generate-rules -t ./infra/
+
+# Save to a file and scan immediately
+riveter generate-rules -t ./infra/ -o my-rules.yml
+riveter scan -r my-rules.yml -t ./infra/
+
+# Focus on a specific compliance framework
+riveter generate-rules -t main.tf --focus "PCI-DSS compliance" -o pci-rules.yml
+```
+
+Riveter parses your Terraform, groups resources by type, and calls Claude once per type to suggest 3–5 enforceable rules. Each rule is validated against the rule schema before output — invalid suggestions are silently dropped. Always review and test generated rules before enforcing them in CI.
+
+### Violation Explanations
+
+Riveter can explain violations in plain English — why a rule matters, what the risk is, and
+exactly how to fix it in your Terraform config.
+
+Add `--explain` to any scan (cost: ~$0.001 per explanation):
 
 ```bash
 riveter scan -p aws-security -t main.tf --explain
@@ -274,7 +308,8 @@ To always enable explanations, add this to `riveter.yml`:
 ```yaml
 ai:
   explain_on_fail: true
-  model: claude-sonnet-4-20250514   # optional — overrides the default model
+  model: claude-sonnet-4-20250514      # optional — overrides the default model
+  generate_model: claude-sonnet-4-20250514  # optional — model used for generate-rules
 ```
 
 > **Note:** `--explain` is available on `riveter scan` only, not `scan-state`.
@@ -304,7 +339,8 @@ exclude_rules:
 
 ai:
   explain_on_fail: true
-  model: claude-sonnet-4-20250514   # optional
+  model: claude-sonnet-4-20250514        # optional — model for --explain
+  generate_model: claude-sonnet-4-20250514  # optional — model for generate-rules
 ```
 
 CLI flags always override config file values.

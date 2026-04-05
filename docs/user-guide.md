@@ -14,8 +14,9 @@ This guide covers everything you need to use Riveter to validate Terraform confi
 6. [Output Formats](#output-formats)
 7. [Filtering](#filtering)
 8. [State File Scanning](#state-file-scanning)
-9. [CI/CD Integration](#cicd-integration)
-10. [Troubleshooting](#troubleshooting)
+9. [AI Features](#ai-features)
+10. [CI/CD Integration](#cicd-integration)
+11. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -401,6 +402,106 @@ riveter scan-state -p aws-security -s terraform.tfstate -f html > state-report.h
 | `--exclude-rules PATTERN` | | Skip matching rules (repeatable) |
 | `--config FILE` | `-c` | Config file (auto-detected if omitted) |
 | `--debug` | | Enable debug logging |
+
+---
+
+## AI Features
+
+Both AI features require an [Anthropic API key](https://console.anthropic.com) and the `anthropic` Python package. If you installed Riveter via Homebrew the package is included. Set the key in your environment:
+
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...
+```
+
+Riveter degrades gracefully when no key is set — scans and rule loading work normally, AI features are simply skipped.
+
+---
+
+### Rule Generation (`generate-rules`)
+
+`riveter generate-rules` reads your Terraform files, groups resources by type, and asks Claude to suggest 3–5 enforceable rules per type. The output is a ready-to-use rules YAML file.
+
+**Basic usage:**
+
+```bash
+# Print generated rules to stdout
+riveter generate-rules -t main.tf
+
+# Save to a file
+riveter generate-rules -t ./infra/ -o my-rules.yml
+```
+
+**Scan with the generated rules:**
+
+```bash
+riveter scan -r my-rules.yml -t ./infra/
+```
+
+**Focus the AI on a specific area:**
+
+The `--focus` flag guides Claude toward a particular concern. Without it, general security and operational best practices are used.
+
+```bash
+riveter generate-rules -t main.tf --focus "PCI-DSS compliance" -o pci-rules.yml
+riveter generate-rules -t main.tf --focus "cost optimization" -o cost-rules.yml
+riveter generate-rules -t main.tf --focus "CIS AWS Foundations Benchmark" -o cis-rules.yml
+```
+
+**All flags:**
+
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--terraform PATH` | `-t` | **Required.** `.tf` file or directory |
+| `--output FILE` | `-o` | Write YAML to a file instead of stdout |
+| `--focus TEXT` | | Plain-text guidance for the AI |
+| `--model MODEL` | | Override the Claude model (default: `claude-sonnet-4-20250514`) |
+| `--debug` | | Enable debug logging |
+
+**Workflow tips:**
+
+- Generated rules are validated against the rule schema before output. Invalid suggestions (bad operators, missing required fields) are silently dropped.
+- Always review generated rules before enforcing them in CI — the AI may suggest rules based on attributes that are optional or environment-specific.
+- Use `--focus` to get more targeted output. Broad prompts produce broad rules; specific compliance frameworks produce specific rules.
+- Run `riveter scan -r generated.yml -t ./infra/` immediately after generating to see which rules have matches and which are SKIPPED.
+
+---
+
+### Violation Explanations (`--explain` / `explain`)
+
+Riveter can explain each violation in plain English: why the rule matters, what an attacker could do, and the exact Terraform change needed to fix it.
+
+**Inline during a scan:**
+
+```bash
+riveter scan -p aws-security -t main.tf --explain
+```
+
+Explanations appear underneath each failing row in the table. In JSON and HTML output, they are included in the structured result.
+
+Cost: approximately $0.001 per explanation.
+
+**Drill into a specific violation:**
+
+```bash
+riveter explain ec2_no_public_ip \
+    --resource aws_instance.web_server \
+    --terraform main.tf \
+    -p aws-security
+```
+
+This is useful when you want to understand a rule before fixing it, without re-running a full scan.
+
+**Always-on via config:**
+
+```yaml
+# riveter.yml
+ai:
+  explain_on_fail: true
+  model: claude-sonnet-4-20250514        # optional — default model for explanations
+  generate_model: claude-sonnet-4-20250514  # optional — model for generate-rules
+```
+
+> **Note:** `--explain` works on `riveter scan` only, not `scan-state`.
 
 ---
 
