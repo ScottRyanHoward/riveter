@@ -223,7 +223,6 @@ class HTMLFormatter(OutputFormatter):
 
     def format(self, results: List[ValidationResult]) -> str:
         summary = self._summary(results)
-        failed_by_sev = self._failed_by_severity(results)
         ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
         data_json = json.dumps(self._to_js_data(results), ensure_ascii=False)
 
@@ -234,18 +233,8 @@ class HTMLFormatter(OutputFormatter):
         html = html.replace("__PASSED__", str(summary["passed"]))
         html = html.replace("__FAILED__", str(summary["failed"]))
         html = html.replace("__SKIPPED__", str(summary["skipped"]))
-        html = html.replace("__ERR__", str(failed_by_sev["error"]))
-        html = html.replace("__WARN__", str(failed_by_sev["warning"]))
-        html = html.replace("__INFO__", str(failed_by_sev["info"]))
         html = html.replace("__DATA_JSON__", data_json)
         return html
-
-    def _failed_by_severity(self, results: List[ValidationResult]) -> Dict[str, int]:
-        counts: Dict[str, int] = {"error": 0, "warning": 0, "info": 0}
-        for r in results:
-            if not r.passed and not r.message.startswith("SKIPPED:"):
-                counts[r.severity.value] = counts.get(r.severity.value, 0) + 1
-        return counts
 
     def _to_js_data(self, results: List[ValidationResult]) -> List[Dict[str, Any]]:
         rows = []
@@ -255,7 +244,6 @@ class HTMLFormatter(OutputFormatter):
             rows.append(
                 {
                     "status": status,
-                    "severity": r.severity.value,
                     "rule_id": r.rule.id,
                     "description": r.rule.description,
                     "resource_type": r.rule.resource_type,
@@ -308,7 +296,6 @@ _HTML_TEMPLATE = """\
     .card .count { font-size: 30px; font-weight: 700; line-height: 1; }
     .card .label { font-size: 11px; color: #6b7280; text-transform: uppercase;
                    letter-spacing: 0.6px; margin-top: 4px; }
-    .card .sev { font-size: 11px; color: #9ca3af; margin-top: 6px; }
     .card.total { background: #f8fafc; }
     .card.pass  { background: #f0fdf4; border-color: #bbf7d0; }
     .card.pass .count { color: #16a34a; }
@@ -353,9 +340,6 @@ _HTML_TEMPLATE = """\
     .badge-pass    { background: #dcfce7; color: #15803d; }
     .badge-fail    { background: #fee2e2; color: #dc2626; }
     .badge-skip    { background: #f3f4f6; color: #6b7280; }
-    .badge-error   { background: #fee2e2; color: #dc2626; }
-    .badge-warning { background: #fef9c3; color: #b45309; }
-    .badge-info    { background: #dbeafe; color: #2563eb; }
 
     /* ── Detail row ── */
     .detail-row td { background: #f8fafc; padding: 0; }
@@ -405,7 +389,6 @@ _HTML_TEMPLATE = """\
   <div class="card fail">
     <div class="count">__FAILED__</div>
     <div class="label">Failed</div>
-    <div class="sev">__ERR__ error &nbsp;&#x2022;&nbsp; __WARN__ warning &nbsp;&#x2022;&nbsp; __INFO__ info</div>
   </div>
   <div class="card skip">
     <div class="count">__SKIPPED__</div>
@@ -419,12 +402,6 @@ _HTML_TEMPLATE = """\
     <option value="fail">Failed</option>
     <option value="pass">Passed</option>
     <option value="skip">Skipped</option>
-  </select>
-  <select id="severityFilter">
-    <option value="all">All severities</option>
-    <option value="error">Error</option>
-    <option value="warning">Warning</option>
-    <option value="info">Info</option>
   </select>
   <input id="search" type="search" placeholder="Search rule ID or resource&#x2026;">
   <span id="resultCount"></span>
@@ -460,10 +437,6 @@ _HTML_TEMPLATE = """\
   function statusBadge(s) {
     const labels = { pass: 'PASS', fail: 'FAIL', skip: 'SKIP' };
     return '<span class="badge badge-' + s + '">' + (labels[s] || s.toUpperCase()) + '</span>';
-  }
-
-  function severityBadge(s) {
-    return '<span class="badge badge-' + s + '">' + s + '</span>';
   }
 
   function assertionDetail(assertions) {
@@ -520,12 +493,10 @@ _HTML_TEMPLATE = """\
   }
 
   function applyFilters() {
-    var status   = document.getElementById('statusFilter').value;
-    var severity = document.getElementById('severityFilter').value;
-    var search   = document.getElementById('search').value.toLowerCase();
+    var status = document.getElementById('statusFilter').value;
+    var search = document.getElementById('search').value.toLowerCase();
     var filtered = DATA.filter(function(r) {
       if (status !== 'all' && r.status !== status) return false;
-      if (severity !== 'all' && r.severity !== severity) return false;
       if (search) {
         var haystack = (r.rule_id + ' ' + r.resource_id).toLowerCase();
         if (haystack.indexOf(search) === -1) return false;
@@ -541,7 +512,6 @@ _HTML_TEMPLATE = """\
   }
 
   document.getElementById('statusFilter').addEventListener('change', applyFilters);
-  document.getElementById('severityFilter').addEventListener('change', applyFilters);
   document.getElementById('search').addEventListener('input', applyFilters);
 
   renderTable(DATA);

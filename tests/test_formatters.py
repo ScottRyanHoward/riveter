@@ -162,16 +162,16 @@ class TestHTMLFormatter:
         output = HTMLFormatter().format(results)
         assert "my_resource" in output
 
-    def test_severity_values_present(self):
+    def test_rule_ids_present(self):
         results = [
             _make_result(False, rule_id="e", severity="error"),
             _make_result(False, rule_id="w", severity="warning"),
             _make_result(False, rule_id="i", severity="info"),
         ]
         output = HTMLFormatter().format(results)
-        assert "error" in output
-        assert "warning" in output
-        assert "info" in output
+        assert '"e"' in output
+        assert '"w"' in output
+        assert '"i"' in output
 
     def test_skipped_count_correct(self):
         results = [_make_skipped(), _make_skipped("skipped-2")]
