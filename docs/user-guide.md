@@ -36,6 +36,7 @@ Homebrew installs a standalone binary with no Python dependency. Rule packs are 
 git clone https://github.com/ScottRyanHoward/riveter.git
 cd riveter
 pip install -e ".[dev]"
+pre-commit install
 ```
 
 ---
@@ -93,15 +94,15 @@ riveter list-rule-packs
 | `gcp-security` | GCP security best practices |
 | `kubernetes-security` | Kubernetes / managed K8s security |
 | `multi-cloud-security` | Cross-cloud patterns |
-| `cis-aws` | CIS AWS Foundations Benchmark v1.4.0 |
-| `cis-azure` | CIS Azure Foundations Benchmark v1.3.0 |
-| `cis-gcp` | CIS GCP Foundations Benchmark v1.3.0 |
+| `cis-aws` | CIS AWS Foundations Benchmark v3.0.0 |
+| `cis-azure` | CIS Azure Foundations Benchmark v2.0.0 |
+| `cis-gcp` | CIS GCP Foundations Benchmark v2.0.0 |
 | `aws-well-architected` | AWS Well-Architected Framework |
 | `azure-well-architected` | Azure Well-Architected Framework |
 | `gcp-well-architected` | GCP Architecture Framework |
 | `aws-hipaa` | HIPAA compliance for AWS |
 | `azure-hipaa` | HIPAA compliance for Azure |
-| `aws-pci-dss` | PCI-DSS for AWS |
+| `aws-pci-dss` | PCI-DSS v4.0 for AWS |
 | `soc2-security` | SOC 2 Trust Service Criteria |
 
 ### Custom rule pack directories
@@ -241,18 +242,18 @@ Or specify explicitly: `riveter scan -c path/to/config.yml -t main.tf`
 
 ### Table (default)
 
-Color-coded terminal output. PASS = green, FAIL = red, SKIP = dim.
+Color-coded terminal output. PASS = green, FAIL = red, SKIP = dim. Columns: Status, Rule ID, Resource, Message.
 
 ```
 Scanning 12 resource(s) against 26 rule(s)...
 
-╭────────┬──────────┬─────────────────────────────┬──────────────────────────┬──────────────────────────╮
-│ Status │ Severity │ Rule ID                     │ Resource                 │ Message                  │
-├────────┼──────────┼─────────────────────────────┼──────────────────────────┼──────────────────────────┤
-│  PASS  │ error    │ ec2_encrypted_ebs_volumes   │ aws_instance.web         │ All checks passed        │
-│  FAIL  │ error    │ ec2_no_public_ip            │ aws_instance.web         │ Expected 'associate_...  │
-│  SKIP  │ warning  │ rds_multi_az                │ aws_db_instance.N/A      │ SKIPPED: No matching...  │
-╰────────┴──────────┴─────────────────────────────┴──────────────────────────┴──────────────────────────╯
+╭────────┬─────────────────────────────┬──────────────────────────┬──────────────────────────╮
+│ Status │ Rule ID                     │ Resource                 │ Message                  │
+├────────┼─────────────────────────────┼──────────────────────────┼──────────────────────────┤
+│  PASS  │ ec2_encrypted_ebs_volumes   │ aws_instance.web         │ All checks passed        │
+│  FAIL  │ ec2_no_public_ip            │ aws_instance.web         │ Expected 'associate_...  │
+│  SKIP  │ rds_multi_az                │ aws_db_instance.N/A      │ SKIPPED: No matching...  │
+╰────────┴─────────────────────────────┴──────────────────────────┴──────────────────────────╯
 
   Passed:  1
   Failed:  1
@@ -282,10 +283,20 @@ riveter scan -p aws-security -t main.tf -f sarif > results.sarif
 
 ### HTML
 
+Use `-o` to write the HTML report to a file while keeping the table summary visible in your terminal:
+
 ```bash
 riveter scan -p aws-security -t main.tf -f html -o report.html
 open report.html
 ```
+
+To write to a file silently (no terminal table — useful in CI pipelines):
+
+```bash
+riveter scan -p aws-security -t main.tf -f html > report.html
+```
+
+> **Tip:** Use `-o` for interactive use, `>` for scripted/CI use where you don't need terminal feedback.
 
 Produces a fully self-contained HTML report — CSS and JavaScript are embedded inline, so the file can be emailed or opened on any machine without an internet connection.
 
@@ -296,6 +307,18 @@ Produces a fully self-contained HTML report — CSS and JavaScript are embedded 
 - Riveter version and report timestamp embedded in the header
 
 Ideal for sharing scan results with auditors or stakeholders who need a readable view of findings.
+
+### Progress messages and stderr
+
+Informational messages (rule loading, scanning progress, warnings) are always written to **stderr**, not stdout. This means non-table output formats (HTML, JSON, SARIF, JUnit) are clean on stdout and safe to pipe or redirect:
+
+```bash
+# HTML goes to the file; progress messages still appear in the terminal
+riveter scan -p aws-security -t main.tf -f html > report.html
+
+# JSON is clean — no progress noise mixed in
+riveter scan -p aws-security -t main.tf -f json | jq .
+```
 
 ---
 
@@ -379,8 +402,8 @@ terraform state pull | riveter scan-state -p aws-security -s - -f json > state-r
 Or generate shareable HTML reports for both:
 
 ```bash
-riveter scan       -p aws-security -t main.tf           -f html > hcl-report.html
-riveter scan-state -p aws-security -s terraform.tfstate -f html > state-report.html
+riveter scan       -p aws-security -t main.tf           -f html -o hcl-report.html
+riveter scan-state -p aws-security -s terraform.tfstate -f html -o state-report.html
 ```
 
 ### State format requirements
@@ -397,6 +420,7 @@ riveter scan-state -p aws-security -s terraform.tfstate -f html > state-report.h
 | `--rule-pack NAME` | `-p` | Built-in rule pack (repeatable) |
 | `--rules FILE` | `-r` | Custom rules YAML file |
 | `--output-format FMT` | `-f` | `table`, `json`, `junit`, `sarif`, `html` |
+| `--output FILE` | `-o` | Write output to a file; table summary still shown in terminal |
 | `--min-severity LEVEL` | | `info`, `warning`, `error` |
 | `--include-rules PATTERN` | | Only run matching rules (repeatable) |
 | `--exclude-rules PATTERN` | | Skip matching rules (repeatable) |
@@ -590,6 +614,18 @@ Riveter only processes `resource` blocks. `data`, `variable`, `output`, and `mod
 
 ```bash
 grep -c 'resource "' main.tf
+```
+
+### HTML output looks garbled in the terminal
+
+If you run `riveter scan -f html` without redirecting output, the raw HTML will print to your terminal. Use `-o` to write directly to a file instead:
+
+```bash
+# Correct — writes HTML to file, shows table in terminal
+riveter scan -p aws-security -t main.tf -f html -o report.html
+
+# Also works — HTML goes to the file, progress messages still visible in terminal
+riveter scan -p aws-security -t main.tf -f html > report.html
 ```
 
 ### Debug mode

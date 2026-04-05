@@ -6,10 +6,6 @@ Riveter catches security misconfigurations and compliance violations during deve
 
 ---
 
-> **Note:** This project is not actively maintained. Issues and pull requests may not receive timely responses. Feel free to fork it and adapt it for your needs.
-
----
-
 ## Installation
 
 ```bash
@@ -32,6 +28,9 @@ riveter scan -p aws-security -p cis-aws -t main.tf
 
 # Scan an entire directory
 riveter scan -p aws-security -t ./infra/
+
+# Save an HTML report and still see results in the terminal
+riveter scan -p aws-security -t main.tf -f html -o report.html
 
 # Validate deployed state (drift detection)
 riveter scan-state -p aws-security -s terraform.tfstate
@@ -61,6 +60,7 @@ Validates Terraform against rules and exits non-zero if any checks fail.
 | `--rule-pack NAME` | `-p` | Built-in rule pack (repeatable) |
 | `--rules FILE` | `-r` | Custom rules YAML file |
 | `--output-format FMT` | `-f` | `table` (default), `json`, `junit`, `sarif`, `html` |
+| `--output FILE` | `-o` | Write output to a file; table summary still shown in terminal |
 | `--min-severity LEVEL` | | `info` (default), `warning`, `error` |
 | `--include-rules PATTERN` | | Only run rules matching glob pattern (repeatable) |
 | `--exclude-rules PATTERN` | | Skip rules matching glob pattern (repeatable) |
@@ -78,6 +78,7 @@ Validates a Terraform **state file** against rules for drift detection.
 | `--rule-pack NAME` | `-p` | Built-in rule pack (repeatable) |
 | `--rules FILE` | `-r` | Custom rules YAML file |
 | `--output-format FMT` | `-f` | `table` (default), `json`, `junit`, `sarif`, `html` |
+| `--output FILE` | `-o` | Write output to a file; table summary still shown in terminal |
 | `--min-severity LEVEL` | | `info` (default), `warning`, `error` |
 | `--include-rules PATTERN` | | Only run rules matching glob pattern (repeatable) |
 | `--exclude-rules PATTERN` | | Skip rules matching glob pattern (repeatable) |
@@ -113,15 +114,15 @@ Lists all available rule packs with name, version, rule count, and description.
 | `gcp-security` | 29 | Compute, Storage, SQL, VPC, IAM |
 | `kubernetes-security` | 40 | EKS, AKS, GKE |
 | `multi-cloud-security` | 40 | Cross-cloud patterns |
-| `cis-aws` | 22 | CIS AWS Foundations v1.4.0 |
-| `cis-azure` | 34 | CIS Azure Foundations v1.3.0 |
-| `cis-gcp` | 43 | CIS GCP Foundations v1.3.0 |
-| `aws-well-architected` | 34 | AWS WAF (6 pillars) |
-| `azure-well-architected` | 35 | Azure WAF (5 pillars) |
-| `gcp-well-architected` | 30 | GCP WAF (5 pillars) |
+| `cis-aws` | 22 | CIS AWS Foundations Benchmark v3.0.0 |
+| `cis-azure` | 34 | CIS Azure Foundations Benchmark v2.0.0 |
+| `cis-gcp` | 43 | CIS GCP Foundations Benchmark v2.0.0 |
+| `aws-well-architected` | 34 | AWS Well-Architected Framework |
+| `azure-well-architected` | 35 | Azure Well-Architected Framework |
+| `gcp-well-architected` | 30 | GCP Architecture Framework |
 | `aws-hipaa` | 35 | HIPAA compliance |
 | `azure-hipaa` | 30 | Azure HIPAA |
-| `aws-pci-dss` | 40 | PCI-DSS compliance |
+| `aws-pci-dss` | 40 | PCI-DSS v4.0 compliance |
 | `soc2-security` | 28 | SOC 2 Trust Service Criteria |
 
 ---
@@ -251,10 +252,16 @@ Upload to GitHub Code Scanning for inline annotations.
 ### HTML
 
 ```bash
+# Write report to file and see table summary in the terminal
+riveter scan -p aws-security -t main.tf -f html -o report.html
+
+# Or redirect stdout to a file (no terminal table)
 riveter scan -p aws-security -t main.tf -f html > report.html
 ```
 
 Generates a self-contained HTML report with no external dependencies. Open in any browser to explore results with interactive filtering by status, severity, and resource/rule name. Click any row to expand full assertion details. When `--explain` is used, AI-generated explanations appear in the expanded detail panel for each failure. Useful for sharing scan results with stakeholders and auditors who can't easily read JSON or SARIF.
+
+> **Tip:** Use `-o report.html` instead of `> report.html` to write the HTML to a file while keeping the table summary visible in your terminal.
 
 ---
 

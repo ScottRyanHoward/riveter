@@ -1,5 +1,33 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- **`--output / -o` flag** on `riveter scan` and `riveter scan-state`: writes formatted output (HTML, JSON, SARIF, JUnit) directly to a file while still showing the table summary in the terminal. Removes the need to choose between a file and terminal feedback.
+
+### Changed
+- **Severity column removed** from the terminal table. Output now shows Status, Rule ID, Resource, and Message — a cleaner view that focuses on actionable information.
+- **Progress messages routed to stderr**: "Loaded X rule(s)" and "Scanning X resource(s)" messages now go to stderr instead of stdout, so piped and redirected output formats (HTML, JSON, SARIF, JUnit) are clean with no informational noise mixed in.
+- **All 15 rule packs bumped to v1.1.0** with accuracy and currency fixes:
+  - `cis-aws`: updated to CIS AWS Foundations Benchmark v3.0.0 (was v1.4.0); fixed root access key rule logic
+  - `cis-azure`: updated to CIS Azure Foundations Benchmark v2.0.0 (was v1.3.0); updated Security Center references to Microsoft Defender for Cloud
+  - `cis-gcp`: updated to CIS GCP Foundations Benchmark v2.0.0 (was v1.3.0); fixed 10+ mismatched rule descriptions and broken API key assertion
+  - `aws-pci-dss`: updated to PCI-DSS v4.0 (was v3.2.1, which became non-compliant March 2024); corrected requirement numbers; replaced deprecated Inspector Classic with Inspector v2
+  - `aws-hipaa`: fixed MFA rule (was checking wrong resource/attribute); updated Elasticsearch → OpenSearch resource type
+  - `aws-security`: fixed `vpc_flow_logs` rule (was checking DNS settings on `aws_vpc` instead of `aws_flow_log`)
+  - `aws-well-architected`: replaced tautological SNS and Lambda assertions with meaningful checks
+  - `azure-hipaa`: replaced deprecated `azurerm_app_service` / `azurerm_function_app` resource types
+  - `azure-well-architected`: replaced tag-based TDE and geo-replication assertions with actual resource properties; updated Front Door resource type
+  - `azure-security`, `multi-cloud-security`: updated all `docs.microsoft.com` URLs to `learn.microsoft.com`
+  - `gcp-security`: fixed service account key rotation assertion (was always-passing tautology)
+  - `gcp-well-architected`: updated SQL machine type regex for current generations; replaced preemptible VM check with Spot VM check
+  - `kubernetes-security`: updated annotation conventions to match real tooling (Trivy Operator)
+  - `soc2-security`: replaced made-up tag assertion with actual Azure storage encryption properties
+
+### Fixed
+- Pre-commit hooks (`black`, `isort`, `ruff`, `mypy`, `bandit`, `pytest`) are now installed and active, catching formatting and lint issues locally before they reach CI.
+- `.gitignore` now excludes `.claude/worktrees/` to prevent Claude Code worktrees from being accidentally staged.
+
 ## [0.2.17] - 2026-04-05
 
 ### Added
