@@ -182,14 +182,18 @@ class TestValidateAssertions:
 class TestLoadRules:
     def test_loads_valid_file(self, tmp_path):
         rules_file = tmp_path / "rules.yml"
-        rules_file.write_text(textwrap.dedent("""\
+        rules_file.write_text(
+            textwrap.dedent(
+                """\
                 rules:
                   - id: test-rule
                     resource_type: aws_instance
                     description: Test
                     assert:
                       instance_type: t3.large
-                """))
+                """
+            )
+        )
         rules = load_rules(str(rules_file))
         assert len(rules) == 1
         assert rules[0].id == "test-rule"
