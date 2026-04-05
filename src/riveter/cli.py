@@ -631,7 +631,9 @@ def scan_state(
 
     resources = state_config.get("resources", [])
     if not resources:
-        err_console.print(f"[yellow]Warning:[/yellow] No managed resources found in {source_label}.")
+        err_console.print(
+            f"[yellow]Warning:[/yellow] No managed resources found in {source_label}."
+        )
         sys.exit(0)
 
     err_console.print(
