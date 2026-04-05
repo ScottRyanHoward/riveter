@@ -360,7 +360,7 @@ def scan(
         try:
             loaded = load_rules(rules_file)
             all_rules.extend(loaded)
-            console.print(
+            err_console.print(
                 f"Loaded [bold]{len(loaded)}[/bold] rule(s) from [cyan]{rules_file}[/cyan]"
             )
         except Exception as exc:
@@ -373,7 +373,7 @@ def scan(
             try:
                 pack = pack_mgr.load_rule_pack(pack_name)
                 all_rules.extend(pack.rules)
-                console.print(
+                err_console.print(
                     f"Loaded [bold]{len(pack.rules)}[/bold] rule(s) from pack "
                     f"[cyan]{pack_name}[/cyan]"
                 )
@@ -395,7 +395,7 @@ def scan(
     if config.include_rules or config.exclude_rules:
         all_rules = _filter_by_pattern(all_rules, config.include_rules, config.exclude_rules)
         if not all_rules:
-            console.print("[yellow]Warning:[/yellow] No rules remain after filtering.")
+            err_console.print("[yellow]Warning:[/yellow] No rules remain after filtering.")
             sys.exit(0)
 
     # -- Parse Terraform -------------------------------------------------------
@@ -407,12 +407,12 @@ def scan(
 
     resources = tf_config.get("resources", [])
     if not resources:
-        console.print(
+        err_console.print(
             "[yellow]Warning:[/yellow] No resources found in the Terraform configuration."
         )
         sys.exit(0)
 
-    console.print(
+    err_console.print(
         f"\nScanning [bold]{len(resources)}[/bold] resource(s) against "
         f"[bold]{len(all_rules)}[/bold] rule(s)...\n"
     )
@@ -583,7 +583,7 @@ def scan_state(
         try:
             loaded = load_rules(rules_file)
             all_rules.extend(loaded)
-            console.print(
+            err_console.print(
                 f"Loaded [bold]{len(loaded)}[/bold] rule(s) from [cyan]{rules_file}[/cyan]"
             )
         except Exception as exc:
@@ -596,7 +596,7 @@ def scan_state(
             try:
                 pack = pack_mgr.load_rule_pack(pack_name)
                 all_rules.extend(pack.rules)
-                console.print(
+                err_console.print(
                     f"Loaded [bold]{len(pack.rules)}[/bold] rule(s) from pack "
                     f"[cyan]{pack_name}[/cyan]"
                 )
@@ -618,7 +618,7 @@ def scan_state(
     if config.include_rules or config.exclude_rules:
         all_rules = _filter_by_pattern(all_rules, config.include_rules, config.exclude_rules)
         if not all_rules:
-            console.print("[yellow]Warning:[/yellow] No rules remain after filtering.")
+            err_console.print("[yellow]Warning:[/yellow] No rules remain after filtering.")
             sys.exit(0)
 
     # -- Parse state file -----------------------------------------------------
@@ -631,10 +631,10 @@ def scan_state(
 
     resources = state_config.get("resources", [])
     if not resources:
-        console.print(f"[yellow]Warning:[/yellow] No managed resources found in {source_label}.")
+        err_console.print(f"[yellow]Warning:[/yellow] No managed resources found in {source_label}.")
         sys.exit(0)
 
-    console.print(
+    err_console.print(
         f"\nScanning [bold]{len(resources)}[/bold] resource(s) from state against "
         f"[bold]{len(all_rules)}[/bold] rule(s)...\n"
     )
