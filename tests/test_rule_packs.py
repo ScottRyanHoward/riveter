@@ -125,8 +125,7 @@ class TestRulePackBuiltIns:
 
 class TestRulePackDuplicate:
     def test_duplicate_ids_raise(self, tmp_path):
-        rules_yaml = textwrap.dedent(
-            """\
+        rules_yaml = textwrap.dedent("""\
             - id: duplicate-id
               resource_type: aws_instance
               assert:
@@ -135,8 +134,7 @@ class TestRulePackDuplicate:
               resource_type: aws_instance
               assert:
                 x: z
-            """
-        )
+            """)
         f = _write_pack(tmp_path, "dup-pack", rules_yaml)
         mgr = RulePackManager()
         with pytest.raises(RulePackError, match="[Dd]uplicate"):
