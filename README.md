@@ -1,5 +1,7 @@
 # Riveter
 
+[![CI](https://github.com/ScottRyanHoward/riveter/actions/workflows/ci.yml/badge.svg)](https://github.com/ScottRyanHoward/riveter/actions/workflows/ci.yml)
+
 **Infrastructure Rule Enforcement as Code** — validate Terraform configurations against YAML rules before deployment.
 
 Riveter catches security misconfigurations and compliance violations during development, not after. Define rules in plain YAML, use one of 15 built-in compliance packs, or do both.
