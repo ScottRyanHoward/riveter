@@ -7,10 +7,7 @@ without spawning a subprocess.
 
 import json
 from pathlib import Path
-from typing import Any, Dict
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 from click.testing import CliRunner
 
@@ -187,9 +184,7 @@ class TestScanOutputFormats:
         runner = CliRunner()
         with patch("riveter.cli.extract_terraform_config") as mock_extract:
             mock_extract.return_value = {"resources": [_PASSING_RESOURCE]}
-            result = runner.invoke(
-                main, ["scan", "-r", str(rules), "-t", str(tf), "-f", "json"]
-            )
+            result = runner.invoke(main, ["scan", "-r", str(rules), "-t", str(tf), "-f", "json"])
         assert result.exit_code == 0, result.output
         # Rich status messages precede the JSON payload — find the first "{"
         data = _extract_json(result.output)
@@ -199,9 +194,7 @@ class TestScanOutputFormats:
         tf = _write_tf(tmp_path, _INSTANCE_TF)
         rules = _write_rules(tmp_path, _PASSING_RULES)
         runner = CliRunner()
-        result = runner.invoke(
-            main, ["scan", "-r", str(rules), "-t", str(tf), "-f", "junit"]
-        )
+        result = runner.invoke(main, ["scan", "-r", str(rules), "-t", str(tf), "-f", "junit"])
         assert result.exit_code == 0
         assert "<?xml" in result.output or "<testsuites" in result.output
 
@@ -211,9 +204,7 @@ class TestScanOutputFormats:
         runner = CliRunner()
         with patch("riveter.cli.extract_terraform_config") as mock_extract:
             mock_extract.return_value = {"resources": [_PASSING_RESOURCE]}
-            result = runner.invoke(
-                main, ["scan", "-r", str(rules), "-t", str(tf), "-f", "sarif"]
-            )
+            result = runner.invoke(main, ["scan", "-r", str(rules), "-t", str(tf), "-f", "sarif"])
         assert result.exit_code == 0
         data = _extract_json(result.output)
         assert data.get("version") == "2.1.0"
@@ -222,9 +213,7 @@ class TestScanOutputFormats:
         tf = _write_tf(tmp_path, _INSTANCE_TF)
         rules = _write_rules(tmp_path, _PASSING_RULES)
         runner = CliRunner()
-        result = runner.invoke(
-            main, ["scan", "-r", str(rules), "-t", str(tf), "-f", "html"]
-        )
+        result = runner.invoke(main, ["scan", "-r", str(rules), "-t", str(tf), "-f", "html"])
         assert result.exit_code == 0
         assert "<html" in result.output.lower()
 
@@ -381,9 +370,7 @@ class TestScanErrors:
         rules = _write_rules(tmp_path, _PASSING_RULES)
         runner = CliRunner()
         # Click validates --terraform path exists, so missing path → error
-        result = runner.invoke(
-            main, ["scan", "-r", str(rules), "-t", "/nonexistent/path/main.tf"]
-        )
+        result = runner.invoke(main, ["scan", "-r", str(rules), "-t", "/nonexistent/path/main.tf"])
         assert result.exit_code != 0
 
 
@@ -481,6 +468,7 @@ class TestExplainCommand:
         with patch.dict("os.environ", {}, clear=True):
             # Remove any API key from environment
             import os
+
             env = {k: v for k, v in os.environ.items() if k != "ANTHROPIC_API_KEY"}
             with patch.dict("os.environ", env, clear=True):
                 result = runner.invoke(
@@ -509,8 +497,10 @@ class TestExplainCommand:
 
         runner = CliRunner()
         # Also mock extraction so resource lookup succeeds regardless of HCL parser version
-        with patch("riveter.cli.Explainer", return_value=mock_explainer), \
-             patch("riveter.cli.extract_terraform_config") as mock_extract:
+        with (
+            patch("riveter.cli.Explainer", return_value=mock_explainer),
+            patch("riveter.cli.extract_terraform_config") as mock_extract,
+        ):
             mock_extract.return_value = {"resources": [_PASSING_RESOURCE]}
             result = runner.invoke(
                 main,
@@ -557,6 +547,7 @@ class TestGenerateRulesCommand:
         tf = _write_tf(tmp_path, _INSTANCE_TF)
         runner = CliRunner()
         import os
+
         env = {k: v for k, v in os.environ.items() if k != "ANTHROPIC_API_KEY"}
         with patch.dict("os.environ", env, clear=True):
             result = runner.invoke(main, ["generate-rules", "-t", str(tf)])
@@ -565,7 +556,7 @@ class TestGenerateRulesCommand:
     def test_empty_terraform_exits_zero(self, tmp_path):
         # No resources → warning + exit 0
         tf = tmp_path / "empty.tf"
-        tf.write_text("terraform { required_version = \">= 1.0\" }\n")
+        tf.write_text('terraform { required_version = ">= 1.0" }\n')
         runner = CliRunner()
         result = runner.invoke(main, ["generate-rules", "-t", str(tf)])
         assert result.exit_code == 0
@@ -607,9 +598,7 @@ class TestGenerateRulesCommand:
 
         runner = CliRunner()
         with patch("riveter.cli.RuleGenerator", return_value=mock_gen):
-            result = runner.invoke(
-                main, ["generate-rules", "-t", str(tf), "-o", str(out_file)]
-            )
+            result = runner.invoke(main, ["generate-rules", "-t", str(tf), "-o", str(out_file)])
         assert result.exit_code == 0
         assert out_file.exists()
         content = out_file.read_text()
@@ -629,7 +618,5 @@ class TestGenerateRulesCommand:
 
     def test_invalid_terraform_path_exits_nonzero(self, tmp_path):
         runner = CliRunner()
-        result = runner.invoke(
-            main, ["generate-rules", "-t", "/nonexistent/path/main.tf"]
-        )
+        result = runner.invoke(main, ["generate-rules", "-t", "/nonexistent/path/main.tf"])
         assert result.exit_code != 0

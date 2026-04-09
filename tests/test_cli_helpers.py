@@ -3,8 +3,6 @@
 import logging
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from riveter.cli import (
     _attach_explanations,
     _filter_by_pattern,
@@ -13,7 +11,6 @@ from riveter.cli import (
 )
 from riveter.rules import Rule
 from riveter.scanner import ValidationResult
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -39,7 +36,7 @@ def _make_result(
 ) -> ValidationResult:
     rule = _make_rule(rule_id)
     resource = {"id": "web", "resource_type": "aws_instance"}
-    msg = message or ("All checks passed" if passed else f"Expected t3.large, got t2.micro")
+    msg = message or ("All checks passed" if passed else "Expected t3.large, got t2.micro")
     result = ValidationResult(rule=rule, resource=resource, passed=passed, message=msg)
     result.explanation = explanation
     return result

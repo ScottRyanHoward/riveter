@@ -11,7 +11,6 @@ from riveter.exceptions import (
     TerraformParsingError,
 )
 
-
 # ---------------------------------------------------------------------------
 # RiveterError base class
 # ---------------------------------------------------------------------------
@@ -200,7 +199,11 @@ class TestFileSystemError:
         exc = FileSystemError("Not found")
         assert len(exc.suggestions) > 0
         suggestions_text = " ".join(exc.suggestions).lower()
-        assert "exist" in suggestions_text or "permission" in suggestions_text or "path" in suggestions_text
+        assert (
+            "exist" in suggestions_text
+            or "permission" in suggestions_text
+            or "path" in suggestions_text
+        )
 
     def test_custom_suggestions_override_auto(self):
         exc = FileSystemError("Error", suggestions=["Custom suggestion"])
