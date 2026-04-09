@@ -332,6 +332,7 @@ rule_dirs:
   - ./my-custom-rules   # load rule packs from additional local directories
 
 output_format: table
+output_file: report.html  # optional — same as passing -o report.html
 
 include_rules:
   - "*encryption*"

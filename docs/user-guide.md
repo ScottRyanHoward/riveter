@@ -107,7 +107,7 @@ riveter list-rule-packs
 
 ### Custom rule pack directories
 
-Add `rule_dirs` to your config file or use `--rule-dirs` to point Riveter at additional directories:
+Add `rule_dirs` to your config file to point Riveter at additional directories:
 
 ```yaml
 # riveter.yml
@@ -226,6 +226,7 @@ exclude_rules:
 
 # Output
 output_format: table
+output_file: report.html  # optional — same as passing -o report.html
 ```
 
 Auto-detected filenames (in order): `riveter.yml`, `riveter.yaml`, `.riveter.yml`, `.riveter.yaml`, `riveter.json`, `.riveter.json`.

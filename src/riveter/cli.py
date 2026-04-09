@@ -897,12 +897,20 @@ def list_rule_packs() -> None:
     is_flag=True,
     help="Enable debug logging.",
 )
+@click.option(
+    "--config",
+    "-c",
+    "config_file",
+    type=click.Path(exists=True),
+    help="Path to a Riveter config file (YAML or JSON). Auto-detected if not specified.",
+)
 def generate_rules(
     terraform_path: str,
     output_file: Optional[str],
     focus: Optional[str],
     model: Optional[str],
     debug: bool,
+    config_file: Optional[str],
 ) -> None:
     """Generate Riveter rules for your Terraform resources using AI.
 
@@ -926,6 +934,21 @@ def generate_rules(
     """
     _setup_logging(debug)
 
+    # -- Resolve configuration ------------------------------------------------
+    cli_overrides: Dict[str, Any] = {}
+    if debug:
+        cli_overrides["debug"] = True
+
+    try:
+        mgr = ConfigManager()
+        config = mgr.load_config(config_file=config_file, cli_overrides=cli_overrides)
+    except Exception as exc:
+        err_console.print(f"[red]Configuration error:[/red] {exc}")
+        sys.exit(1)
+
+    # CLI --model flag takes precedence; fall back to config file ai.generate_model
+    effective_model = model or config.ai_generate_model
+
     # -- Parse Terraform -------------------------------------------------------
     try:
         tf_config = extract_terraform_config(terraform_path)
@@ -939,7 +962,7 @@ def generate_rules(
         sys.exit(0)
 
     # -- Check AI availability -------------------------------------------------
-    generator = RuleGenerator(model=model)
+    generator = RuleGenerator(model=effective_model)
     if not generator.is_available():
         err_console.print(
             "\u26a0  AI rule generation requires an Anthropic API key.\n"
