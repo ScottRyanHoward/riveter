@@ -102,3 +102,51 @@ class TestValidateResources:
         results = validate_resources([simple_rule], [ec2_resource])
         for r in results:
             assert r.execution_time >= 0.0
+
+    def test_empty_rules_list_returns_no_results(self, ec2_resource):
+        results = validate_resources([], [ec2_resource])
+        assert results == []
+
+    def test_empty_resources_list_skips_all_rules(self, simple_rule):
+        results = validate_resources([simple_rule], [])
+        skipped = [r for r in results if r.message.startswith("SKIPPED:")]
+        assert len(skipped) == 1
+
+    def test_multiple_assertions_partial_failure(self):
+        # Rule has two assertions; one passes, one fails
+        rule = _make_rule(
+            "multi-assert",
+            "aws_instance",
+            {"instance_type": "t3.large", "ami": "ami-expected"},
+        )
+        resource = {
+            "id": "web",
+            "resource_type": "aws_instance",
+            "instance_type": "t3.large",
+            "ami": "ami-different",
+        }
+        results = validate_resources([rule], [resource])
+        failed = [r for r in results if not r.passed and not r.message.startswith("SKIPPED:")]
+        assert len(failed) == 1
+
+    def test_validation_result_to_dict_with_explanation(self, simple_rule, ec2_resource):
+        result = ValidationResult(
+            rule=simple_rule,
+            resource=ec2_resource,
+            passed=False,
+            message="Expected m5.xlarge, got t3.large",
+        )
+        result.explanation = "This rule enforces a specific instance type."
+        d = result.to_dict()
+        assert d["explanation"] == "This rule enforces a specific instance type."
+        assert d["passed"] is False
+
+    def test_validation_result_to_dict_no_explanation(self, simple_rule, ec2_resource):
+        result = ValidationResult(
+            rule=simple_rule,
+            resource=ec2_resource,
+            passed=True,
+            message="All checks passed",
+        )
+        d = result.to_dict()
+        assert d.get("explanation") is None

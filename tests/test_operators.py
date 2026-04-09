@@ -167,3 +167,49 @@ class TestNestedAttributeResolver:
         deep_path = ".".join(["a"] * 25)
         with pytest.raises(AttributeResolutionError):
             self.resolver.resolve_path({}, deep_path)
+
+    def test_integer_index_out_of_bounds_returns_none(self):
+        obj = {"items": ["a", "b"]}
+        result = self.resolver.resolve_path(obj, "items[5]")
+        assert result is None
+
+    def test_nested_missing_intermediate_returns_none(self):
+        obj = {"a": {"b": 1}}
+        assert self.resolver.resolve_path(obj, "a.c.d") is None
+
+
+class TestNumericOperatorEdgeCases:
+    def test_non_numeric_string_returns_false(self):
+        # "t3.large" cannot be cast to float → should return False, not raise
+        assert NumericOperator("gt").evaluate("t3.large", 5) is False
+
+    def test_none_expected_returns_false(self):
+        # float(None) raises TypeError → should return False
+        assert NumericOperator("eq").evaluate(5, None) is False
+
+    def test_integer_actual_float_expected(self):
+        assert NumericOperator("eq").evaluate(10, 10.0) is True
+
+    def test_ne_with_equal_values_returns_false(self):
+        assert NumericOperator("ne").evaluate(42, 42) is False
+
+
+class TestListOperatorEdgeCases:
+    def test_contains_with_none_actual_returns_false(self):
+        assert ListOperator("contains").evaluate(None, "x") is False
+
+    def test_subset_with_none_actual_returns_false(self):
+        assert ListOperator("subset").evaluate(None, ["x"]) is False
+
+    def test_length_with_none_actual_returns_false(self):
+        assert ListOperator("length").evaluate(None, 3) is False
+
+    def test_length_with_string_non_list_returns_false(self):
+        assert ListOperator("length").evaluate("not-a-list", 3) is False
+
+
+class TestOperatorFactoryEdgeCases:
+    def test_dict_operator_with_multiple_keys(self):
+        # e.g. {"gte": 3, "lte": 10} → NumericOperator for first key
+        op = OperatorFactory.create_operator({"gte": 3, "lte": 10})
+        assert isinstance(op, NumericOperator)
