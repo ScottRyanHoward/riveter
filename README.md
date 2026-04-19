@@ -10,9 +10,15 @@ Riveter catches security misconfigurations and compliance violations during deve
 
 ## Installation
 
+**macOS / Linux**
+
 ```bash
 brew install ScottRyanHoward/riveter/riveter
 ```
+
+**Windows**
+
+Download the latest `riveter-<version>-windows-x86_64.zip` from the [Releases page](https://github.com/ScottRyanHoward/riveter/releases), extract `riveter.exe`, and add it to your `PATH`. Then place rule pack YAML files in `%USERPROFILE%\.riveter\rule_packs\` — see the [User Guide](docs/user-guide.md#windows) for step-by-step instructions.
 
 ---
 

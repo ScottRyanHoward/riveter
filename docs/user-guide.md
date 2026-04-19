@@ -30,6 +30,34 @@ brew install ScottRyanHoward/riveter/riveter
 
 Homebrew installs a standalone binary with no Python dependency. Rule packs are included.
 
+### Windows {#windows}
+
+1. Go to the [Releases page](https://github.com/ScottRyanHoward/riveter/releases) and download `riveter-<version>-windows-x86_64.zip`.
+
+2. Extract `riveter.exe` to a folder on your `PATH` (e.g. `C:\tools\riveter\`).
+
+3. Rule packs are not bundled in the binary. Download them from the same release's source archive and copy the YAML files to `%USERPROFILE%\.riveter\rule_packs\`:
+
+```powershell
+# Replace with the version you downloaded
+$version = "0.2.22"
+$tag = "v$version"
+
+New-Item -ItemType Directory -Force "$env:USERPROFILE\.riveter\rule_packs" | Out-Null
+
+Invoke-WebRequest "https://github.com/ScottRyanHoward/riveter/archive/$tag.zip" -OutFile src.zip
+Expand-Archive src.zip -DestinationPath src_tmp
+Copy-Item "src_tmp\riveter-$version\rule_packs\*.yml" "$env:USERPROFILE\.riveter\rule_packs\" -Force
+Remove-Item src.zip, src_tmp -Recurse -Force
+```
+
+4. Verify the installation:
+
+```powershell
+riveter --version
+riveter list-rule-packs
+```
+
 ### From Source (development)
 
 ```bash
@@ -561,6 +589,36 @@ jobs:
         if: always()
 ```
 
+### GitHub Actions — Windows
+
+```yaml
+jobs:
+  riveter:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Riveter
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = (gh release list --repo ScottRyanHoward/riveter --limit 1 --json tagName | ConvertFrom-Json)[0].tagName
+          $version = $tag.TrimStart('v')
+          gh release download $tag --repo ScottRyanHoward/riveter --pattern "riveter-$version-windows-x86_64.zip"
+          Expand-Archive "riveter-$version-windows-x86_64.zip" -DestinationPath .
+          echo "$PWD" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+          New-Item -ItemType Directory -Force "$env:USERPROFILE\.riveter\rule_packs" | Out-Null
+          Invoke-WebRequest "https://github.com/ScottRyanHoward/riveter/archive/$tag.zip" -OutFile src.zip
+          Expand-Archive src.zip -DestinationPath src_tmp
+          Copy-Item "src_tmp\riveter-$version\rule_packs\*.yml" "$env:USERPROFILE\.riveter\rule_packs\" -Force
+          Remove-Item src.zip, src_tmp -Recurse -Force
+
+      - name: Scan Terraform
+        run: riveter scan -p aws-security -t main.tf
+```
+
 ### GitLab CI
 
 ```yaml
@@ -591,6 +649,16 @@ ls $(brew --prefix)/share/riveter/rule_packs/
 ```
 
 If running from source, ensure you're in the repo root and the `rule_packs/` directory exists.
+
+### "Rule pack not found" on Windows
+
+Rule packs are discovered from `%USERPROFILE%\.riveter\rule_packs\` on Windows. Verify the directory exists and contains YAML files:
+
+```powershell
+Get-ChildItem "$env:USERPROFILE\.riveter\rule_packs\"
+```
+
+If it's empty, re-run the rule pack install step from the [Windows installation instructions](#windows).
 
 ### "No resources found"
 
