@@ -133,6 +133,8 @@ jobs:
             name: macos-arm64
           - os: ubuntu-latest
             name: linux-x86_64
+          - os: windows-latest
+            name: windows-x86_64
 
     steps:
       - uses: actions/checkout@v4
@@ -150,14 +152,22 @@ jobs:
       - name: Build binary
         run: python build_binary.py
 
-      - name: Package binary
+      - name: Package binary (Unix)
+        if: runner.os != 'Windows'
         run: |
           VERSION="${{ needs.prepare.outputs.version }}"
           ARTIFACT="riveter-${VERSION}-${{ matrix.name }}.tar.gz"
-          cd dist
-          tar -czf "../${ARTIFACT}" riveter
-          cd ..
+          cd dist && tar -czf "../${ARTIFACT}" riveter
           echo "ARTIFACT=${ARTIFACT}" >> "$GITHUB_ENV"
+
+      - name: Package binary (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $VERSION = "${{ needs.prepare.outputs.version }}"
+          $ARTIFACT = "riveter-${VERSION}-${{ matrix.name }}.zip"
+          Compress-Archive -Path dist\riveter.exe -DestinationPath $ARTIFACT
+          echo "ARTIFACT=$ARTIFACT" >> $env:GITHUB_ENV
 
       - name: Upload binary to release
         env:

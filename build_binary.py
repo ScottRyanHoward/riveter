@@ -99,7 +99,7 @@ def main() -> None:
     finally:
         ENTRY.unlink(missing_ok=True)
 
-    binary = Path("dist") / "riveter"
+    binary = Path("dist") / ("riveter.exe" if sys.platform == "win32" else "riveter")
     if binary.exists():
         size_mb = binary.stat().st_size / 1024 / 1024
         print(f"\nBinary built: {binary} ({size_mb:.1f} MB)")
