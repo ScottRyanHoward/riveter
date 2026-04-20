@@ -435,8 +435,6 @@ def scan(
             with open(output_file, "w", encoding="utf-8") as fh:
                 fh.write(rendered)
             err_console.print(f"[green]Report saved to[/green] {output_file}")
-            _display_table(results)
-            _print_summary(results)
         else:
             click.echo(rendered)
     else:
@@ -662,8 +660,6 @@ def scan_state(
             with open(output_file, "w", encoding="utf-8") as fh:
                 fh.write(rendered)
             err_console.print(f"[green]Report saved to[/green] {output_file}")
-            _display_table(results)
-            _print_summary(results)
         else:
             click.echo(rendered)
     else:
