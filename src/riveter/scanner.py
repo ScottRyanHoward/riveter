@@ -40,12 +40,17 @@ class ValidationResult:
         self.execution_time = execution_time
         self.explanation: Optional[str] = explanation
 
+    @property
+    def source_file(self) -> Optional[str]:
+        return self.resource.get("source_file")
+
     def to_dict(self) -> Dict[str, Any]:
         """Serialize to a JSON-compatible dictionary."""
         return {
             "rule_id": self.rule.id,
             "resource_type": self.resource.get("resource_type"),
             "resource_id": self.resource.get("id"),
+            "source_file": self.resource.get("source_file"),
             "passed": self.passed,
             "message": self.message,
             "explanation": self.explanation,

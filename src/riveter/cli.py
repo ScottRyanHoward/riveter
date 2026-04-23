@@ -56,8 +56,7 @@ def _filter_by_pattern(
     return rules
 
 
-def _display_table(results: List[ValidationResult]) -> None:
-    """Render results as a Rich table."""
+def _render_flat_table(results: List[ValidationResult]) -> None:
     table = Table(box=box.ROUNDED, show_header=True, header_style="bold", expand=False)
     table.add_column("Status", width=6, justify="center")
     table.add_column("Rule ID", min_width=24)
@@ -81,6 +80,30 @@ def _display_table(results: List[ValidationResult]) -> None:
         table.add_row(status, r.rule.id, resource, msg)
 
     console.print(table)
+
+
+def _display_table(results: List[ValidationResult]) -> None:
+    if not any(r.source_file for r in results):
+        _render_flat_table(results)
+        return
+
+    groups: dict[str, list[ValidationResult]] = {}
+    ungrouped: list[ValidationResult] = []
+    for r in results:
+        if r.source_file:
+            groups.setdefault(r.source_file, []).append(r)
+        else:
+            ungrouped.append(r)
+
+    for filename, group in groups.items():
+        console.rule(f"[bold cyan]{filename}[/bold cyan]", style="cyan")
+        _render_flat_table(group)
+        console.print()
+
+    if ungrouped:
+        console.rule("[dim]unmatched / skipped[/dim]", style="dim")
+        _render_flat_table(ungrouped)
+        console.print()
 
 
 def _print_summary(results: List[ValidationResult]) -> None:

@@ -57,15 +57,16 @@ def extract_terraform_config(tf_path: str) -> Dict[str, List[Dict[str, Any]]]:
         if not tf_files:
             log.warning("No .tf files found in %s", tf_path)
             return {"resources": []}
+        scan_root = path.resolve()
         resources: List[Dict[str, Any]] = []
         for f in tf_files:
-            resources.extend(_parse_file(str(f)))
+            resources.extend(_parse_file(str(f), scan_root=scan_root))
         return {"resources": resources}
 
     return {"resources": _parse_file(tf_path)}
 
 
-def _parse_file(tf_file: str) -> List[Dict[str, Any]]:
+def _parse_file(tf_file: str, scan_root: Path | None = None) -> List[Dict[str, Any]]:
     """Parse a single Terraform file and return its resource list."""
     resolved = Path(os.path.realpath(tf_file))
 
@@ -110,6 +111,13 @@ def _parse_file(tf_file: str) -> List[Dict[str, Any]]:
             for name, config in instances.items():
                 try:
                     resource = _build_resource(resource_type, name, config)
+                    if scan_root is not None:
+                        try:
+                            resource["source_file"] = str(resolved.relative_to(scan_root))
+                        except ValueError:
+                            resource["source_file"] = str(resolved)
+                    else:
+                        resource["source_file"] = None
                     resources.append(resource)
                     log.debug("Extracted %s.%s", resource_type, name)
                 except Exception as exc:

@@ -8,7 +8,7 @@ from riveter.rules import Rule
 from riveter.scanner import ValidationResult
 
 
-def _make_result(passed, rule_id="test-rule", resource_type="aws_instance"):
+def _make_result(passed, rule_id="test-rule", resource_type="aws_instance", source_file=None):
     rule = Rule(
         {
             "id": rule_id,
@@ -18,6 +18,8 @@ def _make_result(passed, rule_id="test-rule", resource_type="aws_instance"):
         }
     )
     resource = {"id": "my_resource", "resource_type": resource_type}
+    if source_file is not None:
+        resource["source_file"] = source_file
     return ValidationResult(
         rule=rule,
         resource=resource,
@@ -119,6 +121,56 @@ class TestSARIFFormatter:
         results = [_make_skipped()]
         data = json.loads(SARIFFormatter().format(results))
         assert data["runs"][0]["results"] == []
+
+
+class TestSourceFileTracking:
+    def test_json_includes_source_file(self):
+        results = [_make_result(True, source_file="modules/main.tf")]
+        data = json.loads(JSONFormatter().format(results))
+        assert data["results"][0]["source_file"] == "modules/main.tf"
+
+    def test_json_source_file_null_when_absent(self):
+        results = [_make_result(True)]
+        data = json.loads(JSONFormatter().format(results))
+        assert data["results"][0]["source_file"] is None
+
+    def test_junit_source_file_property_present(self):
+        results = [_make_result(True, source_file="networking.tf")]
+        root = ET.fromstring(JUnitXMLFormatter().format(results))
+        props = {p.get("name"): p.get("value") for p in root.findall(".//property")}
+        assert props.get("source_file") == "networking.tf"
+
+    def test_junit_source_file_property_empty_when_absent(self):
+        results = [_make_result(True)]
+        root = ET.fromstring(JUnitXMLFormatter().format(results))
+        props = {p.get("name"): p.get("value") for p in root.findall(".//property")}
+        assert props.get("source_file") == ""
+
+    def test_sarif_physical_location_when_source_file_present(self):
+        results = [_make_result(False, source_file="main.tf")]
+        data = json.loads(SARIFFormatter().format(results))
+        location = data["runs"][0]["results"][0]["locations"][0]
+        assert location["physicalLocation"]["artifactLocation"]["uri"] == "main.tf"
+        assert location["physicalLocation"]["artifactLocation"]["uriBaseId"] == "%SRCROOT%"
+
+    def test_sarif_no_physical_location_when_source_file_absent(self):
+        results = [_make_result(False)]
+        data = json.loads(SARIFFormatter().format(results))
+        location = data["runs"][0]["results"][0]["locations"][0]
+        assert "physicalLocation" not in location
+
+    def test_html_source_file_in_data_json(self):
+        results = [_make_result(False, source_file="ec2.tf")]
+        output = HTMLFormatter().format(results)
+        assert "ec2.tf" in output
+
+    def test_html_source_file_empty_string_when_absent(self):
+        results = [_make_result(False)]
+        output = HTMLFormatter().format(results)
+        data_start = output.index("const DATA = ") + len("const DATA = ")
+        data_end = output.index(";", data_start)
+        rows = json.loads(output[data_start:data_end])
+        assert rows[0]["source_file"] == ""
 
 
 class TestHTMLFormatter:

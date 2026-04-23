@@ -70,6 +70,29 @@ class TestExtractTerraformConfig:
         result = extract_terraform_config(str(tmp_path))
         assert len(result["resources"]) == 3
 
+    def test_directory_scan_resources_have_source_file(self, tmp_path):
+        (tmp_path / "a.tf").write_text(_SIMPLE_TF)
+        (tmp_path / "b.tf").write_text(_MULTI_TF)
+        result = extract_terraform_config(str(tmp_path))
+        for r in result["resources"]:
+            assert r.get("source_file") is not None
+            assert not r["source_file"].startswith("/")
+
+    def test_directory_scan_source_file_is_relative(self, tmp_path):
+        sub = tmp_path / "modules"
+        sub.mkdir()
+        (sub / "network.tf").write_text(_SIMPLE_TF)
+        result = extract_terraform_config(str(tmp_path))
+        source_files = [r["source_file"] for r in result["resources"]]
+        assert all("modules" in sf for sf in source_files)
+
+    def test_single_file_source_file_is_none(self, tmp_path):
+        tf = tmp_path / "main.tf"
+        tf.write_text(_SIMPLE_TF)
+        result = extract_terraform_config(str(tf))
+        for r in result["resources"]:
+            assert r["source_file"] is None
+
     def test_directory_no_tf_files(self, tmp_path):
         result = extract_terraform_config(str(tmp_path))
         assert result["resources"] == []

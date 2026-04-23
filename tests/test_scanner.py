@@ -28,6 +28,28 @@ class TestValidationResult:
         assert d["passed"] is True
         assert d["resource_type"] == "aws_instance"
 
+    def test_to_dict_includes_source_file(self, simple_rule, ec2_resource):
+        resource = dict(ec2_resource, source_file="modules/main.tf")
+        result = ValidationResult(rule=simple_rule, resource=resource, passed=True, message="ok")
+        assert result.to_dict()["source_file"] == "modules/main.tf"
+
+    def test_to_dict_source_file_none_when_absent(self, simple_rule, ec2_resource):
+        result = ValidationResult(
+            rule=simple_rule, resource=ec2_resource, passed=True, message="ok"
+        )
+        assert result.to_dict()["source_file"] is None
+
+    def test_source_file_property(self, simple_rule, ec2_resource):
+        resource = dict(ec2_resource, source_file="networking.tf")
+        result = ValidationResult(rule=simple_rule, resource=resource, passed=True, message="ok")
+        assert result.source_file == "networking.tf"
+
+    def test_source_file_property_none_when_absent(self, simple_rule, ec2_resource):
+        result = ValidationResult(
+            rule=simple_rule, resource=ec2_resource, passed=True, message="ok"
+        )
+        assert result.source_file is None
+
 
 class TestValidateResources:
     def test_passing_check(self, simple_rule, ec2_resource):

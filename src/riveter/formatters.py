@@ -84,6 +84,7 @@ class JUnitXMLFormatter(OutputFormatter):
             for name, value in [
                 ("resource_id", result.resource.get("id", "")),
                 ("description", result.rule.description),
+                ("source_file", result.resource.get("source_file") or ""),
             ]:
                 p = ET.SubElement(props, "property")
                 p.set("name", name)
@@ -165,6 +166,25 @@ class SARIFFormatter(OutputFormatter):
             )
         return rules
 
+    def _sarif_location(self, r: "ValidationResult") -> Dict[str, Any]:
+        location: Dict[str, Any] = {
+            "logicalLocations": [
+                {
+                    "name": r.resource.get("id", "unknown"),
+                    "fullyQualifiedName": (
+                        f"{r.resource.get('resource_type', 'unknown')}"
+                        f".{r.resource.get('id', 'unknown')}"
+                    ),
+                    "kind": "resource",
+                }
+            ]
+        }
+        if r.source_file:
+            location["physicalLocation"] = {
+                "artifactLocation": {"uri": r.source_file, "uriBaseId": "%SRCROOT%"}
+            }
+        return location
+
     def _sarif_results(self, results: List[ValidationResult]) -> List[Dict[str, Any]]:
         output = []
         for r in results:
@@ -177,20 +197,7 @@ class SARIFFormatter(OutputFormatter):
                 "ruleId": r.rule.id,
                 "level": "warning",
                 "message": {"text": message_text},
-                "locations": [
-                    {
-                        "logicalLocations": [
-                            {
-                                "name": r.resource.get("id", "unknown"),
-                                "fullyQualifiedName": (
-                                    f"{r.resource.get('resource_type', 'unknown')}"
-                                    f".{r.resource.get('id', 'unknown')}"
-                                ),
-                                "kind": "resource",
-                            }
-                        ]
-                    }
-                ],
+                "locations": [self._sarif_location(r)],
                 "properties": {
                     "resource_type": r.resource.get("resource_type"),
                     "resource_id": r.resource.get("id"),
@@ -243,6 +250,7 @@ class HTMLFormatter(OutputFormatter):
                     "description": r.rule.description,
                     "resource_type": r.rule.resource_type,
                     "resource_id": r.resource.get("id", ""),
+                    "source_file": r.resource.get("source_file") or "",
                     "message": r.message,
                     "explanation": r.explanation or "",
                     "assertions": [
@@ -398,6 +406,7 @@ _HTML_TEMPLATE = """\
     <option value="pass">Passed</option>
     <option value="skip">Skipped</option>
   </select>
+  <select id="fileFilter"><option value="all">All files</option></select>
   <input id="search" type="search" placeholder="Search rule ID or resource&#x2026;">
   <span id="resultCount"></span>
 </div>
@@ -409,6 +418,7 @@ _HTML_TEMPLATE = """\
         <th>Status</th>
         <th>Rule ID</th>
         <th>Resource</th>
+        <th id="fileColHeader">File</th>
         <th>Message</th>
       </tr>
     </thead>
@@ -420,6 +430,21 @@ _HTML_TEMPLATE = """\
 
 <script>
   const DATA = __DATA_JSON__;
+
+  // Populate file filter and hide File column when no source files present
+  (function() {
+    var files = Array.from(new Set(DATA.map(function(r) { return r.source_file; }).filter(Boolean))).sort();
+    var sel = document.getElementById('fileFilter');
+    files.forEach(function(f) {
+      var opt = document.createElement('option');
+      opt.value = f; opt.textContent = f;
+      sel.appendChild(opt);
+    });
+    if (!files.length) {
+      sel.style.display = 'none';
+      document.getElementById('fileColHeader').style.display = 'none';
+    }
+  })();
 
   function esc(s) {
     return String(s)
@@ -458,8 +483,9 @@ _HTML_TEMPLATE = """\
   function renderTable(data) {
     var tbody = document.getElementById('results');
     var count = document.getElementById('resultCount');
+    var hasFiles = DATA.some(function(r) { return r.source_file; });
     if (!data.length) {
-      tbody.innerHTML = '<tr><td colspan="4" class="no-results">No matching results.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="' + (hasFiles ? 5 : 4) + '" class="no-results">No matching results.</td></tr>';
       count.textContent = '0 results';
       return;
     }
@@ -468,19 +494,25 @@ _HTML_TEMPLATE = """\
         + '<dl class="detail-meta">'
         + '<dt>Description</dt><dd>' + esc(r.description) + '</dd>'
         + '<dt>Resource type</dt><dd><code>' + esc(r.resource_type) + '</code></dd>'
+        + (r.source_file ? '<dt>Source file</dt><dd><code>' + esc(r.source_file) + '</code></dd>' : '')
         + '</dl>'
         + assertionDetail(r.assertions)
         + (r.explanation ? '<div class="explanation"><p class="assert-title">AI Explanation</p><p class="explanation-text">' + esc(r.explanation) + '</p></div>' : '')
         + '</div>';
 
+      var fileCell = hasFiles
+        ? ('<td class="mono">' + (r.source_file ? esc(r.source_file) : '<em style="color:#9ca3af">—</em>') + '</td>')
+        : '';
+
       return '<tr class="result-row" onclick="toggleDetail(' + i + ')">'
         + '<td>' + statusBadge(r.status) + '</td>'
         + '<td class="mono">' + esc(r.rule_id) + '</td>'
         + '<td class="mono">' + (r.resource_id ? esc(r.resource_id) : '<em style="color:#9ca3af">—</em>') + '</td>'
+        + fileCell
         + '<td class="msg" title="' + esc(r.message) + '">' + esc(r.message) + '</td>'
         + '</tr>'
         + '<tr id="detail-' + i + '" class="detail-row" style="display:none">'
-        + '<td colspan="4">' + detailHtml + '</td>'
+        + '<td colspan="' + (hasFiles ? 5 : 4) + '">' + detailHtml + '</td>'
         + '</tr>';
     }).join('');
     var n = data.length;
@@ -489,9 +521,11 @@ _HTML_TEMPLATE = """\
 
   function applyFilters() {
     var status = document.getElementById('statusFilter').value;
+    var fileVal = document.getElementById('fileFilter').value;
     var search = document.getElementById('search').value.toLowerCase();
     var filtered = DATA.filter(function(r) {
       if (status !== 'all' && r.status !== status) return false;
+      if (fileVal !== 'all' && r.source_file !== fileVal) return false;
       if (search) {
         var haystack = (r.rule_id + ' ' + r.resource_id).toLowerCase();
         if (haystack.indexOf(search) === -1) return false;
@@ -507,6 +541,7 @@ _HTML_TEMPLATE = """\
   }
 
   document.getElementById('statusFilter').addEventListener('change', applyFilters);
+  document.getElementById('fileFilter').addEventListener('change', applyFilters);
   document.getElementById('search').addEventListener('input', applyFilters);
 
   renderTable(DATA);
