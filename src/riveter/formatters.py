@@ -42,26 +42,62 @@ class OutputFormatter(ABC):
         }
 
 
+def _group_by_file(
+    results: List[ValidationResult],
+) -> List[Dict[str, Any]]:
+    """Return results grouped by source_file, preserving encounter order."""
+    groups: Dict[str, List[ValidationResult]] = {}
+    for r in results:
+        key = r.source_file or ""
+        groups.setdefault(key, []).append(r)
+
+    out = []
+    for key, group in groups.items():
+        passed = sum(1 for r in group if r.passed)
+        skipped = sum(1 for r in group if r.message.startswith("SKIPPED:"))
+        failed = sum(1 for r in group if not r.passed and not r.message.startswith("SKIPPED:"))
+        out.append(
+            {
+                "source_file": key or None,
+                "summary": {
+                    "total": len(group),
+                    "passed": passed,
+                    "failed": failed,
+                    "skipped": skipped,
+                },
+                "results": [r.to_dict() for r in group],
+            }
+        )
+    return out
+
+
 class JSONFormatter(OutputFormatter):
     """JSON output for programmatic consumption."""
 
     def format(self, results: List[ValidationResult]) -> str:
-        return json.dumps(
-            {
-                "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
-                "riveter_version": __version__,
-                "summary": self._summary(results),
-                "results": [r.to_dict() for r in results],
-            },
-            indent=2,
-            ensure_ascii=False,
-        )
+        has_files = any(r.source_file for r in results)
+        doc: Dict[str, Any] = {
+            "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+            "riveter_version": __version__,
+            "summary": self._summary(results),
+        }
+        if has_files:
+            doc["files"] = _group_by_file(results)
+        else:
+            doc["results"] = [r.to_dict() for r in results]
+        return json.dumps(doc, indent=2, ensure_ascii=False)
 
 
 class JUnitXMLFormatter(OutputFormatter):
     """JUnit XML output for CI/CD integration."""
 
     def format(self, results: List[ValidationResult]) -> str:
+        has_files = any(r.source_file for r in results)
+        if has_files:
+            return self._format_grouped(results)
+        return self._format_flat(results)
+
+    def _format_flat(self, results: List[ValidationResult]) -> str:
         summary = self._summary(results)
         ts = ET.Element("testsuite")
         ts.set("name", "Riveter Infrastructure Rules")
@@ -70,46 +106,76 @@ class JUnitXMLFormatter(OutputFormatter):
         ts.set("skipped", str(summary["skipped"]))
         ts.set("time", str(sum(r.execution_time for r in results)))
         ts.set("timestamp", datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"))
-
         for result in results:
-            if result.message.startswith("SKIPPED:"):
-                continue
-
-            tc = ET.SubElement(ts, "testcase")
-            tc.set("classname", f"riveter.{result.resource.get('resource_type', 'unknown')}")
-            tc.set("name", result.rule.id)
-            tc.set("time", str(result.execution_time))
-
-            props = ET.SubElement(tc, "properties")
-            for name, value in [
-                ("resource_id", result.resource.get("id", "")),
-                ("description", result.rule.description),
-                ("source_file", result.resource.get("source_file") or ""),
-            ]:
-                p = ET.SubElement(props, "property")
-                p.set("name", name)
-                p.set("value", str(value))
-
-            if not result.passed:
-                failure = ET.SubElement(tc, "failure")
-                failure.set("message", result.message)
-                failure.set("type", "RuleViolation")
-                details = []
-                for ar in result.assertion_results:
-                    if not ar.passed:
-                        details.append(
-                            f"Property: {ar.property_path}\n"
-                            f"Operator: {ar.operator}\n"
-                            f"Expected: {ar.expected}\n"
-                            f"Actual:   {ar.actual}\n"
-                            f"Message:  {ar.message}"
-                        )
-                body = "\n\n".join(details) if details else result.message
-                if result.explanation:
-                    body = f"{body}\n\nExplanation: {result.explanation}"
-                failure.text = body
-
+            if not result.message.startswith("SKIPPED:"):
+                self._add_testcase(ts, result)
         return ET.tostring(ts, encoding="unicode", xml_declaration=True)
+
+    def _format_grouped(self, results: List[ValidationResult]) -> str:
+        summary = self._summary(results)
+        root = ET.Element("testsuites")
+        root.set("name", "Riveter Infrastructure Rules")
+        root.set("tests", str(summary["total"] - summary["skipped"]))
+        root.set("failures", str(summary["failed"]))
+        root.set("timestamp", datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"))
+
+        for group in _group_by_file(results):
+            ts = ET.SubElement(root, "testsuite")
+            ts.set("name", group["source_file"] or "unmatched")
+            ts.set("tests", str(group["summary"]["total"] - group["summary"]["skipped"]))
+            ts.set("failures", str(group["summary"]["failed"]))
+            ts.set(
+                "time",
+                str(
+                    sum(
+                        r.execution_time
+                        for r in results
+                        if (r.source_file or "") == (group["source_file"] or "")
+                    )
+                ),
+            )
+            for result in results:
+                if (result.source_file or "") != (group["source_file"] or ""):
+                    continue
+                if not result.message.startswith("SKIPPED:"):
+                    self._add_testcase(ts, result)
+
+        return ET.tostring(root, encoding="unicode", xml_declaration=True)
+
+    def _add_testcase(self, parent: ET.Element, result: ValidationResult) -> None:
+        tc = ET.SubElement(parent, "testcase")
+        tc.set("classname", f"riveter.{result.resource.get('resource_type', 'unknown')}")
+        tc.set("name", result.rule.id)
+        tc.set("time", str(result.execution_time))
+
+        props = ET.SubElement(tc, "properties")
+        for name, value in [
+            ("resource_id", result.resource.get("id", "")),
+            ("description", result.rule.description),
+            ("source_file", result.resource.get("source_file") or ""),
+        ]:
+            p = ET.SubElement(props, "property")
+            p.set("name", name)
+            p.set("value", str(value))
+
+        if not result.passed:
+            failure = ET.SubElement(tc, "failure")
+            failure.set("message", result.message)
+            failure.set("type", "RuleViolation")
+            details = []
+            for ar in result.assertion_results:
+                if not ar.passed:
+                    details.append(
+                        f"Property: {ar.property_path}\n"
+                        f"Operator: {ar.operator}\n"
+                        f"Expected: {ar.expected}\n"
+                        f"Actual:   {ar.actual}\n"
+                        f"Message:  {ar.message}"
+                    )
+            body = "\n\n".join(details) if details else result.message
+            if result.explanation:
+                body = f"{body}\n\nExplanation: {result.explanation}"
+            failure.text = body
 
 
 class SARIFFormatter(OutputFormatter):
@@ -336,6 +402,10 @@ _HTML_TEMPLATE = """\
     .result-row td.msg { color: #6b7280; font-size: 13px; max-width: 320px;
                          overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .no-results { text-align: center; padding: 48px; color: #9ca3af; font-style: italic; }
+    .file-header-row td { background: #f1f5f9; padding: 6px 14px; border-bottom: 1px solid #e2e8f0; }
+    .file-header-name { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+                        font-size: 12px; font-weight: 600; color: #0369a1; }
+    .file-header-none { font-size: 12px; color: #9ca3af; font-style: italic; }
 
     /* ── Badges ── */
     .badge { display: inline-block; padding: 2px 8px; border-radius: 4px;
@@ -480,6 +550,32 @@ _HTML_TEMPLATE = """\
       + '<tbody>' + rows + '</tbody></table>';
   }
 
+  function renderRow(r, i, hasFiles) {
+    var cols = hasFiles ? 5 : 4;
+    var detailHtml = '<div class="detail-inner">'
+      + '<dl class="detail-meta">'
+      + '<dt>Description</dt><dd>' + esc(r.description) + '</dd>'
+      + '<dt>Resource type</dt><dd><code>' + esc(r.resource_type) + '</code></dd>'
+      + (r.source_file ? '<dt>Source file</dt><dd><code>' + esc(r.source_file) + '</code></dd>' : '')
+      + '</dl>'
+      + assertionDetail(r.assertions)
+      + (r.explanation ? '<div class="explanation"><p class="assert-title">AI Explanation</p><p class="explanation-text">' + esc(r.explanation) + '</p></div>' : '')
+      + '</div>';
+    var fileCell = hasFiles
+      ? ('<td class="mono">' + (r.source_file ? esc(r.source_file) : '<em style="color:#9ca3af">—</em>') + '</td>')
+      : '';
+    return '<tr class="result-row" onclick="toggleDetail(' + i + ')">'
+      + '<td>' + statusBadge(r.status) + '</td>'
+      + '<td class="mono">' + esc(r.rule_id) + '</td>'
+      + '<td class="mono">' + (r.resource_id ? esc(r.resource_id) : '<em style="color:#9ca3af">—</em>') + '</td>'
+      + fileCell
+      + '<td class="msg" title="' + esc(r.message) + '">' + esc(r.message) + '</td>'
+      + '</tr>'
+      + '<tr id="detail-' + i + '" class="detail-row" style="display:none">'
+      + '<td colspan="' + cols + '">' + detailHtml + '</td>'
+      + '</tr>';
+  }
+
   function renderTable(data) {
     var tbody = document.getElementById('results');
     var count = document.getElementById('resultCount');
@@ -489,32 +585,31 @@ _HTML_TEMPLATE = """\
       count.textContent = '0 results';
       return;
     }
-    tbody.innerHTML = data.map(function(r, i) {
-      var detailHtml = '<div class="detail-inner">'
-        + '<dl class="detail-meta">'
-        + '<dt>Description</dt><dd>' + esc(r.description) + '</dd>'
-        + '<dt>Resource type</dt><dd><code>' + esc(r.resource_type) + '</code></dd>'
-        + (r.source_file ? '<dt>Source file</dt><dd><code>' + esc(r.source_file) + '</code></dd>' : '')
-        + '</dl>'
-        + assertionDetail(r.assertions)
-        + (r.explanation ? '<div class="explanation"><p class="assert-title">AI Explanation</p><p class="explanation-text">' + esc(r.explanation) + '</p></div>' : '')
-        + '</div>';
 
-      var fileCell = hasFiles
-        ? ('<td class="mono">' + (r.source_file ? esc(r.source_file) : '<em style="color:#9ca3af">—</em>') + '</td>')
-        : '';
+    var sorted = hasFiles ? data.slice().sort(function(a, b) {
+      var fa = a.source_file || '\uffff';
+      var fb = b.source_file || '\uffff';
+      return fa < fb ? -1 : fa > fb ? 1 : 0;
+    }) : data;
 
-      return '<tr class="result-row" onclick="toggleDetail(' + i + ')">'
-        + '<td>' + statusBadge(r.status) + '</td>'
-        + '<td class="mono">' + esc(r.rule_id) + '</td>'
-        + '<td class="mono">' + (r.resource_id ? esc(r.resource_id) : '<em style="color:#9ca3af">—</em>') + '</td>'
-        + fileCell
-        + '<td class="msg" title="' + esc(r.message) + '">' + esc(r.message) + '</td>'
-        + '</tr>'
-        + '<tr id="detail-' + i + '" class="detail-row" style="display:none">'
-        + '<td colspan="' + (hasFiles ? 5 : 4) + '">' + detailHtml + '</td>'
-        + '</tr>';
-    }).join('');
+    var html = '';
+    var lastFile;
+    for (var i = 0; i < sorted.length; i++) {
+      var r = sorted[i];
+      if (hasFiles) {
+        var file = r.source_file || '';
+        if (file !== lastFile) {
+          lastFile = file;
+          html += '<tr class="file-header-row"><td colspan="5">'
+            + (file
+              ? '<span class="file-header-name">' + esc(file) + '</span>'
+              : '<em class="file-header-none">no source file</em>')
+            + '</td></tr>';
+        }
+      }
+      html += renderRow(r, i, hasFiles);
+    }
+    tbody.innerHTML = html;
     var n = data.length;
     count.textContent = n + ' result' + (n !== 1 ? 's' : '');
   }

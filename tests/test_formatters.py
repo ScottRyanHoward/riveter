@@ -67,6 +67,26 @@ class TestJSONFormatter:
         data = json.loads(JSONFormatter().format([]))
         assert data["summary"]["total"] == 0
 
+    def test_files_grouping_when_source_files_present(self):
+        results = [
+            _make_result(True, source_file="main.tf"),
+            _make_result(False, source_file="network.tf"),
+        ]
+        data = json.loads(JSONFormatter().format(results))
+        assert "files" in data
+        assert "results" not in data
+        files = {f["source_file"]: f for f in data["files"]}
+        assert "main.tf" in files
+        assert "network.tf" in files
+        assert files["main.tf"]["summary"]["passed"] == 1
+        assert files["network.tf"]["summary"]["failed"] == 1
+
+    def test_flat_results_when_no_source_files(self):
+        results = [_make_result(True), _make_result(False)]
+        data = json.loads(JSONFormatter().format(results))
+        assert "results" in data
+        assert "files" not in data
+
 
 class TestJUnitXMLFormatter:
     def test_output_is_valid_xml(self):
@@ -74,6 +94,27 @@ class TestJUnitXMLFormatter:
         output = JUnitXMLFormatter().format(results)
         root = ET.fromstring(output)
         assert root.tag == "testsuite"
+
+    def test_grouped_output_uses_testsuites_root(self):
+        results = [
+            _make_result(True, source_file="main.tf"),
+            _make_result(False, rule_id="bad-rule", source_file="network.tf"),
+        ]
+        root = ET.fromstring(JUnitXMLFormatter().format(results))
+        assert root.tag == "testsuites"
+        suite_names = {ts.get("name") for ts in root.findall("testsuite")}
+        assert "main.tf" in suite_names
+        assert "network.tf" in suite_names
+
+    def test_grouped_failures_in_correct_suite(self):
+        results = [
+            _make_result(False, rule_id="rule-a", source_file="a.tf"),
+            _make_result(False, rule_id="rule-b", source_file="b.tf"),
+        ]
+        root = ET.fromstring(JUnitXMLFormatter().format(results))
+        suite_a = next(ts for ts in root.findall("testsuite") if ts.get("name") == "a.tf")
+        assert suite_a.find(".//testcase[@name='rule-a']") is not None
+        assert suite_a.find(".//testcase[@name='rule-b']") is None
 
     def test_failure_element_present(self):
         results = [_make_result(False, rule_id="bad-rule")]
@@ -127,7 +168,8 @@ class TestSourceFileTracking:
     def test_json_includes_source_file(self):
         results = [_make_result(True, source_file="modules/main.tf")]
         data = json.loads(JSONFormatter().format(results))
-        assert data["results"][0]["source_file"] == "modules/main.tf"
+        # source_file present → grouped under files key
+        assert data["files"][0]["results"][0]["source_file"] == "modules/main.tf"
 
     def test_json_source_file_null_when_absent(self):
         results = [_make_result(True)]
