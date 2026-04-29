@@ -40,7 +40,7 @@ Homebrew installs a standalone binary with no Python dependency. Rule packs are 
 
 ```powershell
 # Replace with the version you downloaded
-$version = "0.2.22"
+$version = "0.2.27"
 $tag = "v$version"
 
 New-Item -ItemType Directory -Force "$env:USERPROFILE\.riveter\rule_packs" | Out-Null

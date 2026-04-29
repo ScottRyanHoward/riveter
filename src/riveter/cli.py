@@ -696,7 +696,7 @@ def scan_state(
 
 
 @main.command(name="explain")
-@click.argument("rule_id")
+@click.argument("rule_id", metavar="RULE_ID")
 @click.option(
     "--resource",
     "-r",

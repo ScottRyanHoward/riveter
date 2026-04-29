@@ -40,3 +40,11 @@ Once a fix is ready:
 3. Credit will be given to the reporter unless they prefer to remain anonymous.
 
 We ask that you give us reasonable time to address the issue before any public disclosure.
+
+## Known Issues in Dependencies
+
+| CVE | Affected Package | Impact on riveter | Status |
+|-----|-----------------|-------------------|--------|
+| CVE-2026-3219 | `pip` (Python package manager) | None — affects the CI installer only, not riveter's code or runtime dependencies | No fix version available yet; will be resolved when pip releases a patch |
+
+Users who install riveter via `pip install riveter` or run riveter in their own environment are **not exposed** to this vulnerability through riveter's code. The CVE affects pip itself and is only relevant to CI environments that run pip. This table will be updated as patches become available.
