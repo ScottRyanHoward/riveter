@@ -40,17 +40,14 @@ def _default_search_dirs() -> List[str]:
     """Return the ordered list of directories to search for rule packs."""
     dirs: List[str] = []
 
-    # When running as a PyInstaller binary, sys._MEIPASS is the temp extraction dir.
-    # Rule packs are not bundled into the binary; they are installed separately.
-
-    # Relative to this source file (development installs)
-    src_relative = os.path.join(os.path.dirname(__file__), "..", "..", "rule_packs")
-    dirs.append(os.path.normpath(src_relative))
+    # Bundled package data — works for both `pip install` and `pip install -e .`
+    pkg_bundled = os.path.join(os.path.dirname(__file__), "rule_packs")
+    dirs.append(os.path.normpath(pkg_bundled))
 
     # User-local override directory
     dirs.append(os.path.expanduser("~/.riveter/rule_packs"))
 
-    # Homebrew system install locations
+    # Homebrew system install locations (binary installs via brew)
     dirs.append("/opt/homebrew/share/riveter/rule_packs")  # Apple Silicon
     dirs.append("/usr/local/share/riveter/rule_packs")  # Intel / Linux
 

@@ -119,7 +119,35 @@ jobs:
             --draft
 
 # ---------------------------------------------------------------------------
-# Job 2 (matrix): Build standalone binaries with PyInstaller
+# Job 2: Publish Python wheel and sdist to PyPI
+# ---------------------------------------------------------------------------
+  publish-pypi:
+    name: Publish to PyPI
+    needs: prepare
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # Required for OIDC trusted publishing
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.tag }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build tools
+        run: pip install build
+
+      - name: Build wheel and sdist
+        run: python -m build
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+# ---------------------------------------------------------------------------
+# Job 3 (matrix): Build standalone binaries with PyInstaller
 # ---------------------------------------------------------------------------
   build:
     name: Build binary (${{ matrix.name }})
@@ -176,7 +204,7 @@ jobs:
           gh release upload "${{ needs.prepare.outputs.tag }}" "${{ env.ARTIFACT }}"
 
 # ---------------------------------------------------------------------------
-# Job 3: Update Homebrew tap formula and publish the release
+# Job 4: Update Homebrew tap formula and publish the release
 # ---------------------------------------------------------------------------
   update-homebrew:
     name: Update Homebrew formula
@@ -262,7 +290,7 @@ jobs:
               f"    bin.install \"riveter\"\n"
               f"\n"
               f"    resource(\"rule_packs\").stage do\n"
-              f"      (share/\"riveter/rule_packs\").install Dir[\"rule_packs/*.yml\"]\n"
+              f"      (share/\"riveter/rule_packs\").install Dir[\"src/riveter/rule_packs/*.yml\"]\n"
               f"    end\n"
               f"  end\n"
               f"\n"

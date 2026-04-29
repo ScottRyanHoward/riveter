@@ -10,15 +10,22 @@ Riveter catches security misconfigurations and compliance violations during deve
 
 ## Installation
 
-**macOS / Linux**
+**macOS / Linux — Homebrew**
 
 ```bash
 brew install ScottRyanHoward/riveter/riveter
 ```
 
-**Windows**
+**All platforms — pip** (requires Python 3.12+)
 
-Download the latest `riveter-<version>-windows-x86_64.zip` from the [Releases page](https://github.com/ScottRyanHoward/riveter/releases), extract `riveter.exe`, and add it to your `PATH`. Then place rule pack YAML files in `%USERPROFILE%\.riveter\rule_packs\` — see the [User Guide](docs/user-guide.md#windows) for step-by-step instructions.
+```bash
+pip install riveter        # core
+pip install riveter[ai]    # + AI rule generation and explain features
+```
+
+**Windows** — pip is the recommended path. Install [Python 3.12+](https://www.python.org/downloads/), then run the pip command above. No PATH setup required beyond Python itself.
+
+**Direct download** — grab the latest binary from the [Releases page](https://github.com/ScottRyanHoward/riveter/releases) if you prefer a standalone executable with no Python dependency.
 
 ---
 
