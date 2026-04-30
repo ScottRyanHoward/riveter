@@ -209,6 +209,16 @@ assert:
   ingress_rules:
     length:
       lte: 5
+
+  # none_match — no item in the list may match all fields of any pattern
+  ingress:
+    none_match:
+      - from_port: 22
+        cidr_blocks:
+          contains: "0.0.0.0/0"
+      - from_port: 3389
+        cidr_blocks:
+          contains: "0.0.0.0/0"
 ```
 
 ### Nested Properties
@@ -227,7 +237,8 @@ Filters restrict which resources a rule applies to. A rule is only evaluated for
 
 ```yaml
 filter:
-  tags.Environment: production
+  tags.Environment: production   # equality
+  max_session_duration: present  # "present" skips the rule if the field is absent
 ```
 
 ---

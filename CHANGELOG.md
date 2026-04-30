@@ -8,7 +8,15 @@
 ## [0.2.31] - 2026-04-30
 
 ### Added
-- Release v0.2.31
+- `none_match` list operator: asserts that no item in a list matches all fields of any given pattern. Pattern fields support nested operators (`contains`, `ne`, `regex`, etc.). Used to express "no ingress rule should open port 22 to 0.0.0.0/0" style checks.
+- `present` is now supported as a filter value (previously only worked in assertions). Allows rules to skip resources that don't set a given field, avoiding false positives when Terraform provider defaults satisfy the requirement.
+
+### Fixed
+- `security_group_no_wide_open_ingress`: replaced broken `subset` operator with `none_match`; only security groups with SSH or RDP open to 0.0.0.0/0 now fail.
+- `enable_logging` false positives: removed from CloudTrail rules in `aws-hipaa`, `aws-pci-dss`, `cis-aws`, `multi-cloud-security`, and `soc2-security` — the Terraform provider defaults this to `true`, so rules were failing on correctly-configured trails that omit the field.
+- `aws_wa_security_s3_encryption`: updated to target `aws_s3_bucket_server_side_encryption_configuration` (provider v4+ resource) instead of the deprecated inline block on `aws_s3_bucket`.
+- `aws_wa_reliability_elb_cross_zone`: added filter for `load_balancer_type: network` — `enable_cross_zone_load_balancing` is not applicable to Application Load Balancers.
+- `soc2_cc6_2_session_timeout`: added filter `max_session_duration: present` so the rule only fires on IAM roles that explicitly override the default (3600s), eliminating false positives on roles that rely on the provider default.
 
 ## [0.2.30] - 2026-04-30
 

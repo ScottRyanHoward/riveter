@@ -148,7 +148,8 @@ rules:
     resource_type: aws_instance      # Terraform resource type, or "*" for all
     description: EBS volumes must be encrypted
     filter:                          # optional — only apply rule when these match
-      tags.Environment: production
+      tags.Environment: production   # equality check
+      # max_session_duration: present  # "present" also works: skip if field absent
     assert:                          # assertions that must ALL be true
       root_block_device.encrypted: true
     metadata:                        # optional extra info
@@ -212,7 +213,17 @@ assert:
       lte: 5                   # list length must be ≤ 5
   required_tags:
     subset: ["Environment", "Owner", "Project"]
+  ingress:
+    none_match:            # no list item may match all fields of any pattern
+      - from_port: 22
+        cidr_blocks:
+          contains: "0.0.0.0/0"
+      - from_port: 3389
+        cidr_blocks:
+          contains: "0.0.0.0/0"
 ```
+
+`none_match` takes a list of patterns. Each pattern is a dict of field → value (or operator). The assertion passes if **no** item in the actual list matches all fields of any pattern. Pattern fields support the same operators as regular assertions (`contains`, `ne`, `regex`, etc.).
 
 ### Dot notation for nested attributes
 
