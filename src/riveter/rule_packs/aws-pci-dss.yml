@@ -446,9 +446,8 @@ rules:
   # Logging and Monitoring Rules (5-7 rules)
   - id: pci_cloudtrail_enabled
     resource_type: aws_cloudtrail
-    description: "PCI-DSS 10.2.1 - CloudTrail must be enabled for audit logging"
+    description: "PCI-DSS 10.2.1 - CloudTrail must capture global events and cover all regions"
     assert:
-      enable_logging: true
       include_global_service_events: true
       is_multi_region_trail: true
     metadata:

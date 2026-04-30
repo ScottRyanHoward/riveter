@@ -250,9 +250,8 @@ rules:
   # Audit Logging Rules (5-7 rules)
   - id: hipaa_cloudtrail_enabled
     resource_type: aws_cloudtrail
-    description: "HIPAA - CloudTrail must be enabled for audit logging"
+    description: "HIPAA - CloudTrail must capture global events and cover all regions"
     assert:
-      enable_logging: true
       include_global_service_events: true
       is_multi_region_trail: true
     metadata:

@@ -76,6 +76,8 @@ rules:
   - id: soc2_cc6_2_session_timeout
     resource_type: aws_iam_role
     description: "SOC 2 CC6.2 - Session timeout controls are implemented"
+    filter:
+      max_session_duration: present
     assert:
       max_session_duration:
         lte: 3600
@@ -204,7 +206,6 @@ rules:
     resource_type: aws_cloudtrail
     description: "SOC 2 CC7.1 - System activities are logged and monitored"
     assert:
-      enable_logging: true
       is_multi_region_trail: true
       include_global_service_events: true
       enable_log_file_validation: true

@@ -150,7 +150,10 @@ class Rule:
                 actual = self._resolver.resolve_path(resource, path)
             except AttributeResolutionError:
                 return False
-            if actual != expected_value:
+            if expected_value == "present":
+                if actual is None or actual == "" or actual == [] or actual == {}:
+                    return False
+            elif actual != expected_value:
                 return False
         return True
 

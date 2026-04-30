@@ -380,9 +380,8 @@ rules:
 
   - id: multi_cloud_aws_cloudtrail_enabled
     resource_type: aws_cloudtrail
-    description: "Multi-Cloud AWS - CloudTrail should be enabled for audit logging"
+    description: "Multi-Cloud AWS - CloudTrail should capture global events and cover all regions"
     assert:
-      enable_logging: true
       include_global_service_events: true
       is_multi_region_trail: true
     metadata:

@@ -164,7 +164,6 @@ rules:
     resource_type: aws_cloudtrail
     description: "CIS 2.2.1 - Ensure CloudTrail is enabled in all regions"
     assert:
-      enable_logging: true
       is_multi_region_trail: true
       include_global_service_events: true
     metadata:

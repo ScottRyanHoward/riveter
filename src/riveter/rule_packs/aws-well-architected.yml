@@ -145,10 +145,10 @@ rules:
         - https://docs.aws.amazon.com/wellarchitected/latest/security-pillar/welcome.html
 
   - id: aws_wa_security_s3_encryption
-    resource_type: aws_s3_bucket
-    description: "WAF Security - S3 buckets should have encryption enabled"
+    resource_type: aws_s3_bucket_server_side_encryption_configuration
+    description: "WAF Security - S3 buckets should have encryption configured"
     assert:
-      server_side_encryption_configuration: present
+      rule: present
     metadata:
       tags: [aws, well-architected, security, encryption]
       pillar: Security
@@ -251,7 +251,9 @@ rules:
 
   - id: aws_wa_reliability_elb_cross_zone
     resource_type: aws_lb
-    description: "WAF Reliability - Load balancers should have cross-zone load balancing"
+    description: "WAF Reliability - Network load balancers should have cross-zone load balancing enabled"
+    filter:
+      load_balancer_type: network
     assert:
       enable_cross_zone_load_balancing: true
     metadata:
