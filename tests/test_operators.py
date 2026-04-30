@@ -177,6 +177,22 @@ class TestNestedAttributeResolver:
         obj = {"a": {"b": 1}}
         assert self.resolver.resolve_path(obj, "a.c.d") is None
 
+    def test_list_wrapped_block_auto_deref(self):
+        obj = {"versioning_configuration": [{"status": "Enabled"}]}
+        assert self.resolver.resolve_path(obj, "versioning_configuration.status") == "Enabled"
+
+    def test_list_wrapped_block_nested(self):
+        obj = {"root_block_device": [{"encrypted": True}]}
+        assert self.resolver.resolve_path(obj, "root_block_device.encrypted") is True
+
+    def test_list_wrapped_block_missing_key_returns_none(self):
+        obj = {"versioning_configuration": [{"status": "Enabled"}]}
+        assert self.resolver.resolve_path(obj, "versioning_configuration.missing") is None
+
+    def test_empty_list_wrapped_block_returns_none(self):
+        obj = {"versioning_configuration": []}
+        assert self.resolver.resolve_path(obj, "versioning_configuration.status") is None
+
 
 class TestNumericOperatorEdgeCases:
     def test_non_numeric_string_returns_false(self):

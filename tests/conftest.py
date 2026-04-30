@@ -24,9 +24,19 @@ def ec2_resource() -> dict:
         "id": "my_instance",
         "resource_type": "aws_instance",
         "instance_type": "t3.large",
-        "root_block_device": {"encrypted": True, "volume_size": 100},
+        "root_block_device": [{"encrypted": True, "volume_size": 100}],
         "tags": {"Environment": "production", "Owner": "team-infra"},
         "associate_public_ip_address": False,
+    }
+
+
+@pytest.fixture
+def s3_versioning_resource() -> dict:
+    return {
+        "id": "assets",
+        "resource_type": "aws_s3_bucket_versioning",
+        "bucket": "my-bucket",
+        "versioning_configuration": [{"status": "Enabled"}],
     }
 
 

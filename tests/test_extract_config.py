@@ -28,6 +28,15 @@ terraform {
 }
 """
 
+_VERSIONING_TF = """\
+resource "aws_s3_bucket_versioning" "assets" {
+  bucket = "my-bucket"
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+"""
+
 _EMPTY_TF = ""
 
 
@@ -137,3 +146,13 @@ class TestBuildResource:
         cfg = {"tags": {"Env": "prod"}}
         r = _build_resource("aws_instance", "web", cfg)
         assert r["tags"] == {"Env": "prod"}
+
+    def test_nested_block_preserved_as_list(self, tmp_path):
+        # HCL2 encodes nested blocks as lists; verify extraction preserves this structure
+        tf = tmp_path / "versioning.tf"
+        tf.write_text(_VERSIONING_TF)
+        result = extract_terraform_config(str(tf))
+        r = result["resources"][0]
+        assert r["resource_type"] == "aws_s3_bucket_versioning"
+        assert isinstance(r["versioning_configuration"], list)
+        assert r["versioning_configuration"][0]["status"] == "Enabled"

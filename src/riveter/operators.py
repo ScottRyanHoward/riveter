@@ -157,6 +157,11 @@ class NestedAttributeResolver:
             else:
                 if isinstance(current, dict):
                     current = current.get(part)
+                elif (
+                    isinstance(current, list) and len(current) > 0 and isinstance(current[0], dict)
+                ):
+                    # HCL2 encodes nested blocks as single-element lists; auto-dereference
+                    current = current[0].get(part)
                 else:
                     return None
         return current
