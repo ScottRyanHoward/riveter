@@ -452,6 +452,12 @@ def scan(
         "sarif": SARIFFormatter(),
         "html": HTMLFormatter(),
     }
+    if fmt not in formatter_map and not sys.stdout.isatty():
+        err_console.print(
+            "[yellow]Warning:[/yellow] stdout is redirected but no output format was specified. "
+            "Use [bold]-f json[/bold] (or html, junit, sarif) for structured output, "
+            "or [bold]-o FILE[/bold] to save to a file."
+        )
     if fmt in formatter_map:
         rendered = formatter_map[fmt].format(results)
         if output_file:
@@ -677,6 +683,12 @@ def scan_state(
         "sarif": SARIFFormatter(),
         "html": HTMLFormatter(),
     }
+    if fmt not in formatter_map and not sys.stdout.isatty():
+        err_console.print(
+            "[yellow]Warning:[/yellow] stdout is redirected but no output format was specified. "
+            "Use [bold]-f json[/bold] (or html, junit, sarif) for structured output, "
+            "or [bold]-o FILE[/bold] to save to a file."
+        )
     if fmt in formatter_map:
         rendered = formatter_map[fmt].format(results)
         if output_file:
