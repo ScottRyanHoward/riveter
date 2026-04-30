@@ -58,10 +58,10 @@ rules:
 
   # S3 Security Rules
   - id: s3_bucket_encryption
-    resource_type: aws_s3_bucket
-    description: S3 buckets must have server-side encryption enabled
+    resource_type: aws_s3_bucket_server_side_encryption_configuration
+    description: S3 buckets must have server-side encryption configured
     assert:
-      server_side_encryption_configuration: present
+      rule: present
     metadata:
       tags: [s3, encryption]
       references:
@@ -160,13 +160,11 @@ rules:
     description: Security groups should not allow ingress from 0.0.0.0/0 on sensitive ports
     assert:
       ingress:
-        subset:
-          - from_port:
-              ne: 22
+        none_match:
+          - from_port: 22
             cidr_blocks:
               contains: "0.0.0.0/0"
-          - from_port:
-              ne: 3389
+          - from_port: 3389
             cidr_blocks:
               contains: "0.0.0.0/0"
     metadata:
@@ -210,7 +208,7 @@ rules:
 
   - id: iam_policy_no_wildcard_actions
     resource_type: aws_iam_policy
-    description: IAM policies should not use wildcard actions
+    description: IAM policies should not use wildcard actions (note — ineffective when policy is set via jsonencode(); use aws_iam_policy_document data source for static analysis coverage)
     assert:
       policy:
         regex: "^(?!.*\"Action\":\\s*\"\\*\").*$"
@@ -222,9 +220,8 @@ rules:
   # CloudTrail Security Rules
   - id: cloudtrail_enabled
     resource_type: aws_cloudtrail
-    description: CloudTrail should be enabled for audit logging
+    description: CloudTrail should capture global events and cover all regions
     assert:
-      enable_logging: true
       include_global_service_events: true
       is_multi_region_trail: true
     metadata:

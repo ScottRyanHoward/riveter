@@ -107,6 +107,45 @@ class TestListOperator:
         msg = ListOperator("contains").get_error_message([1, 2], 99)
         assert "99" in msg
 
+    def test_none_match_no_forbidden_pattern_matched(self):
+        ingress = [{"from_port": 443, "cidr_blocks": ["0.0.0.0/0"]}]
+        patterns = [{"from_port": 22, "cidr_blocks": {"contains": "0.0.0.0/0"}}]
+        assert ListOperator("none_match").evaluate(ingress, patterns) is True
+
+    def test_none_match_forbidden_pattern_found(self):
+        ingress = [{"from_port": 22, "cidr_blocks": ["0.0.0.0/0"]}]
+        patterns = [{"from_port": 22, "cidr_blocks": {"contains": "0.0.0.0/0"}}]
+        assert ListOperator("none_match").evaluate(ingress, patterns) is False
+
+    def test_none_match_partial_field_match_only(self):
+        # from_port matches but cidr_blocks does not → no full match → passes
+        ingress = [{"from_port": 22, "cidr_blocks": ["10.0.0.0/8"]}]
+        patterns = [{"from_port": 22, "cidr_blocks": {"contains": "0.0.0.0/0"}}]
+        assert ListOperator("none_match").evaluate(ingress, patterns) is True
+
+    def test_none_match_empty_actual_passes(self):
+        assert ListOperator("none_match").evaluate([], [{"from_port": 22}]) is True
+
+    def test_none_match_multiple_patterns_one_matches(self):
+        ingress = [{"from_port": 3389, "cidr_blocks": ["0.0.0.0/0"]}]
+        patterns = [
+            {"from_port": 22, "cidr_blocks": {"contains": "0.0.0.0/0"}},
+            {"from_port": 3389, "cidr_blocks": {"contains": "0.0.0.0/0"}},
+        ]
+        assert ListOperator("none_match").evaluate(ingress, patterns) is False
+
+    def test_none_match_no_cidr_blocks_field_passes(self):
+        # Item has no cidr_blocks (only security_groups) — pattern requires cidr_blocks → no match
+        ingress = [{"from_port": 22, "security_groups": ["sg-12345"]}]
+        patterns = [{"from_port": 22, "cidr_blocks": {"contains": "0.0.0.0/0"}}]
+        assert ListOperator("none_match").evaluate(ingress, patterns) is True
+
+    def test_none_match_error_message_names_matched_item(self):
+        ingress = [{"from_port": 22, "cidr_blocks": ["0.0.0.0/0"]}]
+        patterns = [{"from_port": 22, "cidr_blocks": {"contains": "0.0.0.0/0"}}]
+        msg = ListOperator("none_match").get_error_message(ingress, patterns)
+        assert "22" in msg
+
 
 class TestOperatorFactory:
     def test_creates_numeric(self):

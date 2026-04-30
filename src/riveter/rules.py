@@ -23,6 +23,7 @@ Supported operators in assert:
     contains                  — list contains value
     length                    — list/string length (int or dict with operators)
     subset                    — list is a subset of another list
+    none_match                — no item in list matches all fields of any given pattern
     present                   — value exists and is non-empty (special keyword)
 """
 
@@ -49,6 +50,7 @@ _VALID_OPERATORS = {
     "contains",
     "length",
     "subset",
+    "none_match",
 }
 
 

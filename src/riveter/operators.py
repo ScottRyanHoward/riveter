@@ -69,10 +69,10 @@ class RegexOperator(ComparisonOperator):
 
 
 class ListOperator(ComparisonOperator):
-    """Handles list-based operations: contains, length, subset."""
+    """Handles list-based operations: contains, length, subset, none_match."""
 
     def __init__(self, operation: str) -> None:
-        if operation not in ("contains", "length", "subset"):
+        if operation not in ("contains", "length", "subset", "none_match"):
             raise ValueError(f"Invalid list operation: {operation}")
         self.operation = operation
 
@@ -97,6 +97,15 @@ class ListOperator(ComparisonOperator):
                 return set(expected).issubset(set(actual))
             except TypeError:
                 return all(item in actual for item in expected)
+        if self.operation == "none_match":
+            if not isinstance(actual, (list, tuple)) or not isinstance(expected, list):
+                return False
+            for pattern in expected:
+                if isinstance(pattern, dict):
+                    for item in actual:
+                        if self._item_matches_pattern(item, pattern):
+                            return False
+            return True
         return False
 
     def get_error_message(self, actual: Any, expected: Any) -> str:
@@ -105,14 +114,41 @@ class ListOperator(ComparisonOperator):
         if self.operation == "length":
             length = len(actual) if isinstance(actual, (list, tuple, str)) else "N/A"
             return f"Length {length} does not satisfy {expected}"
+        if self.operation == "none_match":
+            if isinstance(actual, list) and isinstance(expected, list):
+                for pattern in expected:
+                    if isinstance(pattern, dict):
+                        for item in actual:
+                            if self._item_matches_pattern(item, pattern):
+                                return f"Found item matching forbidden pattern {pattern}: {item}"
+            return f"A forbidden pattern was matched in {actual}"
         return f"Expected subset {expected} is not contained in {actual}"
+
+    def _field_matches_spec(self, actual_value: Any, spec: Any) -> bool:
+        """Check whether actual_value satisfies spec (literal equality or operator dict)."""
+        if isinstance(spec, dict) and len(spec) == 1:
+            op_name, op_value = next(iter(spec.items()))
+            try:
+                op = OperatorFactory.create_operator(op_name)
+                return op.evaluate(actual_value, op_value)
+            except ValueError:
+                pass
+        return bool(actual_value == spec)
+
+    def _item_matches_pattern(self, item: Any, pattern: Dict[str, Any]) -> bool:
+        """Return True if item matches ALL fields in pattern."""
+        if not isinstance(item, dict):
+            return False
+        return all(
+            self._field_matches_spec(item.get(field), spec) for field, spec in pattern.items()
+        )
 
 
 class OperatorFactory:
     """Creates the appropriate operator from a name or config dict."""
 
     _NUMERIC = {"gt", "lt", "gte", "lte", "ne", "eq"}
-    _LIST = {"contains", "length", "subset"}
+    _LIST = {"contains", "length", "subset", "none_match"}
 
     @staticmethod
     def create_operator(operator_config: Union[str, Dict[str, Any]]) -> ComparisonOperator:
