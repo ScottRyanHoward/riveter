@@ -39,8 +39,8 @@ Homebrew installs a standalone binary with no Python dependency. Rule packs are 
 3. Rule packs are not bundled in the binary. Download them from the same release's source archive and copy the YAML files to `%USERPROFILE%\.riveter\rule_packs\`:
 
 ```powershell
-# Replace with the version you downloaded
-$version = "0.2.28"
+# Replace X.Y.Z with the version you downloaded
+$version = "X.Y.Z"
 $tag = "v$version"
 
 New-Item -ItemType Directory -Force "$env:USERPROFILE\.riveter\rule_packs" | Out-Null
