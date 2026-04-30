@@ -241,13 +241,13 @@ Rich terminal output with color-coded PASS/FAIL/SKIP status.
 ### JSON
 
 ```bash
-riveter scan -p aws-security -t main.tf -f json > results.json
+riveter scan -p aws-security -t main.tf -f json -o results.json
 ```
 
 ### JUnit XML (CI/CD)
 
 ```bash
-riveter scan -p aws-security -t main.tf -f junit > results.xml
+riveter scan -p aws-security -t main.tf -f junit -o results.xml
 ```
 
 Compatible with GitHub Actions, Jenkins, GitLab CI, and any JUnit-aware CI system.
@@ -255,7 +255,7 @@ Compatible with GitHub Actions, Jenkins, GitLab CI, and any JUnit-aware CI syste
 ### SARIF
 
 ```bash
-riveter scan -p aws-security -t main.tf -f sarif > results.sarif
+riveter scan -p aws-security -t main.tf -f sarif -o results.sarif
 ```
 
 Upload to GitHub Code Scanning for inline annotations.
@@ -263,16 +263,10 @@ Upload to GitHub Code Scanning for inline annotations.
 ### HTML
 
 ```bash
-# Write report to file and see table summary in the terminal
 riveter scan -p aws-security -t main.tf -f html -o report.html
-
-# Or redirect stdout to a file (no terminal table)
-riveter scan -p aws-security -t main.tf -f html > report.html
 ```
 
 Generates a self-contained HTML report with no external dependencies. Open in any browser to explore results with interactive filtering by status and resource/rule name. Click any row to expand full assertion details. When `--explain` is used, AI-generated explanations appear in the expanded detail panel for each failure. Useful for sharing scan results with stakeholders and auditors who can't easily read JSON or SARIF.
-
-> **Tip:** Use `-o report.html` instead of `> report.html` to write the HTML to a file while keeping the table summary visible in your terminal.
 
 ---
 
@@ -376,7 +370,7 @@ CLI flags always override config file values.
 - name: Scan Terraform with Riveter
   run: |
     brew install ScottRyanHoward/riveter/riveter
-    riveter scan -p aws-security -t main.tf -f junit > riveter-results.xml
+    riveter scan -p aws-security -t main.tf -f junit -o riveter-results.xml
 
 - name: Publish test results
   uses: mikepenz/action-junit-report@v4

@@ -296,32 +296,24 @@ riveter scan -p aws-security -t main.tf -f json | jq '.summary'
 ### JUnit XML
 
 ```bash
-riveter scan -p aws-security -t main.tf -f junit > results.xml
+riveter scan -p aws-security -t main.tf -f junit -o results.xml
 ```
 
 ### SARIF
 
 ```bash
-riveter scan -p aws-security -t main.tf -f sarif > results.sarif
+riveter scan -p aws-security -t main.tf -f sarif -o results.sarif
 # Upload to GitHub Code Scanning, SonarQube, etc.
 ```
 
 ### HTML
 
-Use `-o` to write the HTML report to a file while keeping the table summary visible in your terminal:
+Use `-o` to write the HTML report to a file:
 
 ```bash
 riveter scan -p aws-security -t main.tf -f html -o report.html
 open report.html
 ```
-
-To write to a file silently (no terminal table — useful in CI pipelines):
-
-```bash
-riveter scan -p aws-security -t main.tf -f html > report.html
-```
-
-> **Tip:** Use `-o` for interactive use, `>` for scripted/CI use where you don't need terminal feedback.
 
 Produces a fully self-contained HTML report — CSS and JavaScript are embedded inline, so the file can be emailed or opened on any machine without an internet connection.
 
@@ -338,8 +330,8 @@ Ideal for sharing scan results with auditors or stakeholders who need a readable
 Informational messages (rule loading, scanning progress, warnings) are always written to **stderr**, not stdout. This means non-table output formats (HTML, JSON, SARIF, JUnit) are clean on stdout and safe to pipe or redirect:
 
 ```bash
-# HTML goes to the file; progress messages still appear in the terminal
-riveter scan -p aws-security -t main.tf -f html > report.html
+# HTML goes to the file; table summary and progress messages still appear in the terminal
+riveter scan -p aws-security -t main.tf -f html -o report.html
 
 # JSON is clean — no progress noise mixed in
 riveter scan -p aws-security -t main.tf -f json | jq .
@@ -402,10 +394,10 @@ Run both commands with the same rule pack and compare results to identify drift:
 
 ```bash
 # Check intended config
-riveter scan -p aws-security -t main.tf -f json > hcl-results.json
+riveter scan -p aws-security -t main.tf -f json -o hcl-results.json
 
 # Check deployed state
-terraform state pull | riveter scan-state -p aws-security -s - -f json > state-results.json
+terraform state pull | riveter scan-state -p aws-security -s - -f json -o state-results.json
 
 # Resources that pass in HCL but fail in state have drifted
 ```
@@ -570,7 +562,7 @@ jobs:
 
 ```yaml
       - name: Scan Terraform
-        run: riveter scan -p aws-security -t main.tf -f junit > riveter-results.xml
+        run: riveter scan -p aws-security -t main.tf -f junit -o riveter-results.xml
         continue-on-error: true
 
       - name: Publish results
@@ -584,7 +576,7 @@ jobs:
 
 ```yaml
       - name: Scan Terraform
-        run: riveter scan -p aws-security -t main.tf -f sarif > results.sarif
+        run: riveter scan -p aws-security -t main.tf -f sarif -o results.sarif
 
       - name: Upload SARIF
         uses: github/codeql-action/upload-sarif@v3
@@ -630,7 +622,7 @@ riveter:
   image: ubuntu:latest
   script:
     - brew install ScottRyanHoward/riveter/riveter
-    - riveter scan -p aws-security -t main.tf -f junit > riveter-results.xml
+    - riveter scan -p aws-security -t main.tf -f junit -o riveter-results.xml
   artifacts:
     reports:
       junit: riveter-results.xml
@@ -677,11 +669,7 @@ grep -c 'resource "' main.tf
 If you run `riveter scan -f html` without redirecting output, the raw HTML will print to your terminal. Use `-o` to write directly to a file instead:
 
 ```bash
-# Correct — writes HTML to file, shows table in terminal
 riveter scan -p aws-security -t main.tf -f html -o report.html
-
-# Also works — HTML goes to the file, progress messages still visible in terminal
-riveter scan -p aws-security -t main.tf -f html > report.html
 ```
 
 ### Debug mode
