@@ -7,8 +7,8 @@
 
 ## [0.2.29] - 2026-04-30
 
-### Added
-- Release v0.2.29
+### Fixed
+- Nested block attribute paths (e.g. `versioning_configuration.status`, `root_block_device.encrypted`) now resolve correctly. The HCL2 parser encodes nested Terraform blocks as single-element lists of dicts, causing dot-notation paths to return `None` instead of the actual value. The resolver now transparently dereferences these list-wrapped blocks so rule assertions work as expected.
 
 ## [0.2.28] - 2026-04-29
 
