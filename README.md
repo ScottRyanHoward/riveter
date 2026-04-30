@@ -16,6 +16,8 @@ Riveter catches security misconfigurations and compliance violations during deve
 brew install ScottRyanHoward/riveter/riveter
 ```
 
+AI features are bundled — just add your `ANTHROPIC_API_KEY` to use them.
+
 **All platforms — pip** (requires Python 3.12+)
 
 ```bash
@@ -25,7 +27,7 @@ pip install riveter[ai]    # + AI rule generation and explain features
 
 **Windows** — pip is the recommended path. Install [Python 3.12+](https://www.python.org/downloads/), then run the pip command above. No PATH setup required beyond Python itself.
 
-**Direct download** — grab the latest binary from the [Releases page](https://github.com/ScottRyanHoward/riveter/releases) if you prefer a standalone executable with no Python dependency.
+**Direct download** — grab the latest binary from the [Releases page](https://github.com/ScottRyanHoward/riveter/releases) if you prefer a standalone executable with no Python dependency. AI features are bundled, same as Homebrew.
 
 ---
 
@@ -278,6 +280,9 @@ Generates a self-contained HTML report with no external dependencies. Open in an
 
 Both AI features require an Anthropic API key (pay-as-you-go).
 Get one at https://console.anthropic.com, then export it:
+
+> **Homebrew / standalone binary:** AI support is already bundled — skip to the API key step below.
+> **pip install:** Run `pip install riveter[ai]` to include the AI package.
 
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...
