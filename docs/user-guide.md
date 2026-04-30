@@ -259,7 +259,7 @@ Auto-detected filenames (in order): `riveter.yml`, `riveter.yaml`, `.riveter.yml
 
 Or specify explicitly: `riveter scan -c path/to/config.yml -t main.tf`
 
-**CLI flags always override config file values.**
+**CLI flags and config file values are merged, not replaced.** For scalar options (`output_format`, `output_file`), the CLI value wins. For list options (`rule_packs`, `rule_dirs`, `include_rules`, `exclude_rules`), CLI values are added to the config file list — so passing `--include-rules "*encrypt*"` on the command line while `include_rules: ["*tag*"]` is in the config file will run rules matching either pattern.
 
 ---
 

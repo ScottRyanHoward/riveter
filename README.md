@@ -358,7 +358,7 @@ ai:
   generate_model: claude-sonnet-4-20250514  # optional — model for generate-rules
 ```
 
-CLI flags always override config file values.
+For scalar options (`output_format`, `output_file`), CLI values override the config file. For list options (`rule_packs`, `rule_dirs`, `include_rules`, `exclude_rules`), CLI values extend the config file list.
 
 ---
 
