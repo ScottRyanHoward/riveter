@@ -95,7 +95,9 @@ def validate_resources(
             continue
 
         for rule in active_rules:
-            if rule.resource_type != "*" and resource.get("resource_type") != rule.resource_type:
+            if rule.resource_type != "*" and resource.get("resource_type") not in [
+                t.strip() for t in rule.resource_type.split("|")
+            ]:
                 continue
 
             t0 = time.monotonic()
