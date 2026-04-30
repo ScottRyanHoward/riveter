@@ -32,26 +32,18 @@ Homebrew installs a standalone binary with no Python dependency. Rule packs are 
 
 ### Windows {#windows}
 
-1. Go to the [Releases page](https://github.com/ScottRyanHoward/riveter/releases) and download `riveter-<version>-windows-x86_64.zip`.
-
-2. Extract `riveter.exe` to a folder on your `PATH` (e.g. `C:\tools\riveter\`).
-
-3. Rule packs are not bundled in the binary. Download them from the same release's source archive and copy the YAML files to `%USERPROFILE%\.riveter\rule_packs\`:
+pip is the recommended path. Install [Python 3.12+](https://www.python.org/downloads/), then:
 
 ```powershell
-# Replace X.Y.Z with the version you downloaded
-$version = "X.Y.Z"
-$tag = "v$version"
-
-New-Item -ItemType Directory -Force "$env:USERPROFILE\.riveter\rule_packs" | Out-Null
-
-Invoke-WebRequest "https://github.com/ScottRyanHoward/riveter/archive/$tag.zip" -OutFile src.zip
-Expand-Archive src.zip -DestinationPath src_tmp
-Copy-Item "src_tmp\riveter-$version\rule_packs\*.yml" "$env:USERPROFILE\.riveter\rule_packs\" -Force
-Remove-Item src.zip, src_tmp -Recurse -Force
+pip install riveter        # core
+pip install riveter[ai]    # + AI rule generation and explain features
 ```
 
-4. Verify the installation:
+Rule packs are bundled — no extra setup needed.
+
+Alternatively, download the standalone `riveter-<version>-windows-x86_64.zip` from the [Releases page](https://github.com/ScottRyanHoward/riveter/releases), extract `riveter.exe` to a folder on your `PATH`, and copy the rule pack YAML files from the source archive to `%USERPROFILE%\.riveter\rule_packs\`.
+
+Verify either way with:
 
 ```powershell
 riveter --version
