@@ -46,7 +46,7 @@ riveter scan -p aws-security -p cis-aws -t main.tf
 # Scan an entire directory
 riveter scan -p aws-security -t ./infra/
 
-# Save an HTML report and still see results in the terminal
+# Save an HTML report
 riveter scan -p aws-security -t main.tf -f html -o report.html
 
 # Validate deployed state (drift detection)

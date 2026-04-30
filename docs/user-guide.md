@@ -330,7 +330,7 @@ Ideal for sharing scan results with auditors or stakeholders who need a readable
 Informational messages (rule loading, scanning progress, warnings) are always written to **stderr**, not stdout. This means non-table output formats (HTML, JSON, SARIF, JUnit) are clean on stdout and safe to pipe or redirect:
 
 ```bash
-# HTML goes to the file; table summary and progress messages still appear in the terminal
+# HTML goes to the file; progress messages still appear in the terminal
 riveter scan -p aws-security -t main.tf -f html -o report.html
 
 # JSON is clean — no progress noise mixed in
