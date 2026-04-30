@@ -43,7 +43,7 @@ User runs: riveter scan -p aws-security -t main.tf
 Single source of truth for the package version. Updated automatically by the release workflow.
 
 ```python
-__version__ = "0.2.27"
+__version__ = "0.2.28"
 def get_version() -> str: ...
 ```
 

@@ -40,7 +40,7 @@ Homebrew installs a standalone binary with no Python dependency. Rule packs are 
 
 ```powershell
 # Replace with the version you downloaded
-$version = "0.2.27"
+$version = "0.2.28"
 $tag = "v$version"
 
 New-Item -ItemType Directory -Force "$env:USERPROFILE\.riveter\rule_packs" | Out-Null
@@ -255,6 +255,12 @@ exclude_rules:
 # Output
 output_format: table
 output_file: report.html  # optional — same as passing -o report.html
+
+# AI features
+ai:
+  explain_on_fail: true
+  model: claude-sonnet-4-20250514        # optional — model for --explain
+  generate_model: claude-sonnet-4-20250514  # optional — model for generate-rules
 ```
 
 Auto-detected filenames (in order): `riveter.yml`, `riveter.yaml`, `.riveter.yml`, `.riveter.yaml`, `riveter.json`, `.riveter.json`.
@@ -443,7 +449,13 @@ riveter scan-state -p aws-security -s terraform.tfstate -f html -o state-report.
 
 ## AI Features
 
-Both AI features require an [Anthropic API key](https://console.anthropic.com) and the `anthropic` Python package. If you installed Riveter via Homebrew the package is included. Set the key in your environment:
+Both AI features require an [Anthropic API key](https://console.anthropic.com). The `anthropic` package is bundled in the Homebrew and standalone binary distributions. If you installed via pip, add it with:
+
+```bash
+pip install riveter[ai]
+```
+
+Then set your API key:
 
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...
