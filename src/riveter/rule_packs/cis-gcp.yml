@@ -399,7 +399,7 @@ rules:
     resource_type: google_compute_subnetwork
     description: "CIS 3.8 - Ensure that VPC Flow Logs is enabled for every subnet in a VPC Network"
     assert:
-      log_config.enable: true
+      log_config: present
     metadata:
       tags: [cis, networking, vpc-flow-logs]
       cis_control: "3.8"
@@ -475,7 +475,7 @@ rules:
     resource_type: google_storage_bucket
     description: "CIS 5.1 - Ensure that Cloud Storage buckets have uniform bucket-level access enabled"
     assert:
-      uniform_bucket_level_access.enabled: true
+      uniform_bucket_level_access: true
     metadata:
       tags: [cis, storage, uniform-access]
       cis_control: "5.1"

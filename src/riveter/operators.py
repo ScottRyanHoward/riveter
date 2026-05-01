@@ -80,9 +80,12 @@ class ListOperator(ComparisonOperator):
         if self.operation == "contains":
             return isinstance(actual, (list, tuple)) and expected in actual
         if self.operation == "length":
-            if not isinstance(actual, (list, tuple, str)):
+            if actual is None:
+                length = 0
+            elif not isinstance(actual, (list, tuple, str)):
                 return False
-            length = len(actual)
+            else:
+                length = len(actual)
             if isinstance(expected, int):
                 return length == expected
             if isinstance(expected, dict):
@@ -215,7 +218,22 @@ class NestedAttributeResolver:
         i = 0
         while i < len(path):
             ch = path[i]
-            if ch == ".":
+            if ch == '"':
+                # Quoted segment — read until closing quote, treat as a single key
+                if current:
+                    parts.append(current)
+                    current = ""
+                try:
+                    end = path.index('"', i + 1)
+                except ValueError as exc:
+                    raise AttributeResolutionError(f"Unclosed quote in path: {path}") from exc
+                parts.append(path[i + 1 : end])
+                i = end + 1
+                # Consume a trailing dot separator if present
+                if i < len(path) and path[i] == ".":
+                    i += 1
+                continue
+            elif ch == ".":
                 if current:
                     parts.append(current)
                     current = ""

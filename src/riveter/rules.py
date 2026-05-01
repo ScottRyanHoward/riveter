@@ -153,6 +153,9 @@ class Rule:
             if expected_value == "present":
                 if actual is None or actual == "" or actual == [] or actual == {}:
                     return False
+            elif expected_value == "absent":
+                if actual is not None and actual != "" and actual != [] and actual != {}:
+                    return False
             elif actual != expected_value:
                 return False
         return True
@@ -197,6 +200,23 @@ class Rule:
                         actual=actual,
                         passed=passed,
                         message=(f"{path} is present" if passed else f"{path} is missing or empty"),
+                    )
+                )
+
+            elif expected == "absent":
+                passed = actual is None or actual == "" or actual == [] or actual == {}
+                results.append(
+                    AssertionResult(
+                        property_path=path,
+                        operator="absent",
+                        expected="absent",
+                        actual=actual,
+                        passed=passed,
+                        message=(
+                            f"{path} is absent"
+                            if passed
+                            else f"{path} should be absent but has value {actual!r}"
+                        ),
                     )
                 )
 

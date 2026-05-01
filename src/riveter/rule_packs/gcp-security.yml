@@ -86,7 +86,7 @@ rules:
     resource_type: google_storage_bucket
     description: Storage buckets should use uniform bucket-level access
     assert:
-      uniform_bucket_level_access.enabled: true
+      uniform_bucket_level_access: true
     metadata:
       tags: [gcp, storage, access-control]
       references:
@@ -203,7 +203,7 @@ rules:
     resource_type: google_compute_subnetwork
     description: VPC subnets should have flow logs enabled
     assert:
-      log_config.enable: true
+      log_config: present
     metadata:
       tags: [gcp, vpc, monitoring]
       references:
@@ -251,7 +251,7 @@ rules:
     resource_type: google_compute_firewall
     description: Firewall rules should have logging enabled
     assert:
-      log_config.enable: true
+      log_config: present
     metadata:
       tags: [gcp, firewall, monitoring]
       references:
