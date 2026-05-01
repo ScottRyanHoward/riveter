@@ -168,8 +168,12 @@ class JUnitXMLFormatter(OutputFormatter):
                     details.append(
                         f"Property: {ar.property_path}\n"
                         f"Operator: {ar.operator}\n"
-                        f"Expected: {ar.expected}\n"
-                        f"Actual:   {ar.actual}\n"
+                        + (
+                            f"{(ar.expected_label or 'expected').replace('_', ' ').title()}: {ar.expected}\n"
+                            if ar.expected_label is not None
+                            else ""
+                        )
+                        + f"Actual:   {ar.actual}\n"
                         f"Message:  {ar.message}"
                     )
             body = "\n\n".join(details) if details else result.message
@@ -323,7 +327,8 @@ class HTMLFormatter(OutputFormatter):
                         {
                             "property": ar.property_path,
                             "operator": ar.operator,
-                            "expected": str(ar.expected),
+                            "expected_label": ar.expected_label or "",
+                            "expected": str(ar.expected) if ar.expected_label is not None else "",
                             "actual": str(ar.actual),
                             "passed": ar.passed,
                             "message": ar.message,
@@ -432,6 +437,8 @@ _HTML_TEMPLATE = """\
     .assert-pass td { background: #f0fdf4; }
     .assert-fail td { background: #fef2f2; }
     .no-assert { color: #9ca3af; font-size: 12px; font-style: italic; }
+    .expect-label { font-weight: 600; color: #6b7280; font-family: sans-serif; }
+    .expect-na { color: #9ca3af; text-align: center; }
     .explanation { margin-top: 14px; }
     .explanation-text { font-size: 13px; color: #374151; line-height: 1.6;
                         background: #eff6ff; border: 1px solid #bfdbfe;
@@ -535,17 +542,23 @@ _HTML_TEMPLATE = """\
     }
     const rows = assertions.map(function(a) {
       var cls = a.passed ? 'assert-pass' : 'assert-fail';
+      var label = a.expected_label
+        ? a.expected_label.replace(/_/g, ' ').replace(/\b\w/g, function(c){ return c.toUpperCase(); })
+        : '';
+      var expectedCell = a.expected_label
+        ? '<td><span class="expect-label">' + esc(label) + ':</span> ' + esc(a.expected) + '</td>'
+        : '<td class="expect-na">—</td>';
       return '<tr class="' + cls + '">'
         + '<td>' + esc(a.property) + '</td>'
         + '<td>' + esc(a.operator) + '</td>'
-        + '<td>' + esc(a.expected) + '</td>'
+        + expectedCell
         + '<td>' + esc(a.actual)   + '</td>'
         + '<td>' + (a.passed ? '&#x2713;' : '&#x2717;') + '</td>'
         + '</tr>';
     }).join('');
     return '<p class="assert-title">Assertions</p>'
       + '<table class="assert-table">'
-      + '<thead><tr><th>Property</th><th>Operator</th><th>Expected</th>'
+      + '<thead><tr><th>Property</th><th>Operator</th><th>Value</th>'
       + '<th>Actual</th><th></th></tr></thead>'
       + '<tbody>' + rows + '</tbody></table>';
   }
