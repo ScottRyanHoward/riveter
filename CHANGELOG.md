@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.2.34] - 2026-05-01
+
+### Changed
+- chore: auto-generate CHANGELOG from commits since last release tag
+
 ## [0.2.33] - 2026-04-30
 
 ### Added
