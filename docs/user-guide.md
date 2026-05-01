@@ -169,13 +169,16 @@ assert:
   min_tls_version: TLSv1_2         # any YAML scalar
 ```
 
-#### Presence check
+#### Presence / absence check
 
 ```yaml
 assert:
   tags.Environment: present         # value must exist and be non-empty
   kms_key_id: present
+  associate_public_ip_address: absent   # value must be missing or empty
 ```
+
+`present` and `absent` work the same way in `filter` conditions.
 
 #### Regex match
 
@@ -208,6 +211,8 @@ Operators: `eq`, `ne`, `gt`, `gte`, `lt`, `lte`
 assert:
   security_groups:
     contains: "sg-12345678"    # list must contain value
+  blocked_ports:
+    not_contains: 22           # list must NOT contain value
   ingress_rules:
     length:
       lte: 5                   # list length must be ≤ 5
@@ -224,6 +229,8 @@ assert:
 ```
 
 `none_match` takes a list of patterns. Each pattern is a dict of field → value (or operator). The assertion passes if **no** item in the actual list matches all fields of any pattern. Pattern fields support the same operators as regular assertions (`contains`, `ne`, `regex`, etc.).
+
+`not_contains` is the simple inverse of `contains` — the list must not include the specified value.
 
 ### Dot notation for nested attributes
 
@@ -331,7 +338,7 @@ Produces a fully self-contained HTML report — CSS and JavaScript are embedded 
 **Report features:**
 - Summary cards showing total, passed, failed, and skipped counts
 - Filter by status (All / Pass / Fail / Skip), or free-text search across resource and rule IDs
-- Click any row to expand assertion details showing the property path, expected value, actual value, and operator for each check
+- Click any row to expand assertion details showing the property path, operator, actual value, and operator-specific context (e.g. the pattern for `regex`, forbidden patterns for `none_match`) for each check
 - Riveter version and report timestamp embedded in the header
 
 Ideal for sharing scan results with auditors or stakeholders who need a readable view of findings.

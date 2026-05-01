@@ -43,18 +43,37 @@ Supported assertion operators (used as nested dict under the attribute path):
   lt, lte         — less than, less than or equal
   regex           — regular expression match (string)
   contains        — list contains a value
+  not_contains    — list must NOT contain a value
   length          — list or string length check (int for exact, or dict with operators)
-  subset          — list is a subset of another
-  present         — value exists and is non-empty (use as a bare keyword value: present)
+  subset          — list contains all of these values
+  none_match      — no list item may match all fields of any given pattern
+                    (takes a list of dicts; use for blocking dangerous port/CIDR combos)
+  present         — value exists and is non-empty (bare keyword: `field: present`)
+  absent          — value is missing or empty   (bare keyword: `field: absent`)
 
 Simple equality is written without an operator:
   instance_type: t3.micro            # equals "t3.micro"
   root_block_device.encrypted: true  # equals true
 
+Filter conditions support the same bare keywords (present / absent).
+
 Nested paths use dot-notation:
   root_block_device.encrypted        # nested object
   tags.Environment                   # tag value
-  ingress[0].cidr_blocks             # array element"""
+  ingress[0].cidr_blocks             # array element
+
+none_match example — block SSH/RDP from the internet:
+  ingress:
+    none_match:
+      - from_port: 22
+        cidr_blocks:
+          contains: "0.0.0.0/0"
+      - from_port: 3389
+        cidr_blocks:
+          contains: "0.0.0.0/0"
+
+absent example — assert a field is not set:
+  associate_public_ip_address: absent"""
 
 _FEW_SHOT_EXAMPLES = """\
 Example rules for reference:
@@ -80,7 +99,23 @@ rules:
     description: EC2 instances must have required governance tags
     assert:
       tags.Environment: present
-      tags.Owner: present"""
+      tags.Owner: present
+
+  - id: sg-no-ssh-from-internet
+    resource_type: aws_security_group
+    description: Security groups must not allow SSH from 0.0.0.0/0
+    assert:
+      ingress:
+        none_match:
+          - from_port: 22
+            cidr_blocks:
+              contains: "0.0.0.0/0"
+
+  - id: ec2-no-public-ip
+    resource_type: aws_instance
+    description: EC2 instances must not have a public IP assigned
+    assert:
+      associate_public_ip_address: absent"""
 
 
 class RuleGenerator:
