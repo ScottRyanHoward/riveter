@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.2.35] - 2026-05-01
+
+### Fixed
+- fix: eliminate false positives in rule evaluation
+
 ## [0.2.34] - 2026-05-01
 
 ### Changed
