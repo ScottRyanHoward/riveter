@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.2.36] - 2026-05-01
+
+### Changed
+- docs: document none_match, not_contains, absent; update rule generator context
+
 ## [0.2.35] - 2026-05-01
 
 ### Fixed
