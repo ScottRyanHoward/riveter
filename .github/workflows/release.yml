@@ -76,25 +76,62 @@ jobs:
 
       - name: Update CHANGELOG
         run: |
-          VERSION="${{ steps.bump.outputs.version }}"
-          DATE=$(date +%Y-%m-%d)
-          # Insert new entry after the first line (the title)
+          export VERSION="${{ steps.bump.outputs.version }}"
+          export DATE=$(date +%Y-%m-%d)
+
+          # Find the previous release tag to bound the commit range
+          PREV_TAG=$(git tag --sort=-version:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
+          if [ -z "${PREV_TAG}" ]; then
+            RANGE="HEAD"
+          else
+            RANGE="${PREV_TAG}..HEAD"
+          fi
+
+          # Collect commit subjects since the last tag, excluding chore/release commits
+          export COMMITS=$(git log ${RANGE} --pretty=format:"%s" \
+            | grep -Ev '^(chore: release|Merge )' \
+            | sed 's/^/- /')
+
           python3 - << 'PYEOF'
-          import re, os, sys
+          import os, re
+
           version = os.environ['VERSION']
           date    = os.environ['DATE']
+          commits = os.environ['COMMITS'].strip()
+
+          # Bucket commits into sections by conventional-commit prefix
+          added, fixed, changed, other = [], [], [], []
+          for line in commits.splitlines():
+              low = line.lower()
+              if re.search(r'^- (feat|add)', low):
+                  added.append(line)
+              elif re.search(r'^- fix', low):
+                  fixed.append(line)
+              elif re.search(r'^- (refactor|perf|chore|docs|style|test|ci|build)', low):
+                  changed.append(line)
+              else:
+                  other.append(line)
+
+          sections = []
+          if added:
+              sections.append("### Added\n" + "\n".join(added))
+          if fixed:
+              sections.append("### Fixed\n" + "\n".join(fixed))
+          if changed:
+              sections.append("### Changed\n" + "\n".join(changed))
+          if other:
+              sections.append("### Other\n" + "\n".join(other))
+
+          body = "\n\n".join(sections) if sections else "### Changed\n- Internal updates"
+          entry = f"\n## [{version}] - {date}\n\n{body}\n"
+
           with open('CHANGELOG.md') as f:
               content = f.read()
-          entry = f"\n## [{version}] - {date}\n\n### Added\n- Release v{version}\n"
-          # Insert after first heading line
           lines = content.split('\n', 2)
           new_content = lines[0] + '\n' + entry + ('\n'.join(lines[1:]) if len(lines) > 1 else '')
           with open('CHANGELOG.md', 'w') as f:
               f.write(new_content)
           PYEOF
-        env:
-          VERSION: ${{ steps.bump.outputs.version }}
-          DATE: $(date +%Y-%m-%d)
 
       - name: Commit and push
         run: |
