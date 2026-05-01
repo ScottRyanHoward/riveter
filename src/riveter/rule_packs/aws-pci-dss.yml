@@ -18,9 +18,9 @@ rules:
       tags.PCIScope: "true"
     assert:
       ingress:
-        subset:
+        none_match:
           - cidr_blocks:
-              regex: "^(?!0\\.0\\.0\\.0/0).*$"
+              contains: "0.0.0.0/0"
     metadata:
       tags: [pci-dss, network-segmentation, security-groups]
       pci_requirement: "1.2.1"
@@ -34,12 +34,10 @@ rules:
     description: "PCI-DSS 1.3.1 - SSH access must not be allowed from the internet"
     assert:
       ingress:
-        subset:
+        none_match:
           - from_port: 22
-            to_port: 22
-            protocol: tcp
             cidr_blocks:
-              regex: "^(?!0\\.0\\.0\\.0/0).*$"
+              contains: "0.0.0.0/0"
     metadata:
       tags: [pci-dss, network-segmentation, ssh-access]
       pci_requirement: "1.3.1"
@@ -53,12 +51,10 @@ rules:
     description: "PCI-DSS 1.3.1 - RDP access must not be allowed from the internet"
     assert:
       ingress:
-        subset:
+        none_match:
           - from_port: 3389
-            to_port: 3389
-            protocol: tcp
             cidr_blocks:
-              regex: "^(?!0\\.0\\.0\\.0/0).*$"
+              contains: "0.0.0.0/0"
     metadata:
       tags: [pci-dss, network-segmentation, rdp-access]
       pci_requirement: "1.3.1"

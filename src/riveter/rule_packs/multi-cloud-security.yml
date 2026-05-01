@@ -176,9 +176,8 @@ rules:
     description: "Multi-Cloud AWS - Security groups should not allow SSH from internet"
     assert:
       ingress:
-        subset:
-          - from_port:
-              ne: 22
+        none_match:
+          - from_port: 22
             cidr_blocks:
               contains: "0.0.0.0/0"
     metadata:
@@ -270,11 +269,9 @@ rules:
       direction: INGRESS
     assert:
       allow:
-        subset:
+        none_match:
           - ports:
-              regex: "^(?!22).*$"
-            source_ranges:
-              contains: "0.0.0.0/0"
+              contains: "22"
     metadata:
       tags: [multi-cloud, network-security, firewall, gcp]
       providers: [gcp]

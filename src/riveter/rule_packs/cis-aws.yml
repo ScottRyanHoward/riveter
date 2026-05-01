@@ -255,9 +255,8 @@ rules:
     description: "CIS 4.1 - Ensure no security groups allow ingress from 0.0.0.0/0 to port 22"
     assert:
       ingress:
-        subset:
-          - from_port:
-              ne: 22
+        none_match:
+          - from_port: 22
             cidr_blocks:
               contains: "0.0.0.0/0"
     metadata:
@@ -271,9 +270,8 @@ rules:
     description: "CIS 4.2 - Ensure no security groups allow ingress from 0.0.0.0/0 to port 3389"
     assert:
       ingress:
-        subset:
-          - from_port:
-              ne: 3389
+        none_match:
+          - from_port: 3389
             cidr_blocks:
               contains: "0.0.0.0/0"
     metadata:

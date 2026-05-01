@@ -391,12 +391,12 @@ resource "kubernetes_cluster_role_binding" "admin" {
 
 resource "kubernetes_network_policy" "default_deny" {
   metadata {
-    name      = "default-deny-ingress"
+    name      = "default-deny-all"
     namespace = "app"
   }
 
   spec {
     pod_selector {}
-    policy_types = ["Ingress"]  # OK: default deny ingress
+    policy_types = ["Ingress", "Egress"]  # OK: default deny all traffic
   }
 }

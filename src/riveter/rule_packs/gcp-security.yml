@@ -216,11 +216,17 @@ rules:
       direction: INGRESS
     assert:
       allow:
-        subset:
+        none_match:
           - ports:
-              regex: "^(?!22|3389|1433|3306|5432).*$"
-            source_ranges:
-              contains: "0.0.0.0/0"
+              contains: "22"
+          - ports:
+              contains: "3389"
+          - ports:
+              contains: "1433"
+          - ports:
+              contains: "3306"
+          - ports:
+              contains: "5432"
     metadata:
       tags: [gcp, firewall, network-security]
       references:

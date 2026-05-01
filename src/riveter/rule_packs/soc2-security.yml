@@ -94,13 +94,11 @@ rules:
     description: "SOC 2 CC6.3 - Network segmentation controls are implemented"
     assert:
       ingress:
-        subset:
-          - from_port:
-              ne: 22
+        none_match:
+          - from_port: 22
             cidr_blocks:
               contains: "0.0.0.0/0"
-          - from_port:
-              ne: 3389
+          - from_port: 3389
             cidr_blocks:
               contains: "0.0.0.0/0"
     metadata:

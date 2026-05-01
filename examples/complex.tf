@@ -1344,13 +1344,13 @@ resource "kubernetes_deployment" "batch_worker" {
 
 resource "kubernetes_network_policy" "default_deny_ingress" {
   metadata {
-    name      = "default-deny-ingress"
+    name      = "default-deny-all"
     namespace = "app"
   }
 
   spec {
     pod_selector {}
-    policy_types = ["Ingress"]  # OK: default deny ingress
+    policy_types = ["Ingress", "Egress"]  # OK: default deny all traffic
   }
 }
 

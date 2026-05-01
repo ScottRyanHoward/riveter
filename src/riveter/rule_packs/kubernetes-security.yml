@@ -226,12 +226,12 @@ rules:
   - id: k8s_network_policy_default_deny_ingress
     resource_type: kubernetes_network_policy
     description: Namespaces should have default deny ingress network policies
+    filter:
+      spec.pod_selector.match_labels: absent
+      spec.ingress: absent
     assert:
       spec.policy_types:
         contains: Ingress
-      spec.ingress:
-        length:
-          eq: 0
     metadata:
       tags: [kubernetes, network-policy, segmentation, default-deny]
       providers: [eks, aks, gke]
@@ -241,12 +241,12 @@ rules:
   - id: k8s_network_policy_default_deny_egress
     resource_type: kubernetes_network_policy
     description: Namespaces should have default deny egress network policies
+    filter:
+      spec.pod_selector.match_labels: absent
+      spec.egress: absent
     assert:
       spec.policy_types:
         contains: Egress
-      spec.egress:
-        length:
-          eq: 0
     metadata:
       tags: [kubernetes, network-policy, segmentation, default-deny]
       providers: [eks, aks, gke]
@@ -295,6 +295,8 @@ rules:
   - id: k8s_network_policy_namespace_isolation
     resource_type: kubernetes_network_policy
     description: Network policies should implement namespace isolation
+    filter:
+      spec.ingress: present
     assert:
       spec.ingress.from.namespace_selector: present
     metadata:

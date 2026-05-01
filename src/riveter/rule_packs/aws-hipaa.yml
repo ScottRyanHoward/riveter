@@ -353,12 +353,16 @@ rules:
 
   - id: hipaa_security_group_no_wide_open
     resource_type: aws_security_group
-    description: "HIPAA - Security groups must not allow unrestricted access"
+    description: "HIPAA - Security groups must not allow unrestricted access on SSH or RDP"
     assert:
       ingress:
-        subset:
-          - cidr_blocks:
-              regex: "^(?!.*0\\.0\\.0\\.0/0).*$"
+        none_match:
+          - from_port: 22
+            cidr_blocks:
+              contains: "0.0.0.0/0"
+          - from_port: 3389
+            cidr_blocks:
+              contains: "0.0.0.0/0"
     metadata:
       tags: [hipaa, vpc, security-groups, network-security]
       hipaa_control: "164.312(e)(1)"

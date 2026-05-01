@@ -46,6 +46,11 @@ class NumericOperator(ComparisonOperator):
             }
             return ops[self.operator](a, e)
         except (ValueError, TypeError):
+            # Fall back to direct equality for eq/ne when values aren't numeric
+            if self.operator == "eq":
+                return bool(actual == expected)
+            if self.operator == "ne":
+                return bool(actual != expected)
             return False
 
     def get_error_message(self, actual: Any, expected: Any) -> str:
@@ -72,13 +77,15 @@ class ListOperator(ComparisonOperator):
     """Handles list-based operations: contains, length, subset, none_match."""
 
     def __init__(self, operation: str) -> None:
-        if operation not in ("contains", "length", "subset", "none_match"):
+        if operation not in ("contains", "not_contains", "length", "subset", "none_match"):
             raise ValueError(f"Invalid list operation: {operation}")
         self.operation = operation
 
     def evaluate(self, actual: Any, expected: Any) -> bool:
         if self.operation == "contains":
             return isinstance(actual, (list, tuple)) and expected in actual
+        if self.operation == "not_contains":
+            return not (isinstance(actual, (list, tuple)) and expected in actual)
         if self.operation == "length":
             if actual is None:
                 length = 0
@@ -114,6 +121,8 @@ class ListOperator(ComparisonOperator):
     def get_error_message(self, actual: Any, expected: Any) -> str:
         if self.operation == "contains":
             return f"List {actual} does not contain {expected!r}"
+        if self.operation == "not_contains":
+            return f"List {actual} should not contain {expected!r}"
         if self.operation == "length":
             length = len(actual) if isinstance(actual, (list, tuple, str)) else "N/A"
             return f"Length {length} does not satisfy {expected}"
@@ -151,7 +160,7 @@ class OperatorFactory:
     """Creates the appropriate operator from a name or config dict."""
 
     _NUMERIC = {"gt", "lt", "gte", "lte", "ne", "eq"}
-    _LIST = {"contains", "length", "subset", "none_match"}
+    _LIST = {"contains", "not_contains", "length", "subset", "none_match"}
 
     @staticmethod
     def create_operator(operator_config: Union[str, Dict[str, Any]]) -> ComparisonOperator:

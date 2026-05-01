@@ -48,6 +48,7 @@ _VALID_OPERATORS = {
     "eq",
     "regex",
     "contains",
+    "not_contains",
     "length",
     "subset",
     "none_match",

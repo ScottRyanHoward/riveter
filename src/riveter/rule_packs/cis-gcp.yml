@@ -334,9 +334,8 @@ rules:
     description: "CIS 3.4 - Ensure that RSASHA1 is not used for the key-signing key in Cloud DNS DNSSEC"
     assert:
       dnssec_config.default_key_specs:
-        subset:
-          - algorithm:
-              ne: rsasha1
+        none_match:
+          - algorithm: rsasha1
             key_type: keySigning
     metadata:
       tags: [cis, networking, dnssec, rsasha1]
@@ -349,9 +348,8 @@ rules:
     description: "CIS 3.5 - Ensure that RSASHA1 is not used for the zone-signing key in Cloud DNS DNSSEC"
     assert:
       dnssec_config.default_key_specs:
-        subset:
-          - algorithm:
-              ne: rsasha1
+        none_match:
+          - algorithm: rsasha1
             key_type: zoneSigning
     metadata:
       tags: [cis, networking, dnssec, rsasha1]
@@ -366,11 +364,9 @@ rules:
       direction: INGRESS
     assert:
       allow:
-        subset:
+        none_match:
           - ports:
-              regex: "^(?!22).*$"
-            source_ranges:
-              contains: "0.0.0.0/0"
+              contains: "22"
     metadata:
       tags: [cis, networking, ssh, firewall]
       cis_control: "3.6"
@@ -384,11 +380,9 @@ rules:
       direction: INGRESS
     assert:
       allow:
-        subset:
+        none_match:
           - ports:
-              regex: "^(?!3389).*$"
-            source_ranges:
-              contains: "0.0.0.0/0"
+              contains: "3389"
     metadata:
       tags: [cis, networking, rdp, firewall]
       cis_control: "3.7"
