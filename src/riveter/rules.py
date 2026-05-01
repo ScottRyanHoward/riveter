@@ -55,6 +55,39 @@ _VALID_OPERATORS = {
 }
 
 
+_EXPECTED_LABELS: Dict[str, Optional[str]] = {
+    "eq": "expected",
+    "ne": "expected",
+    "gt": "expected",
+    "gte": "expected",
+    "lt": "expected",
+    "lte": "expected",
+    "regex": "pattern",
+    "contains": "required_value",
+    "not_contains": "excluded_value",
+    "length": "expected_length",
+    "subset": "required_subset",
+    "none_match": "forbidden_patterns",
+    "present": None,
+    "absent": None,
+}
+
+_OP_PASS_MESSAGES: Dict[str, Any] = {
+    "eq": lambda path, val: f"{path} equals {val!r}",
+    "ne": lambda path, val: f"{path} does not equal {val!r}",
+    "gt": lambda path, val: f"{path} > {val}",
+    "gte": lambda path, val: f"{path} >= {val}",
+    "lt": lambda path, val: f"{path} < {val}",
+    "lte": lambda path, val: f"{path} <= {val}",
+    "regex": lambda path, val: f"{path} matches pattern {val!r}",
+    "contains": lambda path, val: f"{path} contains {val!r}",
+    "not_contains": lambda path, val: f"{path} does not contain {val!r}",
+    "length": lambda path, val: f"{path} length satisfies {val}",
+    "subset": lambda path, val: f"{path} contains all required values",
+    "none_match": lambda path, val: f"No forbidden {path} patterns found",
+}
+
+
 @dataclass
 class AssertionResult:
     """Result of evaluating a single assertion within a rule."""
@@ -65,6 +98,11 @@ class AssertionResult:
     actual: Any
     passed: bool
     message: str
+
+    @property
+    def expected_label(self) -> Optional[str]:
+        """Semantic JSON key for the expected value — operator-specific, or None to omit."""
+        return _EXPECTED_LABELS.get(self.operator, "expected")
 
 
 class Rule:
@@ -176,6 +214,7 @@ class Rule:
                 for op_name, op_value in expected.items():
                     operator = OperatorFactory.create_operator(op_name)
                     passed = operator.evaluate(actual, op_value)
+                    pass_fn = _OP_PASS_MESSAGES.get(op_name)
                     results.append(
                         AssertionResult(
                             property_path=path,
@@ -184,8 +223,8 @@ class Rule:
                             actual=actual,
                             passed=passed,
                             message=(
-                                f"{path} check passed"
-                                if passed
+                                pass_fn(path, op_value)
+                                if passed and pass_fn
                                 else operator.get_error_message(actual, op_value)
                             ),
                         )

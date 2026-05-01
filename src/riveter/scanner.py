@@ -59,7 +59,7 @@ class ValidationResult:
                 {
                     "property_path": ar.property_path,
                     "operator": ar.operator,
-                    "expected": ar.expected,
+                    **({ar.expected_label: ar.expected} if ar.expected_label is not None else {}),
                     "actual": ar.actual,
                     "passed": ar.passed,
                     "message": ar.message,
