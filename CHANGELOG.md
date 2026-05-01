@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.2.37] - 2026-05-01
+
+### Fixed
+- fix: use semantic labels in HTML, JUnit assertion details
+
 ## [0.2.36] - 2026-05-01
 
 ### Changed
