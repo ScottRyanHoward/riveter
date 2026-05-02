@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.2.39] - 2026-05-02
+
+### Fixed
+- fix: eliminate false positives and false negatives in example scan results
+
 ## [0.2.38] - 2026-05-02
 
 ### Fixed
