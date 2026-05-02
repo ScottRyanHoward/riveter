@@ -97,7 +97,8 @@ rules:
     resource_type: kubernetes_deployment|kubernetes_daemonset|kubernetes_stateful_set
     description: Pods should not use host network
     assert:
-      spec.template.spec.host_network: false
+      spec.template.spec.host_network:
+        ne: true
     metadata:
       tags: [kubernetes, pod-security, network-isolation]
       providers: [eks, aks, gke]
@@ -108,7 +109,8 @@ rules:
     resource_type: kubernetes_deployment|kubernetes_daemonset|kubernetes_stateful_set
     description: Pods should not use host PID namespace
     assert:
-      spec.template.spec.host_pid: false
+      spec.template.spec.host_pid:
+        ne: true
     metadata:
       tags: [kubernetes, pod-security, process-isolation]
       providers: [eks, aks, gke]
@@ -119,7 +121,8 @@ rules:
     resource_type: kubernetes_deployment|kubernetes_daemonset|kubernetes_stateful_set
     description: Pods should not use host IPC namespace
     assert:
-      spec.template.spec.host_ipc: false
+      spec.template.spec.host_ipc:
+        ne: true
     metadata:
       tags: [kubernetes, pod-security, ipc-isolation]
       providers: [eks, aks, gke]
@@ -372,6 +375,8 @@ rules:
   - id: k8s_no_hardcoded_secrets
     resource_type: kubernetes_deployment|kubernetes_daemonset|kubernetes_stateful_set
     description: Containers should not have hardcoded secrets in environment variables
+    filter:
+      spec.template.spec.container.env.value: present
     assert:
       spec.template.spec.container.env.value:
         regex: "^(?!.*(?:password|secret|key|token|credential)=.+).*$"

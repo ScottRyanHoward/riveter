@@ -196,7 +196,8 @@ rules:
     filter:
       tags.DataClassification: PHI
     assert:
-      associate_public_ip_address: false
+      associate_public_ip_address:
+        ne: true
     metadata:
       tags: [hipaa, ec2, access-control, phi]
       hipaa_control: "164.308(a)(4)(ii)(B)"
@@ -387,6 +388,8 @@ rules:
   - id: hipaa_rds_ssl_required
     resource_type: aws_db_instance
     description: "HIPAA - RDS instances must use a custom parameter group to enforce SSL/TLS connections"
+    filter:
+      parameter_group_name: present
     assert:
       # SSL enforcement requires a custom parameter group (e.g., rds.force_ssl=1 for PostgreSQL/SQL Server)
       # The default parameter group cannot be modified, so any custom group name indicates SSL can be enforced

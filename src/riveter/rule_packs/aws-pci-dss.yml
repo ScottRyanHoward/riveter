@@ -134,7 +134,8 @@ rules:
     filter:
       tags.PCIScope: "true"
     assert:
-      associate_public_ip_address: false
+      associate_public_ip_address:
+        ne: true
     metadata:
       tags: [pci-dss, network-segmentation, ec2]
       pci_requirement: "1.3.1"

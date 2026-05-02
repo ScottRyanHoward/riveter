@@ -345,6 +345,8 @@ rules:
   - id: gcp_wa_cost_storage_class
     resource_type: google_storage_bucket
     description: "WAF Cost Optimization - Storage buckets should use appropriate storage classes"
+    filter:
+      storage_class: present
     assert:
       storage_class:
         regex: "^(STANDARD|NEARLINE|COLDLINE|ARCHIVE)$"

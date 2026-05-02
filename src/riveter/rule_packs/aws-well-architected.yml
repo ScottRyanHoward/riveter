@@ -388,6 +388,8 @@ rules:
   - id: aws_wa_sustainability_region_selection
     resource_type: aws_instance
     description: "WAF Sustainability - Resources should be deployed in sustainable regions"
+    filter:
+      availability_zone: present
     assert:
       availability_zone:
         regex: "^(us-west-2|eu-west-1|eu-north-1)"

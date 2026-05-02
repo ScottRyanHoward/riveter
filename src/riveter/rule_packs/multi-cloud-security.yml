@@ -164,7 +164,8 @@ rules:
     filter:
       tags.Environment: production
     assert:
-      associate_public_ip_address: false
+      associate_public_ip_address:
+        ne: true
     metadata:
       tags: [multi-cloud, network-security, compute, aws]
       providers: [aws]

@@ -64,6 +64,8 @@ rules:
   - id: cis_gcp_1_5_service_account_no_user_managed_keys
     resource_type: google_service_account_key
     description: "CIS 1.5 - Ensure that Service Account has no user-managed keys"
+    filter:
+      key_algorithm: present
     assert:
       key_algorithm:
         regex: "^KEY_ALG_RSA_"
@@ -440,6 +442,8 @@ rules:
   - id: cis_gcp_4_4_no_default_service_account
     resource_type: google_compute_instance
     description: "CIS 4.4 - Ensure that instances are not configured to use the default service account"
+    filter:
+      service_account.email: present
     assert:
       service_account.email:
         regex: "^(?!.*-compute@developer\\.gserviceaccount\\.com).*$"
@@ -452,6 +456,8 @@ rules:
   - id: cis_gcp_4_5_no_full_cloud_api_access
     resource_type: google_compute_instance
     description: "CIS 4.5 - Ensure that instances are not configured to use the default service account with full access to all Cloud APIs"
+    filter:
+      service_account.scopes: present
     assert:
       service_account.scopes:
         regex: "^(?!.*cloud-platform).*$"
