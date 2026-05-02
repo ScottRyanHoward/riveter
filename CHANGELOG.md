@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.2.38] - 2026-05-02
+
+### Fixed
+- fix: eliminate false positives from null-value semantics in rule packs
+
 ## [0.2.37] - 2026-05-01
 
 ### Fixed
