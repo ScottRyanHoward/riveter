@@ -59,8 +59,9 @@ resource "aws_instance" "web_server" {
 }
 
 resource "aws_instance" "worker" {
-  ami           = "ami-0c55b159cbfafe1f0"
-  instance_type = "t2.micro"  # VIOLATION: unapproved instance type
+  ami                         = "ami-0c55b159cbfafe1f0"
+  instance_type               = "t2.micro"  # VIOLATION: unapproved instance type
+  associate_public_ip_address = false
 
   root_block_device {
     volume_size = 20
@@ -320,7 +321,7 @@ resource "kubernetes_deployment" "worker" {
   metadata {
     name      = "batch-worker"
     namespace = "app"
-    labels    = { app = "worker" }
+    labels    = { app = "worker", environment = "production" }
   }
 
   spec {
@@ -336,6 +337,10 @@ resource "kubernetes_deployment" "worker" {
       }
 
       spec {
+        host_network = false
+        host_pid     = false
+        host_ipc     = false
+
         container {
           name  = "worker"
           image = "my-worker:latest"  # VIOLATION: latest tag (k8s_no_latest_image_tag + k8s_trusted_registry_only)

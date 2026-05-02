@@ -209,10 +209,10 @@ rules:
 
   - id: iam_policy_no_wildcard_actions
     resource_type: aws_iam_policy
-    description: IAM policies should not use wildcard actions (note — ineffective when policy is set via jsonencode(); use aws_iam_policy_document data source for static analysis coverage)
+    description: IAM policies should not use wildcard actions
     assert:
       policy:
-        regex: "^(?!.*\"Action\":\\s*\"\\*\").*$"
+        regex: "^(?!.*(?:\"Action\"|'Action'):\\s*(?:\"\\*\"|'\\*')).*$"
     metadata:
       tags: [iam, least-privilege]
       references:

@@ -1302,7 +1302,7 @@ resource "kubernetes_deployment" "batch_worker" {
   metadata {
     name      = "batch-worker"
     namespace = "app"
-    labels    = { app = "batch-worker" }
+    labels    = { app = "batch-worker", environment = "production" }
   }
 
   spec {
@@ -1318,6 +1318,10 @@ resource "kubernetes_deployment" "batch_worker" {
       }
 
       spec {
+        host_network = false
+        host_pid     = false
+        host_ipc     = false
+
         container {
           name  = "worker"
           # VIOLATION: latest tag + untrusted registry (k8s_no_latest_image_tag, k8s_trusted_registry_only)
