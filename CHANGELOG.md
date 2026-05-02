@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.2.40] - 2026-05-02
+
+### Fixed
+- fix: resolve false positives in main.tf example scan results
+
 ## [0.2.39] - 2026-05-02
 
 ### Fixed
