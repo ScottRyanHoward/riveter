@@ -201,6 +201,14 @@ resource "google_storage_bucket" "assets" {
     enabled = true  # OK
   }
 
+  encryption {
+    default_kms_key_name = "projects/my-gcp-project/locations/us/keyRings/main/cryptoKeys/storage"  # OK: CMEK
+  }
+
+  logging {
+    log_bucket = "my-company-assets-logs"  # OK: access logging enabled
+  }
+
   lifecycle_rule {
     condition { age = 365 }
     action { type = "Delete" }
@@ -222,9 +230,10 @@ resource "google_storage_bucket" "staging_bucket" {
 # -----------------------------------------------------------------------------
 
 resource "google_sql_database_instance" "main" {
-  name             = "prod-db"
-  database_version = "POSTGRES_15"
-  region           = "us-central1"
+  name                = "prod-db"
+  database_version    = "POSTGRES_15"
+  region              = "us-central1"
+  encryption_key_name = "projects/my-gcp-project/locations/us-central1/keyRings/main/cryptoKeys/sql"  # OK: CMEK
 
   settings {
     tier = "db-n1-standard-2"
@@ -271,6 +280,11 @@ resource "kubernetes_deployment" "api" {
     labels = {
       app         = "api-server"
       environment = "production"
+    }
+    annotations = {
+      "trivy-operator.aquasecurity.github.io/report-ttl" = "24h"             # OK: vulnerability scanning
+      "cosign.sigstore.dev/signature"                    = "sha256:abc123def456"  # OK: image signature
+      "runtime-security.io/monitored"                    = "true"             # OK: runtime monitoring
     }
   }
 
